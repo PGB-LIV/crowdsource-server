@@ -89,10 +89,12 @@ function GetSqlSchema($file)
             $createTable .= "\n";
             $createTable .= '`'.$columnName .'` '.$columnType.',';
         }
+		
         if ($tableName == 'amino_acids')
         {
             $createTable .= '`num_Se` INTEGER(11),';
         }
+		
         $createTable = substr($createTable, 0, -1);
         $createTable .= "\n";
         $createTable .= ') ENGINE=InnoDB DEFAULT CHARSET=utf8;';
@@ -123,6 +125,7 @@ function GetSqlSchema($file)
             $createTables[] = $index;
         }
     }
+	
     return $createTables;
 }
 
@@ -143,6 +146,7 @@ function GetSqlData($file, $mysqli)
             {
                 $insert .= '`'.$column . '`,';
             }
+			
             $insert = substr($insert, 0, -1);
 
             $insert .= ') VALUES (';
@@ -150,6 +154,7 @@ function GetSqlData($file, $mysqli)
             {
                 $insert .= '\''.$mysqli->real_escape_string($value) . '\',';
             }
+			
             $insert = substr($insert, 0, -1);
             $insert .= ');';
 
@@ -165,6 +170,7 @@ $mysqli = new mysqli(MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_DB);
 if ($mysqli->connect_errno) {
     die('Failed to connect to MySQL: ' . $mysqli->connect_error);
 }
+
 echo 'Connected'."\n\n";
 
 echo 'Fetching schema... ';
@@ -182,8 +188,8 @@ foreach ($schema as $query)
     if (!$res) {
         die($mysqli->errno . ') ' . $mysqli->error."\n".$query);
     }
-
 }
+
 echo 'Done'."\n\n";
 
 
@@ -206,6 +212,7 @@ foreach ($data as $tableName => $table)
             die($mysqli->errno . ') ' . $mysqli->error."\n".$query);
         }
     }
+	
     echo 'Done.';
 }
 
@@ -220,7 +227,7 @@ foreach ($_AMINO_MASS as $aminoAcid => $mass)
         die($mysqli->errno . ') ' . $mysqli->error."\n".$query);
     }
 }
+
 echo 'Done'."\n\n";
 
 echo 'Database Update Complete'."\n";
-?>
