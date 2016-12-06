@@ -3,6 +3,7 @@
  <project name="CrowdSourcingServer" source="src" workdir="build/phpdox">
    <collector backend="parser" />
     <generator output="build/api">
+	
       <build engine="html" output="html"/>
     </generator>
  </project>
