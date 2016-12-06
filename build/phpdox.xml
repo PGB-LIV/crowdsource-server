@@ -4,8 +4,15 @@
    <collector backend="parser" />
     <generator output="build/api">
       <enrich base="build/logs">
-        <source type="phploc">
-          <file name="phploc.xml" />
+        <source type="build" />
+        <source type="git">
+          <history enabled="true" limit="15" />
+        </source>
+        <source type="phploc" />
+        <source type="pmd" />
+        <source type="checkstyle" />
+        <source type="phpunit">
+          <coverage path="coverage/xml" />
         </source>
       </enrich>
       <build engine="html" output="html"/>

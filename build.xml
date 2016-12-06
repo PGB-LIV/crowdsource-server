@@ -232,6 +232,8 @@
   <exec executable="${phpunit}" resultproperty="result.phpunit" taskname="phpunit" dir="${basedir}">
    <arg value="--configuration"/>
    <arg path="${basedir}/build/phpunit.xml"/>
+   <arg value="--coverage-xml"/>
+   <arg path="${basedir}/build/logs/coverage/xml"/>
   </exec>
 
   <property name="phpunit.done" value="true"/>
