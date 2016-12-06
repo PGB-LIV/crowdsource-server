@@ -1,7 +1,7 @@
 <?php
-use PHPUnit\Framework\TestCase;
+require_once 'src/lib/UnimodImport.php';
 
-class UnimodTest extends TestCase
+class UnimodTest extends PHPUnit_Framework_TestCase
 {
     /**
      * @covers UnimodImport::__construct
@@ -10,7 +10,7 @@ class UnimodTest extends TestCase
     {
         $unimod = new UnimodImport();
         $this->assertInstanceOf('UnimodImport', $unimod);
-		
+
         return $unimod;
     }
 }
