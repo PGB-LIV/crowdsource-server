@@ -3,7 +3,11 @@
  <project name="CrowdSourcingServer" source="src" workdir="build/phpdox">
    <collector backend="parser" />
     <generator output="build/api">
-	
+      <enrich base="build/logs">
+        <source type="phploc">
+          <file name="phploc.xml" />
+        </source>
+      </enrich>
       <build engine="html" output="html"/>
     </generator>
  </project>
