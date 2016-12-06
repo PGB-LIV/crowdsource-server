@@ -45,11 +45,11 @@ echo 'Connected'."\n\n";
 
 $unimod = new UnimodImport();
 echo 'Fetching schema... ';
-$schemaPath = $unimod->FetchRemoteData(SCHEMA_URL);
+$schemaPath = $unimod->fetchRemoteData(SCHEMA_URL);
 echo 'Done'."\n".'Saved to '. $schemaPath."\n\n";
 
 echo 'Parsing schema... ';
-$schema = $unimod->GetSqlSchema($schemaPath);
+$schema = $unimod->getSqlSchema($schemaPath);
 echo 'Done'."\n\n";
 
 echo 'Inserting schema... ';
@@ -65,11 +65,11 @@ echo 'Done'."\n\n";
 
 
 echo 'Fetching data... ';
-$dataPath = $unimod->FetchRemoteData(DATA_URL);
+$dataPath = $unimod->fetchRemoteData(DATA_URL);
 echo 'Done'."\n".'Saved to '. $dataPath."\n";
 
 echo 'Parsing schema... ';
-$data = $unimod->GetSqlData($dataPath, $mysqli);
+$data = $unimod->getSqlData($dataPath, $mysqli);
 echo 'Done'."\n\n";
 
 echo 'Inserting data... ';
@@ -83,7 +83,7 @@ foreach ($data as $tableName => $table)
             die($mysqli->errno . ') ' . $mysqli->error."\n".$query);
         }
     }
-	
+    
     echo 'Done.';
 }
 

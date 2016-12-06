@@ -1,7 +1,7 @@
 <?php
 class UnimodImport
-{	
-	public function FetchRemoteData($url)
+{
+	public function fetchRemoteData($url)
 	{
 		$data = file_get_contents($url);
 		$tmpFilePath = tempnam(sys_get_temp_dir(), 'unimod_import_');
@@ -14,7 +14,7 @@ class UnimodImport
 	/*
 	Returns an array of SQL statements to execute that will delete the old tables, then create new ones
 	*/
-	public function GetSqlSchema($file)
+	public function getSqlSchema($file)
 	{
 		// Parse schema
 		$schema = new SimpleXMLElement($file, null, true, 'xs', true);
@@ -94,7 +94,7 @@ class UnimodImport
 		return $createTables;
 	}
 
-	public function GetSqlData($file, $mysqli)
+	public function getSqlData($file, $mysqli)
 	{
 		// Parse schema
 		$schema = new SimpleXMLElement($file, null, true);
