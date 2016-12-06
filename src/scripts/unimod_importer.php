@@ -2,13 +2,12 @@
 /*
  * Initialises the unimod database with data from Unimod, then extends it to add additional mass data
  */
-define('MYSQL_HOST', 'localhost');
-define('MYSQL_USER', '');
-define('MYSQL_PASS', '');
-define('MYSQL_DB', 'unimod');
 
 define('SCHEMA_URL', 'http://www.unimod.org/xmlns/schema/unimod_tables_1/unimod_tables_1.xsd');
 define('DATA_URL', 'http://www.unimod.org/xml/unimod_tables.xml');
+
+include '../conf/config.php';
+include '../lib/UnimodImport.php';
 
 /*
  * Masses source: http://www.matrixscience.com/help/aa_help.html
@@ -36,135 +35,6 @@ $_AMINO_MASS['W'] = array('mono' => 186.079313,    'avg' => 186.2099);
 $_AMINO_MASS['Y'] = array('mono' => 163.06332,    'avg' => 163.1733);
 $_AMINO_MASS['V'] = array('mono' => 99.068414,    'avg' => 99.1311);
 
-function FetchRemoteData($url)
-{
-    $data = file_get_contents($url);
-    $tmpFilePath = tempnam(sys_get_temp_dir(), 'unimod_import_');
-
-    file_put_contents($tmpFilePath, $data);
-
-    return $tmpFilePath;
-}
-
-/*
-Returns an array of SQL statements to execute that will delete the old tables, then create new ones
-*/
-function GetSqlSchema($file)
-{
-    // Parse schema
-    $schema = new SimpleXMLElement($file, null, true, 'xs', true);
-
-    $createTables = array();
-    foreach ($schema->element->complexType->sequence->element as $table)
-    {
-        $tableName = (string) $table->attributes()->name;
-
-        $createTable = 'CREATE TABLE `'.$tableName.'` (';
-        foreach ($table->complexType->sequence->element->complexType->attribute as $column)
-        {
-            $columnName = (string) $column->attributes()->name;
-            $columnType = 'UNKNOWN';
-            switch((string) $column->attributes()->type)
-            {
-                case 'xs:double':
-                    $columnType = 'DOUBLE(20,10)';
-                    break;
-                case 'xs:byte':
-                    $columnType = 'TINYINT(3)';
-                    break;
-                case 'xs:integer':
-                    $columnType = 'INTEGER(11)';
-                    break;
-                case 'xs:long':
-                    $columnType = 'BIGINT(20)';
-                    break;
-                case 'xs:string':
-                    $columnType = 'VARCHAR(255)';
-                    break;
-                default:
-                    die('Unknown data type: '.(string) $column->attributes()->type);
-                    break;
-            }
-
-            $createTable .= "\n";
-            $createTable .= '`'.$columnName .'` '.$columnType.',';
-        }
-		
-        if ($tableName == 'amino_acids')
-        {
-            $createTable .= '`num_Se` INTEGER(11),';
-        }
-		
-        $createTable = substr($createTable, 0, -1);
-        $createTable .= "\n";
-        $createTable .= ') ENGINE=InnoDB DEFAULT CHARSET=utf8;';
-
-        $createTables[] = 'DROP TABLE IF EXISTS `'.$tableName.'`;';
-        $createTables[] = $createTable;
-    }
-
-    foreach ($schema->element->children('xs', true) as $index)
-    {
-        $indexType = $index->getName();
-        if ($indexType == 'key')
-        {
-            $tmp = $index->selector->attributes()['xpath'];
-            $table = substr($tmp, 4, strpos($tmp, '/')-4);
-            $field = substr($index->field->attributes()['xpath'], 1);
-
-            $index = 'ALTER TABLE `'.$table.'` ADD PRIMARY KEY(`'.$field.'`);';
-            $createTables[] = $index;
-        }
-        elseif ($indexType == 'unique')
-        {
-            $tmp = $index->selector->attributes()['xpath'];
-            $table = substr($tmp, 4, strpos($tmp, '/')-4);
-            $field = substr($index->field->attributes()['xpath'], 1);
-
-            $index = 'ALTER TABLE `'.$table.'` ADD UNIQUE(`'.$field.'`);';
-            $createTables[] = $index;
-        }
-    }
-	
-    return $createTables;
-}
-
-function GetSqlData($file, $mysqli)
-{
-    // Parse schema
-    $schema = new SimpleXMLElement($file, null, true);
-
-    $data = array();
-    foreach ($schema as $table)
-    {
-        $tableName = $table->getName();
-        $data[$tableName] = array();
-        foreach ($schema->$tableName->children() as $row)
-        {
-            $insert = 'INSERT IGNORE INTO `'.$tableName.'` (';
-            foreach ($row->attributes() as $column => $value)
-            {
-                $insert .= '`'.$column . '`,';
-            }
-			
-            $insert = substr($insert, 0, -1);
-
-            $insert .= ') VALUES (';
-            foreach ($row->attributes() as $column => $value)
-            {
-                $insert .= '\''.$mysqli->real_escape_string($value) . '\',';
-            }
-			
-            $insert = substr($insert, 0, -1);
-            $insert .= ');';
-
-            $data[$tableName][] = $insert;
-        }
-    }
-
-    return $data;
-}
-
 echo 'Connected to MySQL... ';
 $mysqli = new mysqli(MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_DB);
 if ($mysqli->connect_errno) {
@@ -173,12 +43,13 @@ if ($mysqli->connect_errno) {
 
 echo 'Connected'."\n\n";
 
+$unimod = new UnimodImport();
 echo 'Fetching schema... ';
-$schemaPath = FetchRemoteData(SCHEMA_URL);
+$schemaPath = $unimod->FetchRemoteData(SCHEMA_URL);
 echo 'Done'."\n".'Saved to '. $schemaPath."\n\n";
 
 echo 'Parsing schema... ';
-$schema = GetSqlSchema($schemaPath);
+$schema = $unimod->GetSqlSchema($schemaPath);
 echo 'Done'."\n\n";
 
 echo 'Inserting schema... ';
@@ -194,11 +65,11 @@ echo 'Done'."\n\n";
 
 
 echo 'Fetching data... ';
-$dataPath = FetchRemoteData(DATA_URL);
+$dataPath = $unimod->FetchRemoteData(DATA_URL);
 echo 'Done'."\n".'Saved to '. $dataPath."\n";
 
 echo 'Parsing schema... ';
-$data = GetSqlData($dataPath, $mysqli);
+$data = $unimod->GetSqlData($dataPath, $mysqli);
 echo 'Done'."\n\n";
 
 echo 'Inserting data... ';
