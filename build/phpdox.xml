@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <phpdox xmlns="http://xml.phpdox.net/config">
- <project name="CrowdSourcing" source="${basedir}/src" workdir="${basedir}/build/phpdox">
+ <project name="CrowdSourcingServer" source="${basedir}/src" workdir="${basedir}/build/phpdox">
    <collector backend="parser" />
     <generator output="${basedir}/build/api">
       <build engine="html" output="html"/>
