@@ -8,6 +8,7 @@
  <property name="phploc"  value="phploc"/>
  <property name="phpmd"   value="phpmd"/>
  <property name="phpunit" value="phpunit"/>
+ <property name="composer" value="composer"/>
 
  <!-- Use this when the tools are located as PHARs in ${basedir}/build/tools
  <property name="pdepend" value="${basedir}/build/tools/pdepend.phar"/>
@@ -66,6 +67,8 @@
   <delete dir="${basedir}/build/logs"/>
   <delete dir="${basedir}/build/pdepend"/>
   <delete dir="${basedir}/build/phpdox"/>
+  <delete dir="${basedir}/src/lib/vendor"/>
+  <delete file="${basedir}/build/composer.lock"/>
   <property name="clean.done" value="true"/>
  </target>
 
@@ -78,6 +81,11 @@
   <mkdir dir="${basedir}/build/logs"/>
   <mkdir dir="${basedir}/build/pdepend"/>
   <mkdir dir="${basedir}/build/phpdox"/>
+  <ls - executable="${composer}" taskname="composer">
+   <arg value="install" />
+   <arg value="-d" />
+   <arg path="${basedir}/build" />
+  </exec>
   <property name="prepare.done" value="true"/>
  </target>
 
@@ -88,6 +96,7 @@
    <arg value="-l" />
 
    <fileset dir="${basedir}/src">
+    <exclude name="**/lib/vendor/**" />
     <include name="**/*.php" />
     <modified />
    </fileset>
@@ -106,6 +115,7 @@
          description="Measure project size using PHPLOC and print human readable output. Intended for usage on the command line.">
   <exec executable="${phploc}" taskname="phploc">
    <arg value="--count-tests" />
+   <arg value="--exclude=lib/vendor" />
    <arg path="${basedir}/src" />
    <arg path="${basedir}/tests" />
   </exec>
@@ -119,6 +129,7 @@
          description="Measure project size using PHPLOC and log result in CSV and XML format. Intended for usage within a continuous integration environment.">
   <exec executable="${phploc}" taskname="phploc">
    <arg value="--count-tests" />
+   <arg value="--exclude=lib/vendor" />
    <arg value="--log-csv" />
    <arg path="${basedir}/build/logs/phploc.csv" />
    <arg value="--log-xml" />
@@ -138,6 +149,7 @@
    <arg value="--jdepend-xml=${basedir}/build/logs/jdepend.xml" />
    <arg value="--jdepend-chart=${basedir}/build/pdepend/dependencies.svg" />
    <arg value="--overview-pyramid=${basedir}/build/pdepend/overview-pyramid.svg" />
+   <arg value="--ignore=${basedir}/src/lib/vendor" />
    <arg path="${basedir}/src" />
   </exec>
 
@@ -151,6 +163,8 @@
    <arg path="${basedir}/src" />
    <arg value="text" />
    <arg path="${basedir}/build/phpmd.xml" />
+   <arg value="--exclude" />
+   <arg path="**/lib/vendor" />
   </exec>
 
   <property name="phpmd.done" value="true"/>
@@ -177,7 +191,7 @@
   <exec executable="${phpcs}" taskname="phpcs">
    <arg value="--standard=PSR2" />
    <arg value="--extensions=php" />
-   <arg value="--ignore=autoload.php" />
+   <arg value="--ignore=**/lib/vendor" />
    <arg path="${basedir}/src" />
    <arg path="${basedir}/tests" />
   </exec>
@@ -194,7 +208,7 @@
    <arg value="--report-file=${basedir}/build/logs/checkstyle.xml" />
    <arg value="--standard=PSR2" />
    <arg value="--extensions=php" />
-   <arg value="--ignore=autoload.php" />
+   <arg value="--ignore=**/lib/vendor" />
    <arg path="${basedir}/src" />
    <arg path="${basedir}/tests" />
   </exec>
@@ -206,6 +220,7 @@
          unless="phpcpd.done"
          description="Find duplicate code using PHPCPD and print human readable output. Intended for usage on the command line before committing.">
   <exec executable="${phpcpd}" taskname="phpcpd">
+   <arg value="--exclude=lib/vendor" />
    <arg path="${basedir}/src" />
   </exec>
 
@@ -217,6 +232,7 @@
          depends="prepare"
          description="Find duplicate code using PHPCPD and log result in XML format. Intended for usage within a continuous integration environment.">
   <exec executable="${phpcpd}" taskname="phpcpd">
+   <arg value="--exclude=lib/vendor" />
    <arg value="--log-pmd" />
    <arg path="${basedir}/build/logs/pmd-cpd.xml" />
    <arg path="${basedir}/src" />
