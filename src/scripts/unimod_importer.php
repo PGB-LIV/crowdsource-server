@@ -3,9 +3,6 @@
  * Initialises the unimod database with data from Unimod, then extends it to add additional mass data
  */
 
-define('SCHEMA_URL', 'http://www.unimod.org/xmlns/schema/unimod_tables_1/unimod_tables_1.xsd');
-define('DATA_URL', 'http://www.unimod.org/xml/unimod_tables.xml');
-
 include '../conf/config.php';
 include '../lib/UnimodImport.php';
 
