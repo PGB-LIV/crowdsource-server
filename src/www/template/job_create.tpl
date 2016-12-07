@@ -7,12 +7,10 @@
 	</head>
 	
 	<body>
-
 		<div id = "wrapper">
 			<div id = "content">
 				<h1>Crowd Search</h1>
-  			
-  			<div id = "formcontainer">
+  				<div id = "formcontainer">
 			
   				<form   enctype = "multipart/form-data" method ="post" action ="{$smarty.server.php_self}?page={$smarty.request.page}">
   					<fieldset>
@@ -73,10 +71,8 @@
   				<form>
   			</div>
 			<p>
-			{$procString}
-			</p>
-			
-						
+				{$procString}
+			</p>		
   		</div>
   	</div>
 	</body>
