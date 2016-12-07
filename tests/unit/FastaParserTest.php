@@ -1,5 +1,5 @@
 <?php
-require_once 'src/lib/FastaParserTest.php';
+require_once 'src/lib/FastaParser.php';
 
 class FastaParserTest extends PHPUnit_Framework_TestCase
 {
