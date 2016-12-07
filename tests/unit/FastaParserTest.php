@@ -30,7 +30,7 @@ class FastaParserTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers FastaParserTest::__construct
+     * @covers FastaParser::__construct
      *
      * @uses FastaParserTest
      */
@@ -45,7 +45,7 @@ class FastaParserTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers FastaParserTest::__construct
+     * @covers FastaParser::__construct
      *
      * @uses FastaParserTest
      */

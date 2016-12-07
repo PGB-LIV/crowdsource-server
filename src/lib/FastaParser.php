@@ -6,8 +6,6 @@ class FastaParser implements Iterator
     private $filePath;
 
     private $fileHandle;
-
-    private $fileLine;
     
     private $filePeek;
 
