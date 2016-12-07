@@ -46,10 +46,6 @@ class FastaParserTest extends PHPUnit_Framework_TestCase
 
     /**
      * @covers FastaParserTest::__construct
-     * @covers FastaParserTest::next
-     * @covers FastaParserTest::valid
-     * @covers FastaParserTest::current
-     * @covers FastaParserTest::rewind
      *
      * @uses FastaParserTest
      */
