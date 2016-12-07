@@ -25,7 +25,7 @@
 							<label class = "field" for = "email">Email: </label>
 							<input type = "email" name = "email"
 							value={$email} 
-							style="color:{emailcolor};">					
+							style="color:{$emailcolor};">					
 						</p>
   						<p>
 							<label class = "field" for = "jobname">Job Name: </label>
