@@ -30,7 +30,7 @@
   						<p>
 							<label class = "field" for = "jobname">Job Name: </label>
 							<input type = "text" name = "jobname"
-							value={$jobname) 
+							value={$jobname} 
 							style="color:{$jobcolor}";>
 						</p>
   					

@@ -91,7 +91,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $rawfileErr = "Please specify a raw MS data file ";
         $errorNum ++;
     } else {
-        
         $rawfile = ($_POST["rawfile"]);
     }
     if (! empty($rawfileErr)) {
@@ -100,7 +99,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     
     if ($errorNum <= 0) {
-        
         logJobInDB();
     }
     
@@ -109,7 +107,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $smarty->assign('jobname', $jobname);
     $smarty->assign('fastafile', $fastafile);
     $smarty->assign('rawfile', $rawfile);
-    $smart->assing('procString',$procString);
+    $smart->assing('procString', $procString);
     
     $smarty->display('newjob.tpl');
 }
@@ -122,33 +120,31 @@ function logJobInDB()
     $fastapath = "database/" . $fastafile;
     $rawpath = "rawdata/" . $rawfile;
     
-    //$mysqli = new mysqli('localhost', 'crowdsourcing', 'fVenpEJ710RSKGXw', 'crowdsourcing');
-    //if ($mysqli->connect_errno) {
-     //   echo "Failed to connect to MySQL: " . $mysqli->connect_error;
-    //} else {
-     //   echo "Connected to Database";
-       
+    // $mysqli = new mysqli('localhost', 'crowdsourcing', 'fVenpEJ710RSKGXw', 'crowdsourcing');
+    // if ($mysqli->connect_errno) {
+    // echo "Failed to connect to MySQL: " . $mysqli->connect_error;
+    // } else {
+    // echo "Connected to Database";
     
-        $query = "INSERT INTO job_queue (customer,email,job_title,raw_file,database_file) VALUES ('$name', '$email', '$jobname','$rawpath','$fastapath')";
-        $rs = $adodb->Execute($query);
-        if (!$rs){
-           echo "<br>Values not successfully written";
-        }else{
-            echo "<br>Value successfully written";
-        }
-        
-        $procString = "Parsing and processing job upload";
-        
-        /*
-         *
-         * $target_dir = "databases/";
-         * $target_file = $target_dir . basename($_FILES["fastafile"]["name"]);
-         *
-         * move_uploaded_file($_FILES["fastafile"]["tmp_name"],$target_file);
-         *
-         */
+    $query = "INSERT INTO job_queue (customer,email,job_title,raw_file,database_file) VALUES ('$name', '$email', '$jobname','$rawpath','$fastapath')";
+    $rs = $adodb->Execute($query);
+    if (! $rs) {
+        echo "<br>Values not successfully written";
+    } else {
+        echo "<br>Value successfully written";
     }
-
+    
+    $procString = "Parsing and processing job upload";
+    
+    /*
+     *
+     * $target_dir = "databases/";
+     * $target_file = $target_dir . basename($_FILES["fastafile"]["name"]);
+     *
+     * move_uploaded_file($_FILES["fastafile"]["tmp_name"],$target_file);
+     *
+     */
+}
 
 function test_input($data)
 {
@@ -158,7 +154,7 @@ function test_input($data)
     return $data;
 }
 
-?>
+
 	
 
 
