@@ -67,8 +67,10 @@
   <delete dir="${basedir}/build/logs"/>
   <delete dir="${basedir}/build/pdepend"/>
   <delete dir="${basedir}/build/phpdox"/>
-  <delete dir="${basedir}/src/lib/vendor"/>
   <delete file="${basedir}/build/composer.lock"/>
+  <delete dir="${basedir}/src/lib/vendor"/>
+  <delete dir="${basedir}/src/www/cache"/>
+  <delete dir="${basedir}/src/www/template_c"/>
   <property name="clean.done" value="true"/>
  </target>
 
@@ -81,6 +83,8 @@
   <mkdir dir="${basedir}/build/logs"/>
   <mkdir dir="${basedir}/build/pdepend"/>
   <mkdir dir="${basedir}/build/phpdox"/>
+  <mkdir dir="${basedir}/src/www/cache"/>
+  <mkdir dir="${basedir}/src/www/template_c"/>
   <exec executable="${composer}" taskname="composer">
    <arg value="install" />
    <arg value="-d" />
