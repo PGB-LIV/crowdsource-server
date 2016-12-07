@@ -8,11 +8,10 @@ require_once '../conf/smarty.php';
 
 $page = 'welcome';
 
-if (isset($_REQUEST['page']))
-{
+if (isset($_REQUEST['page'])) {
     $page = $_REQUEST['page'];
 }
 
-require_once '../www/logic/'. $page .'.php';
+require_once '../www/logic/' . $page . '.php';
 
-require_once '../www/template/'. $page .'.tpl';
+$smarty->display('../www/template/' . $page . '.tpl');
