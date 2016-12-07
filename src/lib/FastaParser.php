@@ -1,6 +1,6 @@
 <?php
 
-class FastaParser extends Traversable
+class FastaParser implements Iterator
 {
 
     private $filePath;
@@ -8,6 +8,8 @@ class FastaParser extends Traversable
     private $fileHandle;
 
     private $fileLine;
+    
+    private $filePeek;
 
     private $current;
     
@@ -31,7 +33,7 @@ class FastaParser extends Traversable
     public function next()
     {
         $this->current = null;
-        if (! foef($this->fileHandle)) {
+        if (! feof($this->fileHandle)) {
             $this->current = $this->parseEntry();
         }
     }
@@ -43,9 +45,9 @@ class FastaParser extends Traversable
             fclose($this->fileHandle);
         }
         
-        $this->fileHandle = fopen($this->filePathe, 'r');
+        $this->fileHandle = fopen($this->filePath, 'r');
         $this->key = 0;
-        $this->current = $this->parseEntry();        
+        $this->current = $this->parseEntry();
     }
 
     public function valid()
@@ -83,7 +85,7 @@ class FastaParser extends Traversable
     private function peekLine()
     {
         if ($this->filePeek == null) {
-            $this->fileLine = fgets($this->fileHandle);
+            $this->filePeek = fgets($this->fileHandle);
         }
         
         return $this->filePeek;
@@ -92,11 +94,12 @@ class FastaParser extends Traversable
     private function parseEntry()
     {
         $description = '';
-        while ($line = getLine()) {
+        while ($line = $this->getLine()) {
             $line = trim($line);
             if (strpos($line, '>') !== 0) {
                 continue;
             }
+            
             $description = substr($line, 1);
             break;
         }
@@ -104,16 +107,16 @@ class FastaParser extends Traversable
         $sequence = '';
         while ($line = $this->peekLine()) {
             $line = trim($line);
+            
             if (strpos($line, '>') === 0) {
                 break;
             }
             
-            $sequence .= $this->getLine();
-            break;
+            $sequence .= trim($this->getLine());
         }
         
         $entry = array();
-        $entry['descriotion'] = $description;
+        $entry['description'] = $description;
         $entry['sequence'] = $sequence;
         
         $this->key++;
