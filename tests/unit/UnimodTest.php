@@ -4,8 +4,6 @@ require_once 'src/lib/UnimodImport.php';
 class UnimodTest extends PHPUnit_Framework_TestCase
 {
     /**
-     * @covers UnimodImport::__construct
-     *
      * @uses UnimodImport
      */
     public function testObjectCanBeConstructedForValidConstructorArguments()
