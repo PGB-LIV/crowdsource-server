@@ -12,7 +12,7 @@
 				<h1>Crowd Search</h1>
   				<div id = "formcontainer">
 			
-  				<form   enctype = "multipart/form-data" method ="post" action ="{$smarty.server.php}?page=job_create">
+  				<form   enctype = "multipart/form-data" method ="post" action ="index.php?page=job_create">
   					<fieldset>
   						<legend>Job Creation</legend>
   						<p>
