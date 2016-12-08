@@ -16,6 +16,7 @@ $smarty->assign('email', $email);
 $smarty->assign('jobname', $jobname);
 $smarty->assign('fastafile', $fastafile);
 $smarty->assign('rawfile', $rawfile);
+$smarty->assign('procString', $procString);
 
 $smarty->assign('namecolor', 'black');
 $smarty->assign('emailcolor', 'black');
