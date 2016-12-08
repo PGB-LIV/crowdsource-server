@@ -107,7 +107,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $smarty->assign('jobname', $jobname);
     $smarty->assign('fastafile', $fastafile);
     $smarty->assign('rawfile', $rawfile);
-    $smart->assign('procString', $procString);
+    $smarty->assign('procString', $procString);
     
     $smarty->display('newjob.tpl');
 }
