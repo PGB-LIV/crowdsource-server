@@ -19,25 +19,25 @@
 							<label class = "field" for = "name">Name: </label>
 							<input type = "text" name = "name" 
 							value= {$name} 
-							style="color:green">
+							>
 						</p>
   						<p>
 							<label class = "field" for = "email">Email: </label>
 							<input type = "email" name = "email"
 							value={$email} 
-							style="color:{$emailcolor};">					
+							>					
 						</p>
   						<p>
 							<label class = "field" for = "jobname">Job Name: </label>
 							<input type = "text" name = "jobname"
 							value={$jobname} 
-							style="color:{$jobcolor}";>
+							>
 						</p>
   					
   						<p>
 							<label class = "field" for = "enzyme">Enzyme:</label> 
   							<select name = "enzyme">
-  								<option value = "trypsin">Trypsin</option>
+  							<option value = "trypsin">Trypsin</option>
   							</select>
   						</p>
   						<p>
@@ -52,14 +52,14 @@
 							<label class = "field" for = "fastafile">Database: </label>
 							<input type = "file" name="fastafile" id ="fastafile"
 							value={$fastafile}
-							style="color:{$fastacolor}>
+							>
 						</p>
 						
   					 	<p>
 							<label class = "field" for = "rawfile">MS Data File: </label>
 							<input type = "file" name ="rawfile" id="rawfile"
 							value={$rawfile}
-							style='color:{$rawcolor}">
+							>
 							
 						</p>
 						<p>
