@@ -1,6 +1,6 @@
 <?php
 
-class FastaParser implements Iterator
+class MgfParser implements Iterator
 {
 
     private $filePath;
@@ -91,31 +91,60 @@ class FastaParser implements Iterator
 
     private function parseEntry()
     {
-        $description = '';
+        $entry = array();
+        
+        // Scan to BEGIN IONS
+        $isFound = false;
         while ($line = $this->getLine()) {
             $line = trim($line);
-            if (strpos($line, '>') !== 0) {
+            if (strpos($line, 'BEGIN IONS') !== 0) {
                 continue;
             }
-            
-            $description = substr($line, 1);
+
+            $isFound = true;
             break;
         }
         
-        $sequence = '';
+        if (!$isFound)
+        {
+            return null;
+        }
+        
+        // Scan for key=value pairs
+        $entry['meta'] = array();
         while ($line = $this->peekLine()) {
-            $line = trim($line);
-            
-            if (strpos($line, '>') === 0) {
+            if (strpos($line, '=') === false) {
                 break;
             }
             
-            $sequence .= trim($this->getLine());
+            $line = trim($this->getLine());
+            $pair = explode('=', $line, 2);
+            
+            $entry['meta'][$pair[0]] = $pair[1];
         }
         
-        $entry = array();
-        $entry['description'] = $description;
-        $entry['sequence'] = $sequence;
+        // Scan for [m/z] [intensity]
+        $entry['ions'] = array();
+        while ($line = $this->peekLine()) {
+            if (strpos($line, 'END IONS') !== false) {
+                break;
+            }
+            
+            $line = trim($this->getLine());
+            $pair = explode(' ', $line, 2);
+            
+            $ion = array();
+            $ion['mz'] = $pair[0];
+            if (count($pair) > 1) {
+                $ion['intensity'] = $pair[1];
+            }
+            
+            if (count($pair) > 2) {
+                $ion['charge'] = $pair[2];
+            }
+            
+            $entry['ions'][] = $ion;
+        }
         
         $this->key ++;
         
