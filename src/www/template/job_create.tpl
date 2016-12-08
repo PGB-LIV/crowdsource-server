@@ -19,7 +19,7 @@
 							<label class = "field" for = "name">Name: </label>
 							<input type = "text" name = "name" 
 							value= {$name} 
-							style="color:{$namecolor};"}>
+							style="color:green">
 						</p>
   						<p>
 							<label class = "field" for = "email">Email: </label>
