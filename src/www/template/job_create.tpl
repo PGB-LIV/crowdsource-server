@@ -16,7 +16,7 @@
   					<fieldset>
   						<legend>Job Creation</legend>
   						<p>
-							<label class = "field" for = "name">Name: </label>
+							<label class = "field" for = "name">Nome: </label>
 							<input type = "text" name = "name" 
 							value= {$name} 
 							>
