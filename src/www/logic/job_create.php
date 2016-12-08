@@ -110,7 +110,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $smarty->assign('rawfile', $rawfile);
     $smarty->assign('procString', $procString);
     
-    $smarty->display('newjob.tpl');
+   
 }
 
 function logJobInDB()
