@@ -1,0 +1,58 @@
+/* Top level Crowdsearch */
+
+body
+{
+	font-family:Arial,Hevetica, sans-serif;
+	background-color:grey;
+	
+}
+#wrapper
+{
+	width:90%;
+	margin-left:5%;
+	margin-right:5%;
+	margin-top:0px;
+	min-height:800px;
+	padding:0px;
+	background-color:#fdfdfd;
+	border-radius: 25px;
+	/* border-radius: 0px 0px 25px 25px; */
+}
+#content
+{
+	margin:16px 5% 16px;
+	padding:16px;
+	text-align:center;
+}
+#formcontainer
+{
+	margin:16px 20% 16px;
+	background:#f0fd80;
+	padding:16px;
+	border-radius: 25px;
+}
+fieldset legend
+{
+	font-size:larger;
+}
+fieldset label.field	
+{
+	text_align:right;
+	width:30%;
+	float:left;
+}
+fieldset input
+{
+	width:60%;
+	float:left;
+}
+fieldset select
+{
+	width:30%;
+	float:left;
+}
+fieldset p
+{
+	clear:both;
+	padding:5px;
+}
