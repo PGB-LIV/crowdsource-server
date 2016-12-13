@@ -21,7 +21,6 @@ namespace PGB_LIV\CrowdSource\Parser;
  * entry on each iteration.
  *
  * @author Andrew Collins
- *        
  */
 class FastaParser implements \Iterator
 {

@@ -34,7 +34,6 @@ class MgfParserTest extends \PHPUnit_Framework_TestCase
             $entry['meta']['RTINSECONDS'] = rand(1000, 90000) / 100;
             $entry['ions'] = array();
             for ($ionIndex = 0; $ionIndex < 15; $ionIndex ++) {
-                
                 $entry['ions'][$ionIndex]['mz'] = rand(10000, 100000) / 100;
                 $entry['ions'][$ionIndex]['intensity'] = rand(100000, 10000000) / 100;
             }
