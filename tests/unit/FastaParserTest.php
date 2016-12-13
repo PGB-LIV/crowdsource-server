@@ -14,9 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-require_once 'src/lib/FastaParser.php';
+namespace PGB_LIV\CrowdSource\Test\Unit;
 
-class FastaParserTest extends PHPUnit_Framework_TestCase
+use PGB_LIV\CrowdSource\Parser\FastaParser;
+
+class FastaParserTest extends \PHPUnit_Framework_TestCase
 {
 
     private function createTestFile(&$fastaEntries)
@@ -54,7 +56,7 @@ class FastaParserTest extends PHPUnit_Framework_TestCase
         $fastaEntries = array();
         $fastaPath = $this->createTestFile($fastaEntries);
         $fasta = new FastaParser($fastaPath);
-        $this->assertInstanceOf('FastaParser', $fasta);
+        $this->assertInstanceOf('\PGB_LIV\CrowdSource\Parser\FastaParser', $fasta);
         
         return $fasta;
     }

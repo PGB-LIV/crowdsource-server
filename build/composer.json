@@ -1,6 +1,6 @@
 {
     "config": {
-       "vendor-dir": "../src/lib/vendor"
+       "vendor-dir": "../src/vendor"
     },
     "require": {
         "adodb/adodb-php": "^5.20",

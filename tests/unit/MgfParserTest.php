@@ -14,9 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-require_once 'src/lib/MgfParser.php';
+namespace PGB_LIV\CrowdSource\Test\Unit;
 
-class MgfParserTest extends PHPUnit_Framework_TestCase
+use PGB_LIV\CrowdSource\Parser\MgfParser;
+
+class MgfParserTest extends \PHPUnit_Framework_TestCase
 {
 
     private function createTestFile(&$mgfEntries)
@@ -73,7 +75,7 @@ class MgfParserTest extends PHPUnit_Framework_TestCase
         $mgfEntries = array();
         $mgfPath = $this->createTestFile($mgfEntries);
         $mgf = new MgfParser($mgfPath);
-        $this->assertInstanceOf('MgfParser', $mgf);
+        $this->assertInstanceOf('PGB_LIV\CrowdSource\Parser\MgfParser', $mgf);
         
         return $mgf;
     }

@@ -14,9 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-require_once 'src/lib/UnimodImport.php';
+namespace PGB_LIV\CrowdSource\Test\Unit;
 
-class UnimodTest extends PHPUnit_Framework_TestCase
+use PGB_LIV\CrowdSource\UnimodImport;
+
+class UnimodTest extends \PHPUnit_Framework_TestCase
 {
 
     /**
@@ -26,7 +28,7 @@ class UnimodTest extends PHPUnit_Framework_TestCase
     public function testObjectCanBeConstructedForValidConstructorArguments()
     {
         $unimod = new UnimodImport();
-        $this->assertInstanceOf('UnimodImport', $unimod);
+        $this->assertInstanceOf('PGB_LIV\CrowdSource\UnimodImport', $unimod);
         
         return $unimod;
     }

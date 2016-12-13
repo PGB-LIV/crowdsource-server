@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-require_once '../lib/vendor/smarty/smarty/libs/Smarty.class.php';
+require_once '../vendor/smarty/smarty/libs/Smarty.class.php';
 
 $smarty = new Smarty();
 

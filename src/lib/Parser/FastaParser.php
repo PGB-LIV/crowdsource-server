@@ -1,6 +1,5 @@
 <?php
-
-/*
+/**
  * Copyright 2016 University of Liverpool
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-class MgfParser implements Iterator
+namespace PGB_LIV\CrowdSource\Parser;
+
+/**
+ * A FASTA parser that creates a new iterable object that will return a FASTA
+ * entry on each iteration.
+ *
+ * @author Andrew Collins
+ *        
+ */
+class FastaParser implements \Iterator
 {
 
     private $filePath;
@@ -106,59 +114,31 @@ class MgfParser implements Iterator
 
     private function parseEntry()
     {
-        $entry = array();
-        
-        // Scan to BEGIN IONS
-        $isFound = false;
+        $description = '';
         while ($line = $this->getLine()) {
             $line = trim($line);
-            if (strpos($line, 'BEGIN IONS') !== 0) {
+            if (strpos($line, '>') !== 0) {
                 continue;
             }
             
-            $isFound = true;
+            $description = substr($line, 1);
             break;
         }
         
-        if (! $isFound) {
-            return null;
-        }
-        
-        // Scan for key=value pairs
-        $entry['meta'] = array();
+        $sequence = '';
         while ($line = $this->peekLine()) {
-            if (strpos($line, '=') === false) {
+            $line = trim($line);
+            
+            if (strpos($line, '>') === 0) {
                 break;
             }
             
-            $line = trim($this->getLine());
-            $pair = explode('=', $line, 2);
-            
-            $entry['meta'][$pair[0]] = $pair[1];
+            $sequence .= trim($this->getLine());
         }
         
-        // Scan for [m/z] [intensity]
-        $entry['ions'] = array();
-        while ($line = $this->peekLine()) {
-            if (strpos($line, 'END IONS') !== false) {
-                break;
-            }
-            
-            $line = trim($this->getLine());
-            $pair = explode(' ', $line, 2);
-            
-            $ion = array();
-            $ion['mz'] = $pair[0];
-            if (count($pair) > 1) {
-                $ion['intensity'] = $pair[1];
-            }
-            
-            if (count($pair) > 2) {
-                $ion['charge'] = $pair[2];
-            }
-            
-            $entry['ions'][] = $ion;
-        }
+        $entry = array();
+        $entry['description'] = $description;
+        $entry['sequence'] = $sequence;
         
         $this->key ++;
         
