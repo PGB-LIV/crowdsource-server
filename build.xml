@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="CrowdSourcingServer" default="full-build">
- <!-- By default, we assume all tools to be on the $PATH -->
+ <!-- By default, we assume all tools to be on the $PATH
  <property name="pdepend" value="pdepend"/>
  <property name="phpcpd"  value="phpcpd"/>
  <property name="phpcs"   value="phpcs"/>
- <!--<property name="phpdox"  value="phpdox"/>-->
+ <property name="phpdox"  value="phpdox"/>
  <property name="phploc"  value="phploc"/>
  <property name="phpmd"   value="phpmd"/>
- <property name="phpunit" value="phpunit"/>
+ <property name="phpunit" value="phpunit"/>-->
  <property name="composer" value="composer"/>
 
  <!-- Use this when the tools are located as PHARs in ${basedir}/build/tools
  <property name="pdepend" value="${basedir}/build/tools/pdepend.phar"/>
  <property name="phpcpd"  value="${basedir}/build/tools/phpcpd.phar"/>
- <property name="phpcs"   value="${basedir}/build/tools/phpcs.phar"/>-->
+ <property name="phpcs"   value="${basedir}/build/tools/phpcs.phar"/>
  <property name="phpdox"  value="${basedir}/build/tools/phpdox-0.9.0.phar"/>
- <!--<property name="phploc"  value="${basedir}/build/tools/phploc.phar"/>
+ <property name="phploc"  value="${basedir}/build/tools/phploc.phar"/>
  <property name="phpmd"   value="${basedir}/build/tools/phpmd.phar"/>
  <property name="phpunit" value="${basedir}/build/tools/phpunit.phar"/> -->
 
- <!-- Use this when the tools are managed by Composer in ${basedir}/vendor/bin
- <property name="pdepend" value="${basedir}/vendor/bin/pdepend"/>
- <property name="phpcpd"  value="${basedir}/vendor/bin/phpcpd"/>
- <property name="phpcs"   value="${basedir}/vendor/bin/phpcs"/>
- <property name="phpdox"  value="${basedir}/vendor/bin/phpdox"/>
- <property name="phploc"  value="${basedir}/vendor/bin/phploc"/>
- <property name="phpmd"   value="${basedir}/vendor/bin/phpmd"/>
- <property name="phpunit" value="${basedir}/vendor/bin/phpunit"/> -->
+ <!-- Use this when the tools are managed by Composer in ${basedir}/vendor/bin-->
+ <property name="pdepend" value="${basedir}/src/vendor/bin/pdepend"/>
+ <property name="phpcpd"  value="${basedir}/src/vendor/bin/phpcpd"/>
+ <property name="phpcs"   value="${basedir}/src/vendor/bin/phpcs"/>
+ <property name="phpdox"  value="${basedir}/src/vendor/bin/phpdox"/>
+ <property name="phploc"  value="${basedir}/src/vendor/bin/phploc"/>
+ <property name="phpmd"   value="${basedir}/src/vendor/bin/phpmd"/>
+ <property name="phpunit" value="${basedir}/src/vendor/bin/phpunit"/>
 
  <target name="full-build"
          depends="prepare,static-analysis,phpunit,phpdox,-check-failure"
@@ -100,7 +100,7 @@
    <arg value="-l" />
 
    <fileset dir="${basedir}/src">
-    <exclude name="**/lib/vendor/**" />
+    <exclude name="**/vendor/**" />
     <include name="**/*.php" />
     <modified />
    </fileset>
@@ -119,7 +119,7 @@
          description="Measure project size using PHPLOC and print human readable output. Intended for usage on the command line.">
   <exec executable="${phploc}" taskname="phploc">
    <arg value="--count-tests" />
-   <arg value="--exclude=lib/vendor" />
+   <arg value="--exclude=vendor" />
    <arg path="${basedir}/src" />
    <arg path="${basedir}/tests" />
   </exec>
@@ -153,7 +153,7 @@
    <arg value="--jdepend-xml=${basedir}/build/logs/jdepend.xml" />
    <arg value="--jdepend-chart=${basedir}/build/pdepend/dependencies.svg" />
    <arg value="--overview-pyramid=${basedir}/build/pdepend/overview-pyramid.svg" />
-   <arg value="--ignore=${basedir}/src/lib/vendor" />
+   <arg value="--ignore=${basedir}/src/vendor" />
    <arg path="${basedir}/src" />
   </exec>
 
@@ -185,7 +185,7 @@
    <arg value="--reportfile" />
    <arg path="${basedir}/build/logs/pmd.xml" />
    <arg value="--exclude" />
-   <arg path="**/lib/vendor" />
+   <arg path="**/vendor" />
   </exec>
 
   <property name="phpmd.done" value="true"/>
@@ -197,7 +197,7 @@
   <exec executable="${phpcs}" taskname="phpcs">
    <arg value="--standard=PSR2" />
    <arg value="--extensions=php" />
-   <arg value="--ignore=**/lib/vendor" />
+   <arg value="--ignore=**/vendor" />
    <arg path="${basedir}/src" />
    <arg path="${basedir}/tests" />
   </exec>
@@ -214,7 +214,7 @@
    <arg value="--report-file=${basedir}/build/logs/checkstyle.xml" />
    <arg value="--standard=PSR2" />
    <arg value="--extensions=php" />
-   <arg value="--ignore=**/lib/vendor" />
+   <arg value="--ignore=**/vendor" />
    <arg path="${basedir}/src" />
    <arg path="${basedir}/tests" />
   </exec>
@@ -226,7 +226,7 @@
          unless="phpcpd.done"
          description="Find duplicate code using PHPCPD and print human readable output. Intended for usage on the command line before committing.">
   <exec executable="${phpcpd}" taskname="phpcpd">
-   <arg value="--exclude=lib/vendor" />
+   <arg value="--exclude=vendor" />
    <arg path="${basedir}/src" />
   </exec>
 
@@ -238,7 +238,7 @@
          depends="prepare"
          description="Find duplicate code using PHPCPD and log result in XML format. Intended for usage within a continuous integration environment.">
   <exec executable="${phpcpd}" taskname="phpcpd">
-   <arg value="--exclude=lib/vendor" />
+   <arg value="--exclude=vendor" />
    <arg value="--log-pmd" />
    <arg path="${basedir}/build/logs/pmd-cpd.xml" />
    <arg path="${basedir}/src" />

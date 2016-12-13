@@ -2,7 +2,7 @@
 <phpdox xmlns="http://xml.phpdox.net/config">
  <project name="CrowdSourcingServer" source="src" workdir="build/phpdox">
    <collector backend="parser">
-    <exclude mask="**/lib/vendor*" />   
+    <exclude mask="**/vendor*" />   
    </collector>
     <generator output="build/api">
       <enrich base="build/logs">
