@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright 2016 University of Liverpool
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,9 +66,9 @@ class MgfParserTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers MgfParser::__construct
+     * @covers PGB_LIV\CrowdSource\Parser\MgfParser::__construct
      *
-     * @uses MgfParser
+     * @uses PGB_LIV\CrowdSource\Parser\MgfParser
      */
     public function testObjectCanBeConstructedForValidConstructorArguments()
     {
@@ -81,9 +81,9 @@ class MgfParserTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers MgfParser::__construct
+     * @covers PGB_LIV\CrowdSource\Parser\MgfParser::__construct
      *
-     * @uses MgfParser
+     * @uses PGB_LIV\CrowdSource\Parser\MgfParser
      */
     public function testCanRetrieveEntry()
     {

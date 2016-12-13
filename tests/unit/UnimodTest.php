@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright 2016 University of Liverpool
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ class UnimodTest extends \PHPUnit_Framework_TestCase
 
     /**
      *
-     * @uses UnimodImport
+     * @uses PGB_LIV\CrowdSource\UnimodImport
      */
     public function testObjectCanBeConstructedForValidConstructorArguments()
     {

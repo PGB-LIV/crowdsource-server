@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright 2016 University of Liverpool
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,9 +47,9 @@ class FastaParserTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers FastaParser::__construct
+     * @covers PGB_LIV\CrowdSource\Parser\FastaParser::__construct
      *
-     * @uses FastaParser
+     * @uses PGB_LIV\CrowdSource\Parser\FastaParser
      */
     public function testObjectCanBeConstructedForValidConstructorArguments()
     {
@@ -62,9 +62,9 @@ class FastaParserTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers FastaParser::__construct
+     * @covers PGB_LIV\CrowdSource\Parser\FastaParser::__construct
      *
-     * @uses FastaParser
+     * @uses PGB_LIV\CrowdSource\Parser\FastaParser
      */
     public function testCanRetrieveEntry()
     {
