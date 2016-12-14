@@ -141,7 +141,12 @@ class MgfParser implements \Iterator
             $line = trim($this->getLine());
             $pair = explode('=', $line, 2);
             
-            $entry['meta'][$pair[0]] = $pair[1];
+            $value = $pair[1];
+            if (is_numeric($value)) {
+                $value += 0;
+            }
+            
+            $entry['meta'][$pair[0]] = $value;
         }
         
         // Scan for [m/z] [intensity]
@@ -155,9 +160,9 @@ class MgfParser implements \Iterator
             $pair = explode(' ', $line, 2);
             
             $ion = array();
-            $ion['mz'] = $pair[0];
+            $ion['mz'] = (float) $pair[0];
             if (count($pair) > 1) {
-                $ion['intensity'] = $pair[1];
+                $ion['intensity'] = (float) $pair[1];
             }
             
             if (count($pair) > 2) {
