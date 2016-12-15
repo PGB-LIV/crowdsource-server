@@ -1,7 +1,24 @@
 <?php
-require_once 'src/lib/MgfParser.php';
+/**
+ * Copyright 2016 University of Liverpool
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+namespace PGB_LIV\CrowdSource\Test\Unit;
 
-class MgfParserTest extends PHPUnit_Framework_TestCase
+use PGB_LIV\CrowdSource\Parser\MgfParser;
+
+class MgfParserTest extends \PHPUnit_Framework_TestCase
 {
 
     private function createTestFile(&$mgfEntries)
@@ -17,7 +34,6 @@ class MgfParserTest extends PHPUnit_Framework_TestCase
             $entry['meta']['RTINSECONDS'] = rand(1000, 90000) / 100;
             $entry['ions'] = array();
             for ($ionIndex = 0; $ionIndex < 15; $ionIndex ++) {
-                
                 $entry['ions'][$ionIndex]['mz'] = rand(10000, 100000) / 100;
                 $entry['ions'][$ionIndex]['intensity'] = rand(100000, 10000000) / 100;
             }
@@ -49,24 +65,24 @@ class MgfParserTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers MgfParser::__construct
+     * @covers PGB_LIV\CrowdSource\Parser\MgfParser::__construct
      *
-     * @uses MgfParser
+     * @uses PGB_LIV\CrowdSource\Parser\MgfParser
      */
     public function testObjectCanBeConstructedForValidConstructorArguments()
     {
         $mgfEntries = array();
         $mgfPath = $this->createTestFile($mgfEntries);
         $mgf = new MgfParser($mgfPath);
-        $this->assertInstanceOf('MgfParser', $mgf);
+        $this->assertInstanceOf('PGB_LIV\CrowdSource\Parser\MgfParser', $mgf);
         
         return $mgf;
     }
 
     /**
-     * @covers MgfParser::__construct
+     * @covers PGB_LIV\CrowdSource\Parser\MgfParser::__construct
      *
-     * @uses MgfParser
+     * @uses PGB_LIV\CrowdSource\Parser\MgfParser
      */
     public function testCanRetrieveEntry()
     {

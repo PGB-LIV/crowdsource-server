@@ -1,6 +1,28 @@
 <?php
+/**
+ * Copyright 2016 University of Liverpool
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+namespace PGB_LIV\CrowdSource\Parser;
 
-class MgfParser implements Iterator
+/**
+ * A MGF parser that creates a new iterable object that will return an MGF
+ * entry on each iteration.
+ *
+ * @author Andrew Collins
+ */
+class MgfParser implements \Iterator
 {
 
     private $filePath;
@@ -100,13 +122,12 @@ class MgfParser implements Iterator
             if (strpos($line, 'BEGIN IONS') !== 0) {
                 continue;
             }
-
+            
             $isFound = true;
             break;
         }
         
-        if (!$isFound)
-        {
+        if (! $isFound) {
             return null;
         }
         
@@ -120,7 +141,12 @@ class MgfParser implements Iterator
             $line = trim($this->getLine());
             $pair = explode('=', $line, 2);
             
-            $entry['meta'][$pair[0]] = $pair[1];
+            $value = $pair[1];
+            if (is_numeric($value)) {
+                $value += 0;
+            }
+            
+            $entry['meta'][$pair[0]] = $value;
         }
         
         // Scan for [m/z] [intensity]
@@ -134,9 +160,9 @@ class MgfParser implements Iterator
             $pair = explode(' ', $line, 2);
             
             $ion = array();
-            $ion['mz'] = $pair[0];
+            $ion['mz'] = (float) $pair[0];
             if (count($pair) > 1) {
-                $ion['intensity'] = $pair[1];
+                $ion['intensity'] = (float) $pair[1];
             }
             
             if (count($pair) > 2) {
