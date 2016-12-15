@@ -18,3 +18,5 @@ require_once '../vendor/adodb/adodb-php/adodb.inc.php';
 
 $adodb = newAdoConnection(DB_DRIVER);
 $adodb->Connect(DB_HOST, DB_USER, DB_PASS, DB_DB);
+
+$adodb->setFetchmode(ADODB_FETCH_ASSOC);

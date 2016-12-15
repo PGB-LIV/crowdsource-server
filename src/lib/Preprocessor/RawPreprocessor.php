@@ -40,8 +40,9 @@ class RawPreprocessor
     /**
      * Creates a new instance with the specified parser as input
      *
-     * @param ADOdbConnection $conn            
-     * @param \Iterator $rawParser            
+     * @param ADOdbConnection $conn
+     * @param \Iterator $rawParser
+     * @param \int $jobId
      */
     public function __construct($conn, $rawParser, $jobId)
     {
@@ -63,7 +64,7 @@ class RawPreprocessor
 
     private function processMs1($id, $ms1)
     {
-        $this->ms1Bulk->append(sprintf('(%d, %d, %s, %f, %d, %d, %d)', $id, $this->jobId, $this->adodb->quote($ms1['TITLE']), $ms1['PEPMASS'], $ms1['CHARGE'], $ms1['SCANS'], $ms1['RTINSECONDS']));
+        $this->ms1Bulk->append(sprintf('(%d, %d, %s, %f, %d, %d, %f)', $id, $this->jobId, $this->adodb->quote($ms1['TITLE']), $ms1['PEPMASS'], $ms1['CHARGE'], $ms1['SCANS'], $ms1['RTINSECONDS']));
     }
 
     private function filterMs2($ms2)
@@ -73,12 +74,13 @@ class RawPreprocessor
             return $ms2;
         }
         
-        $filteredMs2 = array();        
+        $filteredMs2 = array();
         $intensities = array();
         
         foreach ($ms2 as $entry) {
             $intensities[] = $entry['intensity'];
         }
+        
         rsort($intensities);
         
         $threshold = $intensities[$this->maxPeaks-1];
@@ -97,7 +99,7 @@ class RawPreprocessor
         $ms2 = $this->filterMs2($ms2);
         $ms2Id = 1;
         foreach ($ms2 as $ion) {
-            $this->ms2Bulk->append(sprintf('(%d, %d, %f, %f)', $ms2Id, $ms1, $ion['mz'], $ion['intensity']));
+            $this->ms2Bulk->append(sprintf('(%d, %d, %d, %f, %f)', $ms2Id, $ms1, $this->jobId, $ion['mz'], $ion['intensity']));
             
             $ms2Id ++;
         }
@@ -124,7 +126,7 @@ class RawPreprocessor
     public function process()
     {
         $this->ms1Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms1` (`id`, `job`, `title`, `pepmass`, `charge`, `scans`, `rtinseconds`) VALUES');
-        $this->ms2Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms2` (`id`, `ms1`, `mz`, `intensity`) VALUES');
+        $this->ms2Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms2` (`id`, `ms1`, `job`, `mz`, `intensity`) VALUES');
                 
         echo time('r') . PHP_EOL;
         

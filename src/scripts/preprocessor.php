@@ -24,10 +24,11 @@ require_once '../conf/adodb.php';
 use PGB_LIV\CrowdSource\Parser\FastaParser;
 use PGB_LIV\CrowdSource\Parser\MgfParser;
 use PGB_LIV\CrowdSource\Preprocessor\RawPreprocessor;
+use PGB_LIV\CrowdSource\Preprocessor\DatabasePreprocessor;
 
 $jobId = $adodb->GetOne('SELECT `id` FROM `job_queue` WHERE `status` = \'preprocessing\'');
 
-if ($jobId !== NULL) {
+if ($jobId !== null) {
     die('Exiting. Job running: ' . $jobId . PHP_EOL);
 }
 
@@ -37,6 +38,10 @@ echo 'Pre-processing job: ' . $job['id'] . PHP_EOL;
 echo 'Pre-processing database: ' . $job['database_file'] . PHP_EOL;
 
 $fastaParser = new FastaParser($job['database_file']);
+$databaseProcessor = new DatabasePreprocessor($adodb, $fastaParser, $job['id']);
+$databaseProcessor->process();
+
+exit;
 
 echo 'Pre-processing raw data: ' . $job['raw_file'] . PHP_EOL;
 

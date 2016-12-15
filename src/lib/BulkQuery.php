@@ -36,8 +36,8 @@ class BulkQuery
     /**
      * Creates a new instance with the specified parser as input
      *
-     * @param ADOdbConnection $conn            
-     * @param \Iterator $rawParser            
+     * @param ADOdbConnection $conn
+     * @param \Iterator $rawParser
      */
     public function __construct($conn, $prefix)
     {
