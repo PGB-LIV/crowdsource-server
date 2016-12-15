@@ -2,14 +2,49 @@
 
 <?php
 
-// include ('Smarty.class.php')
-// $smarty = new Smarty;
+class JobCreate
+{
+    //Andrew wants the jobcreate in a class --- or perhaps a constructor of class job would be better.
+    
+    public $userId;
+    public $jobname;
+    public $fastafile;
+    public $rawfile;
+    public $enzyme;
+    public $missCleave;
+    
+//    public $chargeMin;
+//    public $chargeMax;
+//    public $tolerance;
+    
+    function __construct($id,$name,$fast,$raw,$enz='1',$missedC='2')
+    {
+        $this->$userId = $id;
+        $this->$jobname = $name;
+        $this->$fastafile = $fast;
+        $this->$rawfile = $raw;
+        $this->$enzyme = $enz;
+        $this->$missCleave = $missedC;
+  
+       
+    }
+    
+}
+
+
+
+session_start();
+
+
+
 
 // define variables set to empty values
 $nameErr = $emailErr = $jobnameErr = $fastafileErr = $rawfileErr = "";
 $name = $email = $jobname = $fastafile = $rawfile = "";
 $errorNum = 0;
+$userId = 0;
 $procString = "";
+$visiString="style='visibility: hidden'";
 
 $smarty->assign('name', $name);
 $smarty->assign('email', $email);
@@ -17,6 +52,8 @@ $smarty->assign('jobname', $jobname);
 $smarty->assign('fastafile', $fastafile);
 $smarty->assign('rawfile', $rawfile);
 $smarty->assign('procString', $procString);
+$smarty->assign("shown",$visiString);
+
 
 $smarty->assign('namecolor', 'black');
 $smarty->assign('emailcolor', 'black');
@@ -24,44 +61,38 @@ $smarty->assign('jobcolor', 'black');
 $smarty->assign('fastacolor', 'black');
 $smarty->assign('rawcolor', 'black');
 
+
+    if (isset($_SESSION["userId"]))
+    {
+        $userId = $_SESSION["userId"];
+        $query = "SELECT * FROM users WHERE user_id = '$userId'";
+        $rs = $adodb->Execute($query);
+        $name=$rs->fields['name'];
+        $email=$rs->fields['email'];
+	   $smarty->assign('name', $name);
+	   $smarty->assign('email', $email);
+        
+    } else {
+        header("Location: index.php?page=login");
+        exit;
+    }
+
+    
+    $fastaArray=glob("/mnt/nas/crowdsource/databases/curated/*.*");
+    for ($i = 0; $i < count($fastaArray); $i++)
+    {
+        $fastaArray[$i]=basename($fastaArray[$i]);
+    }
+    $smarty->assign('fastaArray',$fastaArray);
+
+
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // var_dump($_FILES);
-    
-    // Check name
-    if (empty($_POST["name"])) {
-        $nameErr = "Name is required";
-        $errorNum ++;
-    } else {
-        $name = test_input($_POST["name"]);
-        // check if name only contains letters and whitespace
-        if (! preg_match("/^[a-zA-Z ]*$/", $name)) {
-            $nameErr = "Only letters and white space allowed";
-            $errorNum ++;
-        }
-    }
-    if (! empty($nameErr)) {
-        $name = $nameErr;
-        $smarty->assign('namecolor', 'red');
-        $errorNum ++;
-    }
-    
-    if (empty($_POST["email"])) {
-        $emailErr = "Email is required";
-        $errorNum ++;
-    } else {
-        $email = test_input($_POST["email"]);
-        // check if e-mail address is well-formed
-        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $emailErr = "Invalid email format";
-            $errorNum ++;
-        }
-    }
-    if (! empty($emailErr)) {
-        $email = $emailErr;
-        $smarty->assign('emailcolor', 'red');
-    }
-    
-    if (empty($_POST["jobname"])) {
+ 
+       // var_dump($_POST);
+       
+        
+     if (empty($_POST["jobname"])) {
         $jobnameErr = "Job Name is required";
         $errorNum ++;
     } else {
@@ -72,35 +103,83 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $errorNum ++;
         }
     }
+    
     if (! empty($jobnameErr)) {
         $jobname = $jobnameErr;
         $smarty->assign('jobcolor', 'red');
     }
     
-    if (empty($_POST["fastafile"])) {
-        $fastafileErr = "Please specify a database";
-        $errorNum ++;
-    } else {
-        $fastafile = test_input($_POST["fastafile"]);
+        $enzyme = intval($_POST["enzyme"]);
+        $missedCleave = intval($_POST["missedCleave"]);
+        $charge = intval($_POST["charge"]);
+        $tolerance = intval($_POST['tolerance']);
+        
+        
+    if ($_POST['fastasel'] == 'custom')    
+    {
+        if ($_FILES["fastafile"]["name"] == "") {
+            $fastafileErr = "Please specify a database";
+            $errorNum ++;
+        }
     }
-    if (! empty($fastafileErr)) {
-        $fastafile = $fastafileErr;
-        $smarty->assign('fastacolor', 'red');
-    }
-    
-    if (empty($_POST["rawfile"])) {
+   
+    if ($_FILES["rawfile"]["name"]=="") {
         $rawfileErr = "Please specify a raw MS data file ";
         $errorNum ++;
-    } else {
-        $rawfile = ($_POST["rawfile"]);
     }
-    if (! empty($rawfileErr)) {
-        $rawfile = $rawfileErr;
-        $smarty->assign('jobcolor', 'red');
-    }
+        
     
     if ($errorNum <= 0) {
-        logJobInDB();
+        
+        $fastaBaseDir = "/mnt/nas/crowdsource/databases/";
+        $rawBaseDir = "/mnt/nas/crowdsource/rawmgf/";
+        $fastaNewDir = $fastaBaseDir."user".$userId."/";
+        
+        if (!file_exists($fastaNewDir))
+        {
+            mkdir($fastaNewDir);
+        }
+        
+        $rawNewDir = $rawBaseDir."user".$userId."/";
+        if (!file_exists($rawNewDir))
+        {
+            mkdir($rawNewDir);
+        }
+        
+        
+        if ($_POST['fastasel']=='custom')
+        {
+            $fastapath = $fastaNewDir . basename($_FILES["fastafile"]["name"]);
+            move_uploaded_file($_FILES["fastafile"]["tmp_name"],$fastapath);
+        }else{
+            $fastaSource = "/mnt/nas/crowdsource/databases/curated/".$_POST['fastasel'];
+            $fastapath = $fastaNewDir.$_POST['fastasel'];
+            if (!copy($fastaSource,$fastapath))
+            {
+                var_dump($fastaSource);
+            } 
+        }
+        
+        
+        
+        $rawpath = $rawNewDir . basename($_FILES["rawfile"]["name"]);
+        move_uploaded_file($_FILES["rawfile"]["tmp_name"],$rawpath);
+        
+                
+        $query = "INSERT INTO job_queue (customer,job_title,database_file,raw_file,enzyme,miss_cleave_max,charge_min,charge_max,mass_tolerance)";
+        $query .=" VALUES ('$userId','$jobname','$fastapath','$rawpath','$enzyme','$missedCleave',0,'$charge','$tolerance')";
+        
+        $rs = $adodb->Execute($query);
+        
+             
+        
+        
+        
+        
+        
+        
+        $procString = "Parsing and processing job upload";
+        $visiString = "";
     }
     
     $smarty->assign('name', $name);
@@ -109,42 +188,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $smarty->assign('fastafile', $fastafile);
     $smarty->assign('rawfile', $rawfile);
     $smarty->assign('procString', $procString);
+    $smarty->assign('shown',$visiString);
     
    
 }
 
 function logJobInDB()
 {
-    global $name, $email, $jobname;
-    global $rawfile, $fastafile, $procString;
+    global $name, $email, $jobname,$enzyme,$missedCleave,$userId;
+    global $rawfile, $fastafile, $procString, $adodb, $visiString;
     
-    $fastapath = "database/" . $fastafile;
-    $rawpath = "rawdata/" . $rawfile;
-    
-    // $mysqli = new mysqli('localhost', 'crowdsourcing', 'fVenpEJ710RSKGXw', 'crowdsourcing');
-    // if ($mysqli->connect_errno) {
-    // echo "Failed to connect to MySQL: " . $mysqli->connect_error;
-    // } else {
-    // echo "Connected to Database";
-    
-    $query = "INSERT INTO job_queue (customer,email,job_title,raw_file,database_file) VALUES ('$name', '$email', '$jobname','$rawpath','$fastapath')";
-    $rs = $adodb->Execute($query);
-    if (! $rs) {
-        echo "<br>Values not successfully written";
-    } else {
-        echo "<br>Value successfully written";
-    }
-    
-    $procString = "Parsing and processing job upload";
-    
-    /*
-     *
-     * $target_dir = "databases/";
-     * $target_file = $target_dir . basename($_FILES["fastafile"]["name"]);
-     *
-     * move_uploaded_file($_FILES["fastafile"]["tmp_name"],$target_file);
-     *
-     */
+
+        
+   
 }
 
 function test_input($data)
