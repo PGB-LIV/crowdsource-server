@@ -116,11 +116,14 @@ class DatabasePreprocessor
 
     private function processProtein($databaseEntry)
     {
+        $proteinId = $this->proteinId;
         $this->proteinBulk->append(
-            sprintf('(%d, %d, %s, %s)', $this->proteinId, $this->jobId, $this->adodb->quote($databaseEntry['description']), 
+            sprintf('(%d, %d, %s, %s)', $proteinId, $this->jobId, $this->adodb->quote($databaseEntry['description']), 
                 $this->adodb->quote($databaseEntry['sequence'])));
         
-        return $this->proteinId ++;
+        $this->proteinId ++;
+        
+        return $proteinId;
     }
 
     private function filterPeptides($peptides)
@@ -157,7 +160,7 @@ class DatabasePreprocessor
 
     /**
      * Calculates the neutral mass of a sequence
-     * 
+     *
      * @param string $sequence
      *            The peptide sequence to calculate for
      * @return The neutral mass of the sequence
@@ -166,7 +169,7 @@ class DatabasePreprocessor
     {
         $acids = str_split($sequence, 1);
         
-        $mass = self::HYDROGEN_MASS + self::HYDROGEN_MASS + self::OXYGEN_MASS;
+        $mass = static::HYDROGEN_MASS + static::HYDROGEN_MASS + static::OXYGEN_MASS;
         foreach ($acids as $acid) {
             $mass += $this->aminoAcids[$acid];
         }
@@ -195,7 +198,8 @@ class DatabasePreprocessor
         
         // Factor in missed cleaves
         for ($index = 0; $index < count($peptides); $index ++) {
-            $peptide = $peptides[$index]; // Copy peptide
+            // Copy peptide
+            $peptide = $peptides[$index];
             
             for ($missedCleave = 1; $missedCleave <= $this->maxMissedCleavage; $missedCleave ++) {
                 if ($index + $missedCleave >= count($peptides)) {

@@ -36,8 +36,8 @@ class BulkQuery
     /**
      * Creates a new instance with the specified parser as input
      *
-     * @param ADOdbConnection $conn            
-     * @param \Iterator $rawParser            
+     * @param ADOdbConnection $conn ADOdb connection to use for queries
+     * @param string $prefix Initial query prefix that will initiate each bulk query
      */
     public function __construct($conn, $prefix)
     {
