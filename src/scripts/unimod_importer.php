@@ -162,7 +162,8 @@ echo "\n\n" . 'Unimod update complete' . "\n\n";
 echo 'Adding mass values to amino acids...';
 $mysqli->query('ALTER TABLE `amino_acids` ADD `avg_mass` DOUBLE NOT NULL AFTER `num_Se`, ADD `mono_mass` DOUBLE NOT NULL AFTER `avg_mass`;');
 foreach ($_AMINO_MASS as $aminoAcid => $mass) {
-    $res = $mysqli->query('UPDATE `amino_acids` SET `avg_mass` = ' . $mass['avg'] . ', `mono_mass` = ' . $mass['mono'] . ' WHERE `one_letter` = \'' . $aminoAcid . '\';');
+    $res = $mysqli->query(
+        'UPDATE `amino_acids` SET `avg_mass` = ' . $mass['avg'] . ', `mono_mass` = ' . $mass['mono'] . ' WHERE `one_letter` = \'' . $aminoAcid . '\';');
     if (! $res) {
         die($mysqli->errno . ') ' . $mysqli->error . "\n" . $query);
     }

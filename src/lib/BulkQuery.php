@@ -36,8 +36,8 @@ class BulkQuery
     /**
      * Creates a new instance with the specified parser as input
      *
-     * @param ADOdbConnection $conn
-     * @param \Iterator $rawParser
+     * @param ADOdbConnection $conn            
+     * @param \Iterator $rawParser            
      */
     public function __construct($conn, $prefix)
     {
@@ -52,7 +52,7 @@ class BulkQuery
     private function setMaxPacketLimit()
     {
         $this->maxPacketSize = $this->adodb->getRow('SHOW VARIABLES LIKE \'max_allowed_packet\';');
-        $this->maxPacketSize = $this->maxPacketSize[1] - ((int) ($this->maxPacketSize[1] / 10));
+        $this->maxPacketSize = $this->maxPacketSize['Value'] - ((int) ($this->maxPacketSize['Value'] / 10));
     }
 
     private function execute()
