@@ -3,7 +3,7 @@
        "vendor-dir": "../src/vendor"
     },
     "require": {
-        "pgb-liv/php-ms": "dev",
+        "pgb-liv/php-ms": "dev-master",
         "adodb/adodb-php": "5.*",
         "smarty/smarty": "3.*"
     },
