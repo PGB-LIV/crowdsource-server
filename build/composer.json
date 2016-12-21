@@ -3,6 +3,7 @@
        "vendor-dir": "../src/vendor"
     },
     "require": {
+        "pgb-liv/php-ms": "*",
         "adodb/adodb-php": "5.*",
         "smarty/smarty": "3.*",
         "theseer/phpdox": "0.8.*",
