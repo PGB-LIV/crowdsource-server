@@ -20,7 +20,7 @@
 spl_autoload_register(function ($class) {
     
     // project-specific namespace prefix
-    $prefix = 'PGB_LIV\\CrowdSource\\';
+    $prefix = 'pgb_liv\\crowdsource\\';
     
     // base directory for the namespace prefix
     $baseDir = __DIR__ . '/../lib/';

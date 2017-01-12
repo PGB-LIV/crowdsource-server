@@ -14,9 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-namespace PGB_LIV\CrowdSource\Preprocessor;
+namespace pgb_liv\crowdsource\Preprocessor;
 
-use PGB_LIV\CrowdSource\BulkQuery;
+use pgb_liv\php_ms\Reader\FastaReader;
+use pgb_liv\php_ms\Core\Protein;
+use pgb_liv\php_ms\Utility\Digest\DigestTrypsin;
+use pgb_liv\php_ms\Utility\Filter\FilterLength;
+use pgb_liv\crowdsource\BulkQuery;
 
 class DatabasePreprocessor
 {
@@ -27,7 +31,11 @@ class DatabasePreprocessor
 
     private $jobId;
 
-    private $cleavageRule;
+    private $enzyme;
+    
+    private $cleaver;
+    
+    private $filter;
 
     private $aminoAcids;
 
@@ -60,7 +68,7 @@ class DatabasePreprocessor
      * @param \Iterator $rawParser            
      * @param \int $jobId            
      */
-    public function __construct($conn, $databaseParser, $jobId)
+    public function __construct($conn, FastaReader $databaseParser, $jobId)
     {
         $this->adodb = $conn;
         $this->databaseParser = $databaseParser;
@@ -74,6 +82,9 @@ class DatabasePreprocessor
         $this->setEnzyme();
         
         $this->setMaxMissedCleavage();
+
+        $this->cleaver = new DigestTrypsin($this->maxMissedCleavage);
+        $this->filter = new FilterLength($this->minPeptideLength, $this->maxPeptideLength);
     }
 
     private function initialiseAminoAcidsTable()
@@ -91,7 +102,7 @@ class DatabasePreprocessor
     private function setEnzyme()
     {
         // TODO: Pull from database
-        $this->cleavageRule = '/(?!P)(?<=[RK])/';
+        $this->enzyme = 'Trypsin';
     }
 
     public function process()
@@ -114,19 +125,19 @@ class DatabasePreprocessor
         $this->protein2peptideBulk->close();
     }
 
-    private function processProtein($databaseEntry)
+    private function processProtein(Protein $protein)
     {
         $proteinId = $this->proteinId;
         $this->proteinBulk->append(
-            sprintf('(%d, %d, %s, %s)', $proteinId, $this->jobId, $this->adodb->quote($databaseEntry['description']), 
-                $this->adodb->quote($databaseEntry['sequence'])));
+            sprintf('(%d, %d, %s, %s)', $proteinId, $this->jobId, $this->adodb->quote($protein->getDescription()), 
+                $this->adodb->quote($protein->getSequence())));
         
         $this->proteinId ++;
         
         return $proteinId;
     }
 
-    private function filterPeptides($peptides)
+    private function filterPeptidesOLD($peptides)
     {
         foreach ($peptides as $key => $peptide) {
             $peptideLength = strlen($peptide['sequence']);
@@ -142,77 +153,19 @@ class DatabasePreprocessor
         return $peptides;
     }
 
-    private function processPeptides($proteinId, $databaseEntry)
+    private function processPeptides($proteinId, $protein)
     {
-        $peptides = $this->cleaveSequence($databaseEntry['sequence']);
-        $peptides = $this->filterPeptides($peptides);
+        $peptides = $this->cleaver->digest($protein);
+        $peptides = $this->filter->filter($peptides);
         
         foreach ($peptides as $peptide) {
             $this->peptideBulk->append(
-                sprintf('(%d, %d, %s, %d, %d, %f)', $this->peptideId, $this->jobId, $this->adodb->quote($peptide['sequence']), strlen($peptide['sequence']), 
-                    $peptide['missedCleavage'], $peptide['mass']));
+                sprintf('(%d, %d, %s, %d, %d, %f)', $this->peptideId, $this->jobId, $this->adodb->quote($peptide->getSequence()), $peptide->getLength(), 
+                    $peptide->getMissedCleavageCount(), $peptide->calculateMass()));
             
-            $this->protein2peptideBulk->append(sprintf('(%d, %d, %d, %d)', $this->jobId, $proteinId, $this->peptideId, $peptide['start']));
+            $this->protein2peptideBulk->append(sprintf('(%d, %d, %d, %d)', $this->jobId, $proteinId, $this->peptideId, $peptide->getPositionStart()));
             
             $this->peptideId ++;
         }
-    }
-
-    /**
-     * Calculates the neutral mass of a sequence
-     *
-     * @param string $sequence
-     *            The peptide sequence to calculate for
-     * @return The neutral mass of the sequence
-     */
-    private function calculateMass($sequence)
-    {
-        $acids = str_split($sequence, 1);
-        
-        $mass = static::HYDROGEN_MASS + static::HYDROGEN_MASS + static::OXYGEN_MASS;
-        foreach ($acids as $acid) {
-            $mass += $this->aminoAcids[$acid];
-        }
-        
-        return $mass;
-    }
-
-    private function cleaveSequence($proteinSequence)
-    {
-        $peptideSequences = preg_split($this->cleavageRule, $proteinSequence);
-        
-        $peptides = array();
-        $position = 0;
-        foreach ($peptideSequences as $peptideSequence) {
-            $peptide = array();
-            $peptide['start'] = $position;
-            $peptide['sequence'] = $peptideSequence;
-            $peptide['finish'] = $position + strlen($peptideSequence) - 1;
-            $peptide['missedCleavage'] = 0;
-            
-            $peptides[] = $peptide;
-            $position = $peptide['finish'] + 1;
-        }
-        
-        $missedCleaveges = array();
-        
-        // Factor in missed cleaves
-        for ($index = 0; $index < count($peptides); $index ++) {
-            // Copy peptide
-            $peptide = $peptides[$index];
-            
-            for ($missedCleave = 1; $missedCleave <= $this->maxMissedCleavage; $missedCleave ++) {
-                if ($index + $missedCleave >= count($peptides)) {
-                    continue;
-                }
-                
-                $peptide['sequence'] .= $peptides[$index + $missedCleave]['sequence'];
-                $peptide['finish'] = $peptide['start'] + strlen($peptide['sequence']) - 1;
-                $peptide['missedCleavage'] = $missedCleave;
-                $missedCleaveges[] = $peptide;
-            }
-        }
-        
-        return array_merge($peptides, $missedCleaveges);
     }
 }

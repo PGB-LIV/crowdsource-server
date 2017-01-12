@@ -14,17 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+use pgb_liv\php_ms\Reader\FastaReader;
+use pgb_liv\crowdsource\Preprocessor\DatabasePreprocessor;
 error_reporting(E_ALL);
 ini_set('display_errors', true);
 
 require_once '../conf/config.php';
 require_once '../conf/autoload.php';
 require_once '../conf/adodb.php';
-
-use PGB_LIV\CrowdSource\Parser\FastaParser;
-use PGB_LIV\CrowdSource\Parser\MgfParser;
-use PGB_LIV\CrowdSource\Preprocessor\RawPreprocessor;
-use PGB_LIV\CrowdSource\Preprocessor\DatabasePreprocessor;
+require_once '../vendor/pgb-liv/php-ms/src/autoload.php';
 
 $jobId = $adodb->GetOne('SELECT `id` FROM `job_queue` WHERE `status` = \'preprocessing\'');
 
@@ -37,11 +35,12 @@ $job = $adodb->GetRow('SELECT `id`, `database_file`, `raw_file` FROM `job_queue`
 echo 'Pre-processing job: ' . $job['id'] . PHP_EOL;
 echo 'Pre-processing database: ' . $job['database_file'] . PHP_EOL;
 
-$fastaParser = new FastaParser($job['database_file']);
+$fastaParser = new FastaReader($job['database_file']);
+
 $databaseProcessor = new DatabasePreprocessor($adodb, $fastaParser, $job['id']);
 $databaseProcessor->process();
 
-exit;
+exit();
 
 echo 'Pre-processing raw data: ' . $job['raw_file'] . PHP_EOL;
 
