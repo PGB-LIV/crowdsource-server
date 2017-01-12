@@ -14,9 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-namespace PGB_LIV\CrowdSource\Preprocessor;
+namespace pgb_liv\crowdsource\Preprocessor;
 
-use PGB_LIV\CrowdSource\BulkQuery;
+use pgb_liv\crowdsource\BulkQuery;
+use pgb_liv\php_ms\Reader\MgfReader;
+use pgb_liv\php_ms\Core\Spectra\SpectraEntry;
 
 /**
  *
@@ -41,10 +43,10 @@ class RawPreprocessor
      * Creates a new instance with the specified parser as input
      *
      * @param ADOdbConnection $conn            
-     * @param \Iterator $rawParser            
-     * @param \int $jobId            
+     * @param MgfReader $rawParser            
+     * @param int $jobId            
      */
-    public function __construct($conn, $rawParser, $jobId)
+    public function __construct($conn, MgfReader $rawParser, $jobId)
     {
         $this->adodb = $conn;
         $this->rawParser = $rawParser;
@@ -62,14 +64,14 @@ class RawPreprocessor
         $this->maxPeaks = $maxPeaks;
     }
 
-    private function processMs1($id, $ms1)
+    private function processMs1($id, SpectraEntry $ms1)
     {
         $this->ms1Bulk->append(
-            sprintf('(%d, %d, %s, %f, %d, %d, %f)', $id, $this->jobId, $this->adodb->quote($ms1['TITLE']), $ms1['PEPMASS'], $ms1['CHARGE'], $ms1['SCANS'], 
-                $ms1['RTINSECONDS']));
+            sprintf('(%d, %d, %s, %f, %d, %d, %f)', $id, $this->jobId, $this->adodb->quote($ms1->getTitle()), $ms1->getMassCharge(), $ms1->getCharge(), $ms1->getScans(), 
+                $ms1->getRetentionTime()));
     }
 
-    private function filterMs2($ms2)
+    private function filterMs2(array $ms2)
     {
         if (count($ms2) < $this->maxPeaks) {
             return $ms2;
@@ -79,7 +81,7 @@ class RawPreprocessor
         $intensities = array();
         
         foreach ($ms2 as $entry) {
-            $intensities[] = $entry['intensity'];
+            $intensities[] = $entry->getIntensity();
         }
         
         rsort($intensities);
@@ -87,7 +89,7 @@ class RawPreprocessor
         $threshold = $intensities[$this->maxPeaks - 1];
         
         foreach ($ms2 as $entry) {
-            if ($entry['intensity'] >= $threshold) {
+            if ($entry->getIntensity() >= $threshold) {
                 $filteredMs2[] = $entry;
             }
         }
@@ -95,12 +97,12 @@ class RawPreprocessor
         return $filteredMs2;
     }
 
-    private function processMs2($ms1, $ms2)
+    private function processMs2($ms1, SpectraEntry $ms2)
     {
-        $ms2 = $this->filterMs2($ms2);
+        $ms2 = $this->filterMs2($ms2->getIons());
         $ms2Id = 1;
         foreach ($ms2 as $ion) {
-            $this->ms2Bulk->append(sprintf('(%d, %d, %d, %f, %f)', $ms2Id, $ms1, $this->jobId, $ion['mz'], $ion['intensity']));
+            $this->ms2Bulk->append(sprintf('(%d, %d, %d, %f, %f)', $ms2Id, $ms1, $this->jobId, $ion->getMassCharge(), $ion->getIntensity()));
             
             $ms2Id ++;
         }
@@ -111,12 +113,12 @@ class RawPreprocessor
         $ms1Id = 1;
         
         foreach ($this->rawParser as $rawEntry) {
-            if (! isset($rawEntry['meta']['PEPMASS'])) {
+            if ($rawEntry->getMassCharge() == null) {
                 continue;
             }
             
-            $this->processMs1($ms1Id, $rawEntry['meta']);
-            $this->processMs2($ms1Id, $rawEntry['ions']);
+            $this->processMs1($ms1Id, $rawEntry);
+            $this->processMs2($ms1Id, $rawEntry);
             $ms1Id ++;
         }
     }
@@ -125,16 +127,10 @@ class RawPreprocessor
     {
         $this->ms1Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms1` (`id`, `job`, `title`, `pepmass`, `charge`, `scans`, `rtinseconds`) VALUES');
         $this->ms2Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms2` (`id`, `ms1`, `job`, `mz`, `intensity`) VALUES');
-        
-        echo time('r') . PHP_EOL;
-        
-        $this->adodb->commitTrans();
+                
         $this->processRawFile();
-        $this->adodb->commitTrans();
         
         $this->ms1Bulk->close();
-        $this->ms2Bulk->close();
-        
-        echo time('r') . PHP_EOL;
+        $this->ms2Bulk->close();        
     }
 }

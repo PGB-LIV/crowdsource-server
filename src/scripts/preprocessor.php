@@ -15,7 +15,10 @@
  * limitations under the License.
  */
 use pgb_liv\php_ms\Reader\FastaReader;
+use pgb_liv\php_ms\Reader\MgfReader;
 use pgb_liv\crowdsource\Preprocessor\DatabasePreprocessor;
+use pgb_liv\crowdsource\Preprocessor\RawPreprocessor;
+
 error_reporting(E_ALL);
 ini_set('display_errors', true);
 
@@ -40,11 +43,9 @@ $fastaParser = new FastaReader($job['database_file']);
 $databaseProcessor = new DatabasePreprocessor($adodb, $fastaParser, $job['id']);
 $databaseProcessor->process();
 
-exit();
-
 echo 'Pre-processing raw data: ' . $job['raw_file'] . PHP_EOL;
 
-$mgfParser = new MgfParser($job['raw_file']);
+$mgfParser = new MgfReader($job['raw_file']);
 
 $rawProcessor = new RawPreprocessor($adodb, $mgfParser, $job['id']);
 $rawProcessor->setMs2PeakCount(50);
