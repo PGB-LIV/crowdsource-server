@@ -14,21 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-namespace PGB_LIV\CrowdSource\Test\Unit;
+namespace pgb_liv\crowdsource\Test\Unit;
 
-use PGB_LIV\CrowdSource\UnimodImport;
+use pgb_liv\crowdsource\UnimodImport;
 
 class UnimodTest extends \PHPUnit_Framework_TestCase
 {
 
     /**
      *
-     * @uses PGB_LIV\CrowdSource\UnimodImport
+     * @uses pgb_liv\crowdsource\UnimodImport
      */
     public function testObjectCanBeConstructedForValidConstructorArguments()
     {
         $unimod = new UnimodImport();
-        $this->assertInstanceOf('PGB_LIV\CrowdSource\UnimodImport', $unimod);
+        $this->assertInstanceOf('pgb_liv\crowdsource\UnimodImport', $unimod);
         
         return $unimod;
     }
