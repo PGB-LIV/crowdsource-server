@@ -18,7 +18,7 @@ namespace pgb_liv\crowdsource\Preprocessor;
 
 use pgb_liv\php_ms\Reader\FastaReader;
 use pgb_liv\php_ms\Core\Protein;
-use pgb_liv\php_ms\Utility\Digest\DigestTrypsin;
+use pgb_liv\php_ms\Utility\Digest\DigestFactory;
 use pgb_liv\php_ms\Utility\Filter\FilterLength;
 use pgb_liv\crowdsource\BulkQuery;
 
@@ -37,8 +37,6 @@ class DatabasePreprocessor
     
     private $filter;
 
-    private $aminoAcids;
-
     private $maxMissedCleavage;
     
     // TODO: pull from database
@@ -56,10 +54,6 @@ class DatabasePreprocessor
     private $peptideBulk;
 
     private $protein2peptideBulk;
-
-    const HYDROGEN_MASS = 1.007825;
-
-    const OXYGEN_MASS = 15.994915;
 
     /**
      * Creates a new instance with the specified parser as input
@@ -83,14 +77,10 @@ class DatabasePreprocessor
         
         $this->setMaxMissedCleavage();
 
-        $this->cleaver = new DigestTrypsin($this->maxMissedCleavage);
+        $this->cleaver = DigestFactory::getDigest($this->enzyme);
+        $this->cleaver->setMaxMissedCleavage($this->maxMissedCleavage);
+        
         $this->filter = new FilterLength($this->minPeptideLength, $this->maxPeptideLength);
-    }
-
-    private function initialiseAminoAcidsTable()
-    {
-        $this->aminoAcids = $this->adodb->getAssoc('SELECT `one_letter`, `mono_mass` FROM `unimod`.`amino_acids`;');
-        $this->aminoAcids['X'] = 0;
     }
 
     private function setMaxMissedCleavage()
@@ -135,22 +125,6 @@ class DatabasePreprocessor
         $this->proteinId ++;
         
         return $proteinId;
-    }
-
-    private function filterPeptidesOLD($peptides)
-    {
-        foreach ($peptides as $key => $peptide) {
-            $peptideLength = strlen($peptide['sequence']);
-            
-            if ($peptideLength < $this->minPeptideLength || $peptideLength > $this->maxPeptideLength) {
-                unset($peptides[$key]);
-                continue;
-            }
-            
-            $peptides[$key]['mass'] = $this->calculateMass($peptide['sequence']);
-        }
-        
-        return $peptides;
     }
 
     private function processPeptides($proteinId, $protein)
