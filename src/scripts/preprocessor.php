@@ -27,6 +27,7 @@ require_once '../conf/autoload.php';
 require_once '../conf/adodb.php';
 require_once '../vendor/pgb-liv/php-ms/src/autoload.php';
 
+echo 'Starting: ' . date('r') . PHP_EOL;
 $jobId = $adodb->GetOne('SELECT `id` FROM `job_queue` WHERE `status` = \'preprocessing\'');
 
 if ($jobId !== null) {
@@ -51,4 +52,4 @@ $rawProcessor = new RawPreprocessor($adodb, $mgfParser, $job['id']);
 $rawProcessor->setMs2PeakCount(50);
 $rawProcessor->process();
 
-echo time('r') . PHP_EOL;
+echo 'Finished: ' . date('r') . PHP_EOL;
