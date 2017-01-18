@@ -46,8 +46,12 @@ class RawPreprocessor
      * @param MgfReader $rawParser            
      * @param int $jobId            
      */
-    public function __construct($conn, MgfReader $rawParser, $jobId)
+    public function __construct(\ADOConnection $conn, MgfReader $rawParser, $jobId)
     {
+        if (! is_int($jobId)) {
+            throw new \InvalidArgumentException('Job ID must be an integer value. Valued passed is of type ' . gettype($jobId));
+        }
+        
         $this->adodb = $conn;
         $this->rawParser = $rawParser;
         $this->jobId = $jobId;
@@ -61,14 +65,18 @@ class RawPreprocessor
      */
     public function setMs2PeakCount($maxPeaks)
     {
+        if (! is_int($maxPeaks)) {
+            throw new \InvalidArgumentException('Job ID must be an integer value. Valued passed is of type ' . gettype($maxPeaks));
+        }
+        
         $this->maxPeaks = $maxPeaks;
     }
 
     private function processMs1($id, SpectraEntry $ms1)
     {
         $this->ms1Bulk->append(
-            sprintf('(%d, %d, %s, %f, %d, %d, %f)', $id, $this->jobId, $this->adodb->quote($ms1->getTitle()), $ms1->getMassCharge(), $ms1->getCharge(), $ms1->getScans(), 
-                $ms1->getRetentionTime()));
+            sprintf('(%d, %d, %s, %f, %d, %d, %f)', $id, $this->jobId, $this->adodb->quote($ms1->getTitle()), $ms1->getMassCharge(), $ms1->getCharge(), 
+                $ms1->getScans(), $ms1->getRetentionTime()));
     }
 
     private function filterMs2(array $ms2)
@@ -127,10 +135,10 @@ class RawPreprocessor
     {
         $this->ms1Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms1` (`id`, `job`, `title`, `pepmass`, `charge`, `scans`, `rtinseconds`) VALUES');
         $this->ms2Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms2` (`id`, `ms1`, `job`, `mz`, `intensity`) VALUES');
-                
+        
         $this->processRawFile();
         
         $this->ms1Bulk->close();
-        $this->ms2Bulk->close();        
+        $this->ms2Bulk->close();
     }
 }

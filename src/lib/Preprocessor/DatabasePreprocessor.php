@@ -61,11 +61,15 @@ class DatabasePreprocessor
      * Creates a new instance with the specified parser as input
      *
      * @param ADOdbConnection $conn            
-     * @param \Iterator $rawParser            
+     * @param FastaReader $databaseParser            
      * @param \int $jobId            
      */
-    public function __construct($conn, FastaReader $databaseParser, $jobId)
+    public function __construct(\ADOConnection $conn, FastaReader $databaseParser, $jobId)
     {
+        if (! is_int($jobId)) {
+            throw new \InvalidArgumentException('Job ID must be an integer value. Valued passed is of type ' . gettype($jobId));
+        }
+        
         $this->adodb = $conn;
         $this->databaseParser = $databaseParser;
         $this->jobId = $jobId;

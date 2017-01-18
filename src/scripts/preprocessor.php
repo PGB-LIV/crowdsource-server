@@ -18,6 +18,7 @@ use pgb_liv\php_ms\Reader\FastaReader;
 use pgb_liv\php_ms\Reader\MgfReader;
 use pgb_liv\crowdsource\Preprocessor\DatabasePreprocessor;
 use pgb_liv\crowdsource\Preprocessor\RawPreprocessor;
+use pgb_liv\crowdsource\Preprocessor\WorkUnitPreprocessor;
 
 error_reporting(E_ALL);
 ini_set('display_errors', true);
@@ -35,21 +36,37 @@ if ($jobId !== null) {
 }
 
 $job = $adodb->GetRow('SELECT `id`, `database_file`, `raw_file` FROM `job_queue` WHERE `status` = \'new\' ORDER BY `job_time` ASC');
+$adodb->Execute('UPDATE `job_queue` SET `status` = \'preprocessing\', `old_status` = \'new\' WHERE `id` = '.$job['id']);
 
 echo 'Pre-processing job: ' . $job['id'] . PHP_EOL;
 echo 'Pre-processing database: ' . $job['database_file'] . PHP_EOL;
 
 $fastaParser = new FastaReader($job['database_file']);
 
-$databaseProcessor = new DatabasePreprocessor($adodb, $fastaParser, $job['id']);
-$databaseProcessor->process();
+$databaseProcessor = new DatabasePreprocessor($adodb, $fastaParser, (int) $job['id']);
+//$databaseProcessor->process();
+
+$fastaParser = null;
+$databaseProcessor = null;
 
 echo 'Pre-processing raw data: ' . $job['raw_file'] . PHP_EOL;
 
 $mgfParser = new MgfReader($job['raw_file']);
 
-$rawProcessor = new RawPreprocessor($adodb, $mgfParser, $job['id']);
+$rawProcessor = new RawPreprocessor($adodb, $mgfParser, (int) $job['id']);
 $rawProcessor->setMs2PeakCount(50);
-$rawProcessor->process();
+//$rawProcessor->process();
+
+$mgfParser = null;
+$rawProcessor = null;
+
+echo 'Pre-processing work units.' . PHP_EOL;
+
+$workProcessor = new WorkUnitPreprocessor($adodb, (int) $job['id']);
+//$workProcessor->process();
+
+$workProcessor = null;
+
+$adodb->Execute('UPDATE `job_queue` SET `status` = \'preprocessed\', `old_status` = \'preprocessing\' WHERE `id` = '.$job['id']);
 
 echo 'Finished: ' . date('r') . PHP_EOL;
