@@ -33,19 +33,9 @@ class DatabasePreprocessor
 
     private $jobId;
 
-    private $enzyme;
-
     private $cleaver;
 
     private $filter;
-
-    private $maxMissedCleavage;
-    
-    // TODO: pull from database
-    private $minPeptideLength = 6;
-    
-    // TODO: pull from database
-    private $maxPeptideLength = 60;
 
     private $peptideId = 1;
 
@@ -80,25 +70,14 @@ class DatabasePreprocessor
 
     private function initialise()
     {
-        $this->setEnzyme();
-        $this->setMaxMissedCleavage();
+        $job = $this->adodb->GetRow(
+            'SELECT `miss_cleave_max`, `peptide_min`, `peptide_max`, `name` AS `enzyme` FROM `job_queue` `j` LEFT JOIN `enzymes` `e` ON `e`.`id` = `j`.`enzyme` WHERE `j`.`id` = ' .
+                 $this->jobId);
         
-        $this->cleaver = DigestFactory::getDigest($this->enzyme);
-        $this->cleaver->setMaxMissedCleavage($this->maxMissedCleavage);
+        $this->cleaver = DigestFactory::getDigest($job['enzyme']);
+        $this->cleaver->setMaxMissedCleavage((int) $job['miss_cleave_max']);
         
-        $this->filter = new FilterLength($this->minPeptideLength, $this->maxPeptideLength);
-    }
-
-    private function setMaxMissedCleavage()
-    {
-        // TODO: Pull from database
-        $this->maxMissedCleavage = 2;
-    }
-
-    private function setEnzyme()
-    {
-        // TODO: Pull from database
-        $this->enzyme = 'Trypsin';
+        $this->filter = new FilterLength($job['peptide_min'], $job['peptide_max']);
     }
 
     public function process()
@@ -137,7 +116,7 @@ class DatabasePreprocessor
     private function processPeptides($proteinId, $protein)
     {
         $peptides = $this->cleaver->digest($protein);
-        $peptides = $this->filter->filter($peptides);
+        $peptides = $this->filter->filterPeptide($peptides);
         
         foreach ($peptides as $peptide) {
             if (! isset($this->peptide2Id[$peptide->getSequence()])) {

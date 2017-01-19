@@ -76,10 +76,8 @@ class WorkUnitPreprocessor
         $pepMassLow = $peptideMass - $tolerance;
         $pepMassHigh = $peptideMass + $tolerance;
         
-        $peptides = $this->adodb->GetCol(
+        return $this->adodb->GetCol(
             'SELECT `id` FROM `fasta_peptides` WHERE `job` = ' . $this->jobId . ' && `mass` BETWEEN ' . $pepMassLow . ' AND ' . $pepMassHigh);
-        
-        return $peptides;
     }
 
     public function process()

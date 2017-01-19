@@ -19,6 +19,7 @@ namespace pgb_liv\crowdsource\Preprocessor;
 use pgb_liv\crowdsource\BulkQuery;
 use pgb_liv\php_ms\Reader\MgfReader;
 use pgb_liv\php_ms\Core\Spectra\SpectraEntry;
+use pgb_liv\php_ms\Utility\Filter\FilterCharge;
 
 /**
  *
@@ -38,6 +39,8 @@ class RawPreprocessor
     private $ms2Bulk;
 
     private $jobId;
+
+    private $filter;
 
     /**
      * Creates a new instance with the specified parser as input
@@ -120,25 +123,38 @@ class RawPreprocessor
     {
         $ms1Id = 1;
         
-        foreach ($this->rawParser as $rawEntry) {
-            if ($rawEntry->getMassCharge() == null) {
+        foreach ($this->rawParser as $spectra) {
+            if ($spectra->getMassCharge() == null) {
                 continue;
             }
             
-            $this->processMs1($ms1Id, $rawEntry);
-            $this->processMs2($ms1Id, $rawEntry);
+            if (! $this->filter->isValidSpectra($spectra)) {
+                continue;
+            }
+            
+            $this->processMs1($ms1Id, $spectra);
+            $this->processMs2($ms1Id, $spectra);
             $ms1Id ++;
         }
     }
 
     public function process()
     {
-        $this->ms1Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms1` (`id`, `job`, `title`, `pepmass`, `charge`, `scans`, `rtinseconds`) VALUES');
-        $this->ms2Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms2` (`id`, `ms1`, `job`, `mz`, `intensity`) VALUES');
+        $this->initialise();
         
         $this->processRawFile();
         
         $this->ms1Bulk->close();
         $this->ms2Bulk->close();
+    }
+
+    private function initialise()
+    {
+        $job = $this->adodb->GetRow('SELECT `charge_min`, `charge_max` FROM `job_queue` WHERE `id` = ' . $this->jobId);
+        
+        $this->filter = new FilterCharge((int) $job['charge_min'], (int) $job['charge_max']);
+        
+        $this->ms1Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms1` (`id`, `job`, `title`, `pepmass`, `charge`, `scans`, `rtinseconds`) VALUES');
+        $this->ms2Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms2` (`id`, `ms1`, `job`, `mz`, `intensity`) VALUES');
     }
 }
