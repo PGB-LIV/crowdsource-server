@@ -17,9 +17,6 @@
 require_once '../vendor/adodb/adodb-php/adodb.inc.php';
 require_once '../vendor/adodb/adodb-php/adodb-errorhandler.inc.php';
 
-define('ADODB_ERROR_LOG_TYPE',3);
-define('ADODB_ERROR_LOG_DEST', '../log/adodb.log');
-
 $adodb = newAdoConnection(DB_DRIVER);
 $adodb->Connect(DB_HOST, DB_USER, DB_PASS, DB_DB);
 

@@ -60,9 +60,12 @@ class DatabasePreprocessor
     /**
      * Creates a new instance with the specified parser as input
      *
-     * @param ADOdbConnection $conn            
-     * @param FastaReader $databaseParser            
-     * @param \int $jobId            
+     * @param ADOdbConnection $conn
+     *            Open ADOdb connection to database to write to
+     * @param FastaReader $databaseParser
+     *            Open FastaReader instance to read from
+     * @param int $jobId
+     *            The job to process
      */
     public function __construct(\ADOConnection $conn, FastaReader $databaseParser, $jobId)
     {
@@ -78,7 +81,6 @@ class DatabasePreprocessor
     private function initialise()
     {
         $this->setEnzyme();
-        
         $this->setMaxMissedCleavage();
         
         $this->cleaver = DigestFactory::getDigest($this->enzyme);

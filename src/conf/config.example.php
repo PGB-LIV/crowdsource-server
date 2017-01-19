@@ -24,3 +24,6 @@ define('SCHEMA_URL', 'http://www.unimod.org/xmlns/schema/unimod_tables_1/unimod_
 define('DATA_URL', 'http://www.unimod.org/xml/unimod_tables.xml');
 
 define('DATA_PATH_PREFIX', '/mnt/nas/crowdsourcing/');
+
+define('ADODB_ERROR_LOG_TYPE', 3);
+define('ADODB_ERROR_LOG_DEST', '../log/adodb.log');

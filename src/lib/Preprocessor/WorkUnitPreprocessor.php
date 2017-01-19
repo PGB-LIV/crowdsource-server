@@ -76,34 +76,40 @@ class WorkUnitPreprocessor
         $pepMassLow = $peptideMass - $tolerance;
         $pepMassHigh = $peptideMass + $tolerance;
         
-        $peptides = $this->adodb->GetAll(
+        $peptides = $this->adodb->GetCol(
             'SELECT `id` FROM `fasta_peptides` WHERE `job` = ' . $this->jobId . ' && `mass` BETWEEN ' . $pepMassLow . ' AND ' . $pepMassHigh);
+        
+        return $peptides;
     }
 
     public function process()
     {
         $this->initialise();
+        $this->createWorkUnits();
         
+        $this->workUnitBulk->close();
+        $this->workUnitPeptideBulk->close();
+    }
+
+    private function createWorkUnits()
+    {
         $recordSet = $this->adodb->Execute('SELECT `id`, `pepmass`, `charge` FROM `raw_ms1` WHERE `job` = ' . $this->jobId);
         
         $workUnitId = 1;
         foreach ($recordSet as $record) {
             $peptides = $this->getPeptides($record['pepmass']);
             
-            if (count($peptides) == 0) {
+            if (count($peptides) === 0) {
                 continue;
             }
             
             $this->workUnitBulk->append(sprintf('(%d, %d, %d)', $workUnitId, $this->jobId, $record['id']));
             
             foreach ($peptides as $peptide) {
-                $this->workUnitPeptideBulk->append(sprintf('(%d, %d, %d)', $workUnitId, $this->jobId, $peptide['id']));
+                $this->workUnitPeptideBulk->append(sprintf('(%d, %d, %d)', $workUnitId, $this->jobId, $peptide));
             }
             
             $workUnitId ++;
         }
-        
-        $this->workUnitBulk->close();
-        $this->workUnitPeptideBulk->close();
     }
 }
