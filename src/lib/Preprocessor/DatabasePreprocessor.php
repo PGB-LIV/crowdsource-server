@@ -84,7 +84,7 @@ class DatabasePreprocessor
     {
         $this->initialise();
         
-        $this->proteinBulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `fasta_proteins` (`id`, `job`, `description`, `sequence`) VALUES ');
+        $this->proteinBulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `fasta_proteins` (`id`, `job`, `identifier`, `description`, `sequence`) VALUES ');
         $this->peptideBulk = new BulkQuery($this->adodb, 
             'INSERT IGNORE INTO `fasta_peptides` (`id`, `job`, `peptide`, `length`, `missed_cleavage`, `mass`) VALUES');
         $this->protein2peptideBulk = new BulkQuery($this->adodb, 'INSERT INTO `fasta_protein2peptide` (`job`, `protein`, `peptide`, `position_start`) VALUES ');
@@ -106,7 +106,8 @@ class DatabasePreprocessor
     {
         $proteinId = $this->proteinId;
         $this->proteinBulk->append(
-            sprintf('(%d, %d, %s, %s)', $proteinId, $this->jobId, $this->adodb->quote($protein->getDescription()), $this->adodb->quote($protein->getSequence())));
+            sprintf('(%d, %d, %s, %s, %s)', $proteinId, $this->jobId, $this->adodb->quote($protein->getUniqueIdentifier()), 
+                $this->adodb->quote($protein->getDescription()), $this->adodb->quote($protein->getSequence())));
         
         $this->proteinId ++;
         

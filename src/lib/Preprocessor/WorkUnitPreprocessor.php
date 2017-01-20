@@ -95,7 +95,7 @@ class WorkUnitPreprocessor
         
         $workUnitId = 1;
         foreach ($recordSet as $record) {
-            $peptides = $this->getPeptides($record['pepmass']);
+            $peptides = $this->getPeptides($record['mass']);
             
             if (count($peptides) === 0) {
                 continue;

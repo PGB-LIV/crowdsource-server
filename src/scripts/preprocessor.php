@@ -14,11 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-use pgb_liv\php_ms\Reader\FastaReader;
-use pgb_liv\php_ms\Reader\MgfReader;
-use pgb_liv\crowdsource\Preprocessor\DatabasePreprocessor;
-use pgb_liv\crowdsource\Preprocessor\RawPreprocessor;
-use pgb_liv\crowdsource\Preprocessor\WorkUnitPreprocessor;
+use pgb_liv\crowdsource\Preprocessor\Phase1Preprocessor;
+use pgb_liv\crowdsource\Preprocessor\Phase2Preprocessor;
+use pgb_liv\crowdsource\Preprocessor\Phase3Preprocessor;
 
 error_reporting(E_ALL);
 ini_set('display_errors', true);
@@ -29,44 +27,30 @@ require_once '../conf/adodb.php';
 require_once '../vendor/pgb-liv/php-ms/src/autoload.php';
 
 echo 'Starting: ' . date('r') . PHP_EOL;
-$jobId = $adodb->GetOne('SELECT `id` FROM `job_queue` WHERE `status` = \'preprocessing\'');
+$jobId = $adodb->GetOne('SELECT `id` FROM `job_queue` WHERE `status` = \'PREPARING\'');
 
 if ($jobId !== null) {
     die('Exiting. Job running: ' . $jobId . PHP_EOL);
 }
 
-$job = $adodb->GetRow('SELECT `id`, `database_file`, `raw_file` FROM `job_queue` WHERE `status` = \'new\' ORDER BY `job_time` ASC');
-$adodb->Execute('UPDATE `job_queue` SET `status` = \'preprocessing\', `old_status` = \'new\' WHERE `id` = ' . $job['id']);
+$job = $adodb->GetRow('SELECT `id`, `phase` FROM `job_queue` WHERE `state` = \'DONE\' ORDER BY `job_time` ASC');
 
-echo 'Pre-processing job: ' . $job['id'] . PHP_EOL;
-echo 'Pre-processing database: ' . $job['database_file'] . PHP_EOL;
+if (empty($job)) {
+    die('Exit. Nothing to do.');
+}
 
-$fastaParser = new FastaReader($job['database_file']);
+echo 'Pre-processing job: ' . $job['id'] . ' Phase: ' . $job['phase'] . PHP_EOL;
+echo 'Started: ' . date('r') . PHP_EOL;
 
-$databaseProcessor = new DatabasePreprocessor($adodb, $fastaParser, (int) $job['id']);
-$databaseProcessor->process();
-
-$fastaParser = null;
-$databaseProcessor = null;
-
-echo 'Pre-processing raw data: ' . $job['raw_file'] . PHP_EOL;
-
-$mgfParser = new MgfReader($job['raw_file']);
-
-$rawProcessor = new RawPreprocessor($adodb, $mgfParser, (int) $job['id']);
-$rawProcessor->setMs2PeakCount(50);
-$rawProcessor->process();
-
-$mgfParser = null;
-$rawProcessor = null;
-
-echo 'Pre-processing work units.' . PHP_EOL;
-
-$workProcessor = new WorkUnitPreprocessor($adodb, (int) $job['id']);
-$workProcessor->process();
-
-$workProcessor = null;
-
-$adodb->Execute('UPDATE `job_queue` SET `status` = \'preprocessed\', `old_status` = \'preprocessing\' WHERE `id` = ' . $job['id']);
+if ($job['phase'] == 0) {
+    $phase1 = new Phase1Preprocessor($adodb, (int) $job['id']);
+    $phase1->process();
+} elseif ($job['phase'] == 1) {
+    $phase2 = new Phase2Preprocessor($adodb, (int) $job['id']);
+    $phase2->process();
+} elseif ($job['phase'] == 2) {
+    $phase3 = new Phase3Preprocessor($adodb, (int) $job['id']);
+    $phase3->process();
+}
 
 echo 'Finished: ' . date('r') . PHP_EOL;
