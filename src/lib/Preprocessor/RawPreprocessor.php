@@ -20,6 +20,7 @@ use pgb_liv\crowdsource\BulkQuery;
 use pgb_liv\php_ms\Reader\MgfReader;
 use pgb_liv\php_ms\Core\Spectra\SpectraEntry;
 use pgb_liv\php_ms\Utility\Filter\FilterCharge;
+use pgb_liv\php_ms\Utility\Filter\FilterMass;
 
 /**
  *
@@ -40,7 +41,9 @@ class RawPreprocessor
 
     private $jobId;
 
-    private $filter;
+    private $filterCharge;
+
+    private $filterMass;
 
     /**
      * Creates a new instance with the specified parser as input
@@ -78,7 +81,7 @@ class RawPreprocessor
     private function processMs1($id, SpectraEntry $ms1)
     {
         $this->ms1Bulk->append(
-            sprintf('(%d, %d, %s, %f, %d, %d, %f)', $id, $this->jobId, $this->adodb->quote($ms1->getTitle()), $ms1->getMassCharge(), $ms1->getCharge(), 
+            sprintf('(%d, %d, %s, %f, %d, %d, %f)', $id, $this->jobId, $this->adodb->quote($ms1->getTitle()), $ms1->getMass(), $ms1->getCharge(), 
                 $ms1->getScans(), $ms1->getRetentionTime()));
     }
 
@@ -124,11 +127,11 @@ class RawPreprocessor
         $ms1Id = 1;
         
         foreach ($this->rawParser as $spectra) {
-            if ($spectra->getMassCharge() == null) {
+            if (! $this->filterCharge->isValidSpectra($spectra)) {
                 continue;
             }
             
-            if (! $this->filter->isValidSpectra($spectra)) {
+            if (! $this->filterMass->isValidSpectra($spectra)) {
                 continue;
             }
             
@@ -150,11 +153,18 @@ class RawPreprocessor
 
     private function initialise()
     {
-        $job = $this->adodb->GetRow('SELECT `charge_min`, `charge_max` FROM `job_queue` WHERE `id` = ' . $this->jobId);
+        $job = $this->adodb->GetRow('SELECT `charge_min`, `charge_max`, `mass_tolerance` FROM `job_queue` WHERE `id` = ' . $this->jobId);
+        $job['mass_tolerance'] /= 1000000;
         
-        $this->filter = new FilterCharge((int) $job['charge_min'], (int) $job['charge_max']);
+        // TODO: This will need to factor the smallest/largest PTM
+        $mass = $this->adodb->GetRow('SELECT MIN(`mass`) AS `min`, MAX(`mass`) AS `max` FROM `fasta_peptides` WHERE `job` = ' . $this->jobId);
+        $mass['min'] -= $mass['min'] * $job['mass_tolerance'];
+        $mass['max'] += $mass['max'] * $job['mass_tolerance'];
         
-        $this->ms1Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms1` (`id`, `job`, `title`, `pepmass`, `charge`, `scans`, `rtinseconds`) VALUES');
+        $this->filterCharge = new FilterCharge((int) $job['charge_min'], (int) $job['charge_max']);
+        $this->filterMass = new FilterMass((float) $mass['min'], (float) $mass['max']);
+        
+        $this->ms1Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms1` (`id`, `job`, `title`, `mass`, `charge`, `scans`, `rtinseconds`) VALUES');
         $this->ms2Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms2` (`id`, `ms1`, `job`, `mz`, `intensity`) VALUES');
     }
 }

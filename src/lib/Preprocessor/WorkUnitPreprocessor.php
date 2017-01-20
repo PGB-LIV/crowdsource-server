@@ -91,7 +91,7 @@ class WorkUnitPreprocessor
 
     private function createWorkUnits()
     {
-        $recordSet = $this->adodb->Execute('SELECT `id`, `pepmass`, `charge` FROM `raw_ms1` WHERE `job` = ' . $this->jobId);
+        $recordSet = $this->adodb->Execute('SELECT `id`, `mass`, `charge` FROM `raw_ms1` WHERE `job` = ' . $this->jobId);
         
         $workUnitId = 1;
         foreach ($recordSet as $record) {
