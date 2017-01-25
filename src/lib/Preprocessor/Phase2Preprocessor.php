@@ -72,7 +72,7 @@ class Phase2Preprocessor
         $this->initialise();
         
         echo 'Pre-processing work units.' . PHP_EOL;
-        $phase1->indexWorkUnits();
+        $this->indexWorkUnits();
         
         $this->finalise();
     }
@@ -82,6 +82,9 @@ class Phase2Preprocessor
      */
     private function indexWorkUnits()
     {
+        // Select best peptides
+        $this->adodb->Execute('SELECT `peptide`, MAX(`score`) bestscore FROM `workunit_peptides`WHERE `job` = '.$this->jobId.' GROUP BY `peptide` HAVING `bestscore` > 2000 ORDER BY `bestscore` DESC');
+        
         // TODO: Create an index of best PSM and modification masses, then associate with potential spectra
     }
 }

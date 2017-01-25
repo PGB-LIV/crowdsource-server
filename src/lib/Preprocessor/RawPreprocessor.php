@@ -81,7 +81,7 @@ class RawPreprocessor
     private function processMs1($id, SpectraEntry $ms1)
     {
         $this->ms1Bulk->append(
-            sprintf('(%d, %d, %s, %f, %d, %d, %f)', $id, $this->jobId, $this->adodb->quote($ms1->getTitle()), $ms1->getMass(), $ms1->getCharge(), 
+            sprintf('(%d, %d, %s, %f, %f, %d, %d, %f)', $id, $this->jobId, $this->adodb->quote($ms1->getTitle()), $ms1->getMassCharge(), $ms1->getMass(), $ms1->getCharge(), 
                 $ms1->getScans(), $ms1->getRetentionTime()));
     }
 
@@ -164,7 +164,7 @@ class RawPreprocessor
         $this->filterCharge = new FilterCharge((int) $job['charge_min'], (int) $job['charge_max']);
         $this->filterMass = new FilterMass((float) $mass['min'], (float) $mass['max']);
         
-        $this->ms1Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms1` (`id`, `job`, `title`, `mass`, `charge`, `scans`, `rtinseconds`) VALUES');
+        $this->ms1Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms1` (`id`, `job`, `title`, `mass_charge`, `mass`, `charge`, `scans`, `rtinseconds`) VALUES');
         $this->ms2Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms2` (`id`, `ms1`, `job`, `mz`, `intensity`) VALUES');
     }
 }

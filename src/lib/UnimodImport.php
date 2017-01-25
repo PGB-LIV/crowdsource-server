@@ -19,10 +19,12 @@ namespace pgb_liv\crowdsource;
 class UnimodImport
 {
 
+    const TMP_FILE_PREFIX = 'unimod_';
+
     public function fetchRemoteData($url)
     {
         $data = file_get_contents($url);
-        $tmpFilePath = tempnam(sys_get_temp_dir(), 'unimod_import_');
+        $tmpFilePath = tempnam(sys_get_temp_dir(), UnimodImport::TMP_FILE_PREFIX);
         
         file_put_contents($tmpFilePath, $data);
         
@@ -35,13 +37,14 @@ class UnimodImport
     public function getSqlSchema($file)
     {
         // Parse schema
-        $schema = new SimpleXMLElement($file, null, true, 'xs', true);
+        $schema = new \SimpleXMLElement($file, null, true, 'xs', true);
         
         $createTables = array();
         foreach ($schema->element->complexType->sequence->element as $table) {
-            $tableName = (string) $table->attributes()->name;
+            $tableName = UNIMOD_PREFIX . (string) $table->attributes()->name;
             
             $createTable = 'CREATE TABLE `' . $tableName . '` (';
+            
             foreach ($table->complexType->sequence->element->complexType->attribute as $column) {
                 $columnName = (string) $column->attributes()->name;
                 $columnType = 'UNKNOWN';
@@ -70,10 +73,6 @@ class UnimodImport
                 $createTable .= '`' . $columnName . '` ' . $columnType . ',';
             }
             
-            if ($tableName == 'amino_acids') {
-                $createTable .= '`num_Se` INTEGER(11),';
-            }
-            
             $createTable = substr($createTable, 0, - 1);
             $createTable .= "\n";
             $createTable .= ') ENGINE=InnoDB DEFAULT CHARSET=utf8;';
@@ -89,14 +88,14 @@ class UnimodImport
                 $table = substr($tmp, 4, strpos($tmp, '/') - 4);
                 $field = substr($index->field->attributes()['xpath'], 1);
                 
-                $index = 'ALTER TABLE `' . $table . '` ADD PRIMARY KEY(`' . $field . '`);';
+                $index = 'ALTER TABLE `' . UNIMOD_PREFIX . $table . '` ADD PRIMARY KEY(`' . $field . '`);';
                 $createTables[] = $index;
             } elseif ($indexType == 'unique') {
                 $tmp = $index->selector->attributes()['xpath'];
                 $table = substr($tmp, 4, strpos($tmp, '/') - 4);
                 $field = substr($index->field->attributes()['xpath'], 1);
                 
-                $index = 'ALTER TABLE `' . $table . '` ADD UNIQUE(`' . $field . '`);';
+                $index = 'ALTER TABLE `' . UNIMOD_PREFIX . $table . '` ADD UNIQUE(`' . $field . '`);';
                 $createTables[] = $index;
             }
         }
@@ -104,17 +103,17 @@ class UnimodImport
         return $createTables;
     }
 
-    public function getSqlData($file, $mysqli)
+    public function getSqlData($file, \ADOConnection $conn)
     {
         // Parse schema
-        $schema = new SimpleXMLElement($file, null, true);
+        $schema = new \SimpleXMLElement($file, null, true);
         
         $data = array();
         foreach ($schema as $table) {
             $tableName = $table->getName();
             $data[$tableName] = array();
             foreach ($schema->$tableName->children() as $row) {
-                $insert = 'INSERT IGNORE INTO `' . $tableName . '` (';
+                $insert = 'INSERT IGNORE INTO `' . UNIMOD_PREFIX . $tableName . '` (';
                 foreach ($row->attributes() as $column => $value) {
                     $insert .= '`' . $column . '`,';
                 }
@@ -123,7 +122,7 @@ class UnimodImport
                 
                 $insert .= ') VALUES (';
                 foreach ($row->attributes() as $column => $value) {
-                    $insert .= '\'' . $mysqli->real_escape_string($value) . '\',';
+                    $insert .= $conn->Quote($value) . ',';
                 }
                 
                 $insert = substr($insert, 0, - 1);

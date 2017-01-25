@@ -72,7 +72,7 @@ class Phase3Preprocessor
         $this->initialise();
         
         echo 'Pre-processing work units.' . PHP_EOL;
-        $phase1->indexWorkUnits();
+        $this->indexWorkUnits();
         
         $this->finalise();
     }
