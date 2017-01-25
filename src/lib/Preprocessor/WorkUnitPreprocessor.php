@@ -59,25 +59,32 @@ class WorkUnitPreprocessor
     }
 
     /**
-     * Calculates the ppm tolerance of the specified peptide mass
+     * Calculates the ppm tolerance of the specified mass
      *
-     * @param float $peptideMass
-     *            Peptide mass to calculate tolerance for
+     * @param float $mass
+     *            Mass to calculate tolerance for
      * @return float Tolerance value
      */
-    private function calculateTolerance($peptideMass)
+    private function calculateTolerance($mass)
     {
-        return $peptideMass * $this->massTolerance;
+        return $mass * $this->massTolerance;
     }
 
-    private function getPeptides($peptideMass)
+    /**
+     * Get the peptides that have a mass matching the spectra mass
+     *
+     * @param float $spectraMass
+     *            Mass of the spectra to match against
+     * @return array Peptide IDs within tolerance
+     */
+    private function getPeptides($spectraMass)
     {
-        $tolerance = $this->calculateTolerance($peptideMass);
-        $pepMassLow = $peptideMass - $tolerance;
-        $pepMassHigh = $peptideMass + $tolerance;
+        $tolerance = $this->calculateTolerance($spectraMass);
+        $pepMassLow = $spectraMass - $tolerance;
+        $pepMassHigh = $spectraMass + $tolerance;
         
         return $this->adodb->GetCol(
-            'SELECT `id` FROM `fasta_peptides` WHERE `job` = ' . $this->jobId . ' && `mass` BETWEEN ' . $pepMassLow . ' AND ' . $pepMassHigh);
+            'SELECT `id` FROM `fasta_peptides` WHERE `job` = ' . $this->jobId . ' && `mass_modified` BETWEEN ' . $pepMassLow . ' AND ' . $pepMassHigh);
     }
 
     public function process()

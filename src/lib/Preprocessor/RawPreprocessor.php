@@ -131,10 +131,6 @@ class RawPreprocessor
                 continue;
             }
             
-            if (! $this->filterMass->isValidSpectra($spectra)) {
-                continue;
-            }
-            
             $this->processMs1($ms1Id, $spectra);
             $this->processMs2($ms1Id, $spectra);
             $ms1Id ++;

@@ -27,7 +27,7 @@ require_once '../conf/adodb.php';
 require_once '../vendor/pgb-liv/php-ms/src/autoload.php';
 
 echo 'Starting: ' . date('r') . PHP_EOL;
-$jobId = $adodb->GetOne('SELECT `id` FROM `job_queue` WHERE `status` = \'PREPARING\'');
+$jobId = $adodb->GetOne('SELECT `id` FROM `job_queue` WHERE `state` = \'PREPARING\'');
 
 if ($jobId !== null) {
     die('Exiting. Job running: ' . $jobId . PHP_EOL);
