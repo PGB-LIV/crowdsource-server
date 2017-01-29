@@ -66,8 +66,6 @@ class WorkUnitAllocator
      */
     public function getWorkUnit()
     {
-        $_myWorkUnit = new WorkUnit();
-        
         $job = $this->adodb->GetRow('SELECT `id`, `phase` FROM `job_queue` WHERE `state` = \'READY\' LIMIT 0,1');
         if (empty($job)) {
             return false;

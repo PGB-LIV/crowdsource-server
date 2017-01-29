@@ -36,7 +36,7 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
     {
         parent::__construct($conn, $jobId);
         
-        $this->setTableName(self::WORKUNIT_TABLE_NAME);
+        $this->setTableName(Phase1Allocator::WORKUNIT_TABLE_NAME);
     }
 
     /**

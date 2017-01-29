@@ -26,8 +26,6 @@ require_once '../vendor/pgb-liv/php-ms/src/autoload.php';
 
 header('Content-Type: application/json');
 
-$myWorkUnit = null; // {type:'workunit', id:0, job:0, mods:=[{modtype:0,modMass:0,loc:'C'}..],$ipAddress:0, ms1:0, ms2:=[{mz:n, intensity:n}...], peptides:[{id:1, structure:"ASDFFS"}...]};
-
 $requestType = 'unknown';
 if (isset($_GET['r'])) {
     $requestType = $_GET['r'];
@@ -41,7 +39,7 @@ switch ($requestType) {
         $workUnit = $allocator->getWorkUnit();
         
         if ($workUnit === false) {
-            echo 'parseResult({"type":"nomore"});'; // no more jobs this session.
+            echo 'parseResult({"type":"nomore"});';
             return;
         }
         
@@ -53,7 +51,6 @@ switch ($requestType) {
         break;
     
     case 'result':
-        // r=result&result={"type":"result","workunit":"1","job":30,"ip":0,"peptides":[{"id":784282,"score":262055.40000000002},...]}
         $workUnitAllocator->recordResults(json_decode($_GET['result']));
         echo 'parseResult({"type":"confirmation"})';
         break;
