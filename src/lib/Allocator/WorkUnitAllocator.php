@@ -96,29 +96,4 @@ class WorkUnitAllocator
         
         return $workUnit;
     }
-
-    /**
-     * Get the peptides array from workunit_peptides
-     *
-     * @param unknown $wu            
-     * @param unknown $job            
-     */
-    function getPeptides($workUnitId)
-    {
-        // TODO: $workUnitId
-        $_peps = array();
-        $rs = $adodb->Execute(
-            'SELECT fpeps.id, fpeps.peptide FROM fasta_peptides AS fpeps
-        LEFT OUTER JOIN workunit_peptides AS wu_p ON wu_p.peptide=fpeps.id
-        WHERE wu_p.job = ' . $this->jobId . ' && wu_p.workunit=' . $workUnitId);
-        $i = 0;
-        while (! $rs->EOF) {
-            $_peps[$i]['id'] = (int) $rs->fields['id'];
-            $_peps[$i]['structure'] = $rs->fields['peptide'];
-            $rs->MoveNext();
-            $i ++;
-        }
-        
-        return $_peps;
-    }
 }

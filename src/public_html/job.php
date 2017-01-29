@@ -24,7 +24,7 @@ require_once '../conf/autoload.php';
 require_once '../conf/adodb.php';
 require_once '../vendor/pgb-liv/php-ms/src/autoload.php';
 
-$myWorkUnit = NULL; // {type:'workunit', id:0, job:0, mods:=[{modtype:0,modMass:0,loc:'C'}..],$ipAddress:0, ms1:0, ms2:=[{mz:n, intensity:n}...], peptides:[{id:1, structure:"ASDFFS"}...]};
+$myWorkUnit = null; // {type:'workunit', id:0, job:0, mods:=[{modtype:0,modMass:0,loc:'C'}..],$ipAddress:0, ms1:0, ms2:=[{mz:n, intensity:n}...], peptides:[{id:1, structure:"ASDFFS"}...]};
 
 $requestType = $_GET['r'];
 $workUnitAllocator = new WorkUnitAllocator($adodb, $jobId);

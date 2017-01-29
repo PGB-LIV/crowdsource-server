@@ -52,8 +52,7 @@ class Phase1Allocator implements AllocatorInterface
         // {type:'workunit', id:0, job:0, mods:=[{modtype:'fixed',modMass:0,loc:'C'}..],$ipAddress:0, ms1:0, ms2:=[{mz:n, intensity:n}...], peptides:[{id:1, structure:"ASDFFS"}...]};
         if ($currentModsJob == $this->jobId) {
             $workUnit->mods = $modsForCurrentJob;
-        } else {
-            
+        } else {            
             $workUnit->mods = $this->getFixedModifications();
         }
         
@@ -70,7 +69,7 @@ class Phase1Allocator implements AllocatorInterface
             return $modsForCurrentJob;
         }
         
-        $this->modsForCurrentJob = Array();
+        $this->modsForCurrentJob = array();
         $currentJob = $this->jobId;
         
         // $query ="SELECT mod_id, acid FROM job_fixed_mod WHERE job = '$job'";
@@ -92,7 +91,7 @@ class Phase1Allocator implements AllocatorInterface
     }
     
     // get the ms2 arrary from spectrum ms1;
-    function getMs2($ms1)
+    private function getMs2($ms1)
     {
         // TODO: Validate $ms1
         $ms2 = array();

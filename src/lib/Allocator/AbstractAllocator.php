@@ -44,7 +44,7 @@ abstract class AbstractAllocator implements AllocatorInterface
         WHERE `id` = ' . $_myWorkUnit->id . ' && `job` = ' . $this->jobId);
     }
 
-    public abstract function getWorkUnit();
+    abstract public function getWorkUnit();
 
-    public abstract function setWorkUnitResults();
+    abstract public function setWorkUnitResults();
 }
