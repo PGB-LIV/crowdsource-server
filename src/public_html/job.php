@@ -1,5 +1,5 @@
 <?php
-use pgb_liv\crowdsource\Processor\WorkUnitAllocator;
+use pgb_liv\crowdsource\Allocator\WorkUnitAllocator;
 
 /**
  * Copyright 2016 University of Liverpool
@@ -24,25 +24,28 @@ require_once '../conf/autoload.php';
 require_once '../conf/adodb.php';
 require_once '../vendor/pgb-liv/php-ms/src/autoload.php';
 
+header('Content-Type: application/json');
+
 $myWorkUnit = null; // {type:'workunit', id:0, job:0, mods:=[{modtype:0,modMass:0,loc:'C'}..],$ipAddress:0, ms1:0, ms2:=[{mz:n, intensity:n}...], peptides:[{id:1, structure:"ASDFFS"}...]};
 
-$requestType = $_GET['r'];
-$workUnitAllocator = new WorkUnitAllocator($adodb, $jobId);
+$requestType = 'unknown';
+if (isset($_GET['r'])) {
+    $requestType = $_GET['r'];
+}
+
+$workUnitAllocator = new WorkUnitAllocator($adodb);
 
 switch ($requestType) {
     case 'workunit':
-        $myWorkUnit = $workunit->getWorkUnit();
-        if ($myWorkUnit->job == 0) {
+        $allocator = new WorkUnitAllocator($adodb);
+        $workUnit = $allocator->getWorkUnit();
+        
+        if ($workUnit === false) {
             echo 'parseResult({"type":"nomore"});'; // no more jobs this session.
             return;
         }
         
-        if ($myWorkUnit->id == 0) {
-            echo 'parseResult({"type":"nomore"});'; // no more jobs this session.
-            return;
-        }
-        
-        echo 'parseResult(' . json_encode($myWorkUnit) . ');';
+        echo 'parseResult(' . json_encode($workUnit) . ');';
         break;
     
     case 'terminate':

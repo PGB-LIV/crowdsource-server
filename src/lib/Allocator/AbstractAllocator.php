@@ -16,18 +16,33 @@
  */
 namespace pgb_liv\crowdsource\Allocator;
 
+use pgb_liv\crowdsource\Core\WorkUnit;
+
 abstract class AbstractAllocator implements AllocatorInterface
 {
 
-    private $adodb;
+    protected $adodb;
 
     private $tableName;
 
     protected $jobId;
 
-    public function __construct($conn, $jobId)
+    /**
+     * Creates a new instance of a job allocator.
+     *
+     * @param \ADOConnection $conn
+     *            A valid and connected ADOdb instance
+     * @param int $jobId
+     *            The job to preprocess
+     * @throws \InvalidArgumentException If job is not an integer
+     */
+    public function __construct(\ADOConnection $conn, $jobId)
     {
-        // TODO validate args
+        if (! is_int($jobId)) {
+            throw new \InvalidArgumentException('Job ID must be an integer value. Valued passed is of type ' . gettype($jobId));
+        }
+        
+        $this->adodb = $conn;
         $this->jobId = $jobId;
     }
 
@@ -36,15 +51,28 @@ abstract class AbstractAllocator implements AllocatorInterface
         $this->tableName = $tableName;
     }
 
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \pgb_liv\crowdsource\Allocator\AllocatorInterface::setWorkUnitWorker()
+     */
     public function setWorkUnitWorker($workUnitId, $workerId)
     {
-        // TODO: Validate args
+        if (! is_int($workUnitId)) {
+            throw new \InvalidArgumentException('Argument 1 must be an integer value. Valued passed is of type ' . gettype($workUnitId));
+        }
+        
+        if (! is_int($workUnitId)) {
+            throw new \InvalidArgumentException('Argument 2 must be an integer value. Valued passed is of type ' . gettype($workerId));
+        }
+        
         $this->adodb->Execute(
-            'UPDATE `' . $tableName . '` SET `status` = \'ASSIGNED\', `assigned_to` =' . $workerId . ', `assigned_at` = NOW()
-        WHERE `id` = ' . $_myWorkUnit->id . ' && `job` = ' . $this->jobId);
+            'UPDATE `' . $this->tableName . '` SET `status` = \'ASSIGNED\', `assigned_to` =' . $workerId . ', `assigned_at` = NOW()
+        WHERE `id` = ' . $workUnitId . ' && `job` = ' . $this->jobId);
     }
 
     abstract public function getWorkUnit();
 
-    abstract public function setWorkUnitResults();
+    abstract public function setWorkUnitResults($results);
 }

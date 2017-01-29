@@ -18,12 +18,26 @@ namespace pgb_liv\crowdsource\Allocator;
 
 use pgb_liv\crowdsource\Core\WorkUnit;
 
-class Phase1Allocator implements AllocatorInterface
+class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
 {
 
-    private $currentModsJob = - 1;
+    const WORKUNIT_TABLE_NAME = 'workunit';
 
-    private $modsForCurrentJob = array();
+    /**
+     * Creates a new instance of the Phase 1 allocator.
+     *
+     * @param \ADOConnection $conn
+     *            A valid and connected ADOdb instance
+     * @param int $jobId
+     *            The job to preprocess
+     * @throws \InvalidArgumentException If job is not an integer
+     */
+    public function __construct(\ADOConnection $conn, $jobId)
+    {
+        parent::__construct($conn, $jobId);
+        
+        $this->setTableName(self::WORKUNIT_TABLE_NAME);
+    }
 
     /**
      *
@@ -37,43 +51,54 @@ class Phase1Allocator implements AllocatorInterface
         
         $workUnit->job = $this->jobId;
         
-        // Query table workUnit for job 30, status = unassigned
-        $rs = $adodb->GetRow('SELECT `id`, `ms1` FROM `workunit` WHERE `job` =' . $this->jobId . ' AND `status` = \'UNASSIGNED\'');
+        // Select any jobs unassigned or assigned but not completed in the past minute
+        $rs = $this->adodb->GetRow(
+            'SELECT `id`, `ms1` FROM `workunit` WHERE `job` =' . $this->jobId .
+                 ' && (`status` = \'UNASSIGNED\' || ( `completed_at` IS NULL && `assigned_at` < NOW() - INTERVAL 1 MINUTE)) LIMIT 0, 1');
+        
         if (empty($rs)) {
             // Mark job as done
-            $rs = $adodb->Execute('UPDATE `job_queue` SET `state` = \'DONE\' WHERE `id` = ' . $this->jobId . ' AND phase = \'1\'');
+            $rs = $this->adodb->Execute('UPDATE `job_queue` SET `state` = \'DONE\' WHERE `id` = ' . $this->jobId . ' AND phase = \'1\'');
             
-            return null;
+            return false;
         }
         
         $workUnit->id = (int) $rs['id'];
         $workUnit->ms1 = (int) $rs['ms1'];
         
-        // {type:'workunit', id:0, job:0, mods:=[{modtype:'fixed',modMass:0,loc:'C'}..],$ipAddress:0, ms1:0, ms2:=[{mz:n, intensity:n}...], peptides:[{id:1, structure:"ASDFFS"}...]};
-        if ($currentModsJob == $this->jobId) {
-            $workUnit->mods = $modsForCurrentJob;
-        } else {            
-            $workUnit->mods = $this->getFixedModifications();
-        }
+        $workUnit->mods = $this->getFixedModifications();
         
-        // get the ms2 arrary from spectrum ms1;
         $workUnit->ms2 = $this->getMs2($workUnit->job, $workUnit->ms1);
         
         // get the peptides array from workunit_peptides
-        $_myWorkUnit->peptides = requestWUPeptides($workUnit->id, $workUnit->job);
+        $workUnit->peptides = $this->getPeptides($workUnit->id);
+        
+        return $workUnit;
+    }
+
+    private function getPeptides($workUnitId)
+    {
+        $peptides = array();
+        $rs = $this->adodb->Execute(
+            'SELECT `fpeps`.`id`, `fpeps`.`peptide` FROM `fasta_peptides` AS `fpeps`
+            LEFT OUTER JOIN `workunit_peptides` AS `wu_p` ON `wu_p`.`peptide`=`fpeps`.`id`
+            WHERE `wu_p`.`job` = ' . $this->jobId . ' && `wu_p`.`workunit`=' . $workUnitId);
+        $i = 0;
+        while (! $rs->EOF) {
+            $peptides[$i]['id'] = (int) $rs->fields['id'];
+            $peptides[$i]['structure'] = $rs->fields['peptide'];
+            $rs->MoveNext();
+            $i ++;
+        }
+        
+        return $peptides;
     }
 
     private function getFixedModifications()
     {
-        if ($currentJob == $this->jobId) {
-            return $modsForCurrentJob;
-        }
-        
         $this->modsForCurrentJob = array();
-        $currentJob = $this->jobId;
         
-        // $query ="SELECT mod_id, acid FROM job_fixed_mod WHERE job = '$job'";
-        $rs = $adodb->Execute(
+        $rs = $this->adodb->Execute(
             'SELECT `unimod_modifications`.`mono_mass`, `job_fixed_mod`.`acid` FROM `job_fixed_mod`
     INNER JOIN `unimod_modifications` ON `unimod_modifications`.`record_id` = `job_fixed_mod`.`mod_id` WHERE 
             `job_fixed_mod`.`job` = ' . $this->jobId);
@@ -90,13 +115,23 @@ class Phase1Allocator implements AllocatorInterface
         return $this->modsForCurrentJob;
     }
     
-    // get the ms2 arrary from spectrum ms1;
+    //
+    /**
+     * Get the MS/MS data for the associated precursor mass ID
+     *
+     * @param int $ms1
+     *            Precursor mass ID to search for
+     * @return array MS/MS m/z and intensity data
+     */
     private function getMs2($ms1)
     {
-        // TODO: Validate $ms1
+        if (! is_int($ms1)) {
+            throw new \InvalidArgumentException('Argument 1 must be an integer value. Valued passed is of type ' . gettype($workUnitId));
+        }
+        
         $ms2 = array();
         
-        $rs = $adodb->Execute('SELECT `mz`, `intensity` FROM `raw_ms2` WHERE `job` = ' . $this->jobId . ' && `ms1` = ' . $ms1);
+        $rs = $this->adodb->Execute('SELECT `mz`, `intensity` FROM `raw_ms2` WHERE `job` = ' . $this->jobId . ' && `ms1` = ' . $ms1);
         $i = 0;
         while (! $rs->EOF) {
             $ms2[$i]['mz'] = (float) $rs->fields['mz'];
@@ -106,5 +141,31 @@ class Phase1Allocator implements AllocatorInterface
         }
         
         return $ms2;
+    }
+
+    public function setWorkUnitResults($results)
+    {
+        foreach ($results->peptides as $result) {
+            $this->recordPeptideScores((int) $results->workunit, $result);
+        }
+        
+        // Mark work unit as complete
+        $this->adodb->Execute('UPDATE `workunit` SET `status` = \'COMPLETE\', `completed_at` = NOW() WHERE `id` = ' . $results->workunit);
+    }
+
+    private function recordPeptideScores($workUnitId, $peptide)
+    {
+        if (! is_int($workUnitId)) {
+            throw new \InvalidArgumentException('Argument 1 must be an integer value. Valued passed is of type ' . gettype($workUnitId));
+        }
+        
+        // only place the score if > 0
+        if ($peptide->score <= 0) {
+            return;
+        }
+        
+        $this->adodb->Execute(
+            'UPDATE `workunit_peptides` SET `score` = ' . $this->adodb->quote($peptide->score) . ' WHERE `job` = ' . $this->jobId . ' && `workunit` = ' .
+                 $workUnitId . ' && `peptide` = ' . $this->adodb->quote($peptide->id));
     }
 }

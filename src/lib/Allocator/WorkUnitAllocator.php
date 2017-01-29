@@ -23,16 +23,9 @@ class WorkUnitAllocator
 
     private $adodb;
 
-    private $jobId;
-
-    public function __construct(\ADOConnection $conn, $jobId)
+    public function __construct(\ADOConnection $conn)
     {
-        if (! is_int($jobId)) {
-            throw new \InvalidArgumentException('Job ID must be an integer value. Valued passed is of type ' . gettype($jobId));
-        }
-        
         $this->adodb = $conn;
-        $this->jobId = $jobId;
     }
 
     /**
@@ -41,58 +34,65 @@ class WorkUnitAllocator
      * @param array $results
      *            An array of WorkUnit's with scores
      */
-    public function recordResults(WorkUnit $results)
+    public function recordResults($results)
     {
-        foreach ($results as $result) {
-            $this->recordPeptideScores($result);
-        }
-        
-        // Mark work unit as complete
-        $rs = $adodb->Execute('UPDATE `workunit` SET `status` = \'COMPLETE\', `completed_at` = NOW() WHERE `id` = ' . $myResult->workunit);
-    }
-
-    private function recordPeptideScores($jobId, $workUnitId, array $peptide)
-    {
-        // only place the score if > 0
-        if ($peptide->score <= 0) {
-            return;
-        }
-        
-        $this->adodb->Execute(
-            'UPDATE `workunit_peptides` SET `score` = ' . $peptide->score . ' WHERE `job` = ' . $jobId . ' && `workunit` = ' . $workUnitId . ' && `peptide` = ' .
-                 $peptide->id);
-    }
-
-    public function getWorkUnit()
-    {
-        $_myWorkUnit = new WorkUnit();
-        
-        // TODO: This probably should only request ready state and amend accordingly
-        $job = $adodb->GetOne('SELECT `id`, `phase` FROM `job_queue` WHERE `state` = \'READY\'');
-        if (is_null($jobId)) {
-            // No work available
-            $_myWorkUnit->job = 0; // flag no work units available;
-            return $_myWorkUnit;
+        $job = $this->adodb->GetRow('SELECT `id`, `phase` FROM `job_queue` WHERE `id` = ' . $this->adodb->quote($results->job));
+        if (empty($job)) {
+            return false;
         }
         
         $allocator = null;
         switch ($job['phase']) {
             case '1':
-                $allocator = new Phase1Allocator($this->adodb, $this->jobId);
+                $allocator = new Phase1Allocator($this->adodb, (int) $job['id']);
                 break;
             case '2':
-                $allocator = new Phase2Allocator($this->adodb, $this->jobId);
+                $allocator = new Phase2Allocator($this->adodb, (int) $job['id']);
                 break;
             case '3':
-                $allocator = new Phase3Allocator($this->adodb, $this->jobId);
+                $allocator = new Phase3Allocator($this->adodb, (int) $job['id']);
                 break;
             default:
-                throw new Exception("Argh bad things happened");
+                return false;
+        }
+        
+        $allocator->setWorkUnitResults($results);
+    }
+
+    /**
+     * Gets the next available work unit for the requester.
+     *
+     * @return boolean|\pgb_liv\crowdsource\Allocator\The The next available job or false if none are available.
+     */
+    public function getWorkUnit()
+    {
+        $_myWorkUnit = new WorkUnit();
+        
+        $job = $this->adodb->GetRow('SELECT `id`, `phase` FROM `job_queue` WHERE `state` = \'READY\' LIMIT 0,1');
+        if (empty($job)) {
+            return false;
+        }
+        
+        $allocator = null;
+        switch ($job['phase']) {
+            case '1':
+                $allocator = new Phase1Allocator($this->adodb, (int) $job['id']);
+                break;
+            case '2':
+                $allocator = new Phase2Allocator($this->adodb, (int) $job['id']);
+                break;
+            case '3':
+                $allocator = new Phase3Allocator($this->adodb, (int) $job['id']);
+                break;
+            default:
+                return false;
         }
         
         $workUnit = $allocator->getWorkUnit();
-        
-        $allocator->setWorkUnitWorker(ip2long($_SERVER['REMOTE_ADDR']));
+        // If false, no job was available for allocation
+        if ($workUnit !== false) {
+            $allocator->setWorkUnitWorker((int) $workUnit->id, ip2long($_SERVER['REMOTE_ADDR']));
+        }
         
         return $workUnit;
     }
