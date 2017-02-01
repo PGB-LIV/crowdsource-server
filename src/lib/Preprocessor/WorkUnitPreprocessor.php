@@ -54,8 +54,8 @@ class WorkUnitPreprocessor
         // As ppm
         $this->massTolerance /= 1000000;
         
-        $this->workUnitBulk = new BulkQuery($this->adodb, 'INSERT INTO `workunit` (`id`, `job`, `ms1`) VALUES ');
-        $this->workUnitPeptideBulk = new BulkQuery($this->adodb, 'INSERT INTO `workunit_peptides` (`workunit`, `job`, `peptide`) VALUES ');
+        $this->workUnitBulk = new BulkQuery($this->adodb, 'INSERT INTO `workunit1` (`id`, `job`, `ms1`) VALUES ');
+        $this->workUnitPeptideBulk = new BulkQuery($this->adodb, 'INSERT INTO `workunit1_peptides` (`workunit`, `job`, `peptide`) VALUES ');
     }
 
     /**

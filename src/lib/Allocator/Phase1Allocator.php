@@ -51,7 +51,7 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
         
         // Select any jobs unassigned or assigned but not completed in the past minute
         $rs = $this->adodb->GetRow(
-            'SELECT `id`, `ms1` FROM `workunit` WHERE `job` =' . $this->jobId .
+            'SELECT `id`, `ms1` FROM `workunit1` WHERE `job` =' . $this->jobId .
                  ' && (`status` = \'UNASSIGNED\' || ( `completed_at` IS NULL && `assigned_at` < NOW() - INTERVAL 1 MINUTE)) LIMIT 0, 1');
         
         if (empty($rs)) {
@@ -150,7 +150,7 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
         }
         
         // Mark work unit as complete
-        $this->adodb->Execute('UPDATE `workunit` SET `status` = \'COMPLETE\', `completed_at` = NOW() WHERE `id` = ' . $results->workunit);
+        $this->adodb->Execute('UPDATE `workunit1` SET `status` = \'COMPLETE\', `completed_at` = NOW() WHERE `id` = ' . $results->workunit);
     }
 
     private function recordPeptideScores($workUnitId, $peptide)
@@ -165,7 +165,7 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
         }
         
         $this->adodb->Execute(
-            'UPDATE `workunit_peptides` SET `score` = ' . $this->adodb->quote($peptide->score) . ' WHERE `job` = ' . $this->jobId . ' && `workunit` = ' .
+            'UPDATE `workunit1_peptides` SET `score` = ' . $this->adodb->quote($peptide->score) . ' WHERE `job` = ' . $this->jobId . ' && `workunit` = ' .
                  $workUnitId . ' && `peptide` = ' . $this->adodb->quote($peptide->id));
     }
 }
