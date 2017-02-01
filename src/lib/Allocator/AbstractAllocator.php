@@ -16,16 +16,14 @@
  */
 namespace pgb_liv\crowdsource\Allocator;
 
-use pgb_liv\crowdsource\Core\WorkUnit;
-
 abstract class AbstractAllocator implements AllocatorInterface
 {
 
     protected $adodb;
 
-    private $tableName;
-
     protected $jobId;
+
+    private $phase;
 
     /**
      * Creates a new instance of a job allocator.
@@ -46,9 +44,9 @@ abstract class AbstractAllocator implements AllocatorInterface
         $this->jobId = $jobId;
     }
 
-    protected function setTableName($tableName)
+    protected function setPhase($phase)
     {
-        $this->tableName = $tableName;
+        $this->phase = $phase;
     }
 
     /**
@@ -70,6 +68,27 @@ abstract class AbstractAllocator implements AllocatorInterface
         $this->adodb->Execute(
             'UPDATE `' . $this->tableName . '` SET `status` = \'ASSIGNED\', `assigned_to` =' . $workerId . ', `assigned_at` = NOW()
         WHERE `id` = ' . $workUnitId . ' && `job` = ' . $this->jobId);
+    }
+
+    /**
+     * Checks if the current phases work units are marked as COMPLETE.
+     *
+     * @return boolean Returns true if all work units are marked as complete, else false.
+     */
+    protected function isPhaseComplete()
+    {
+        $incompleteCount = $this->adodb->GetOne('SELECT COUNT(`id`) FROM `workunit' . $this->phase . '` WHERE `status` != \'COMPLETE\'');
+        
+        return $incompleteCount == 0;
+    }
+
+    /**
+     * Marks the job as complete for this phase
+     */
+    protected function setJobDone()
+    {
+        $this->adodb->Execute(
+            'UPDATE `job_queue` SET `state` = \'DONE\' WHERE `id` = ' . $this->jobId . ' && `state` = \'READY\' && phase = \'' . $this->phase . '\'');
     }
 
     abstract public function getWorkUnit();

@@ -21,8 +21,6 @@ use pgb_liv\crowdsource\Core\WorkUnit;
 class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
 {
 
-    const WORKUNIT_TABLE_NAME = 'workunit';
-
     /**
      * Creates a new instance of the Phase 1 allocator.
      *
@@ -36,7 +34,7 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
     {
         parent::__construct($conn, $jobId);
         
-        $this->setTableName(Phase1Allocator::WORKUNIT_TABLE_NAME);
+        $this->setPhase(1);
     }
 
     /**
@@ -57,8 +55,10 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
                  ' && (`status` = \'UNASSIGNED\' || ( `completed_at` IS NULL && `assigned_at` < NOW() - INTERVAL 1 MINUTE)) LIMIT 0, 1');
         
         if (empty($rs)) {
-            // Mark job as done
-            $rs = $this->adodb->Execute('UPDATE `job_queue` SET `state` = \'DONE\' WHERE `id` = ' . $this->jobId . ' AND phase = \'1\'');
+            // All work units are possibly complete
+            if ($this->isPhaseComplete()) {
+                $this->setJobDone();
+            }
             
             return false;
         }
