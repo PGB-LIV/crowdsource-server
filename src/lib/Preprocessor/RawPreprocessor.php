@@ -81,8 +81,8 @@ class RawPreprocessor
     private function processMs1($id, SpectraEntry $ms1)
     {
         $this->ms1Bulk->append(
-            sprintf('(%d, %d, %s, %f, %f, %d, %d, %f)', $id, $this->jobId, $this->adodb->quote($ms1->getTitle()), $ms1->getMassCharge(), $ms1->getMass(), $ms1->getCharge(), 
-                $ms1->getScans(), $ms1->getRetentionTime()));
+            sprintf('(%d, %d, %s, %f, %f, %d, %d, %f)', $id, $this->jobId, $this->adodb->quote($ms1->getTitle()), $ms1->getMassCharge(), $ms1->getMass(), 
+                $ms1->getCharge(), $ms1->getScans(), $ms1->getRetentionTime()));
     }
 
     private function filterMs2(array $ms2)
@@ -113,9 +113,15 @@ class RawPreprocessor
 
     private function processMs2($ms1, SpectraEntry $ms2)
     {
-        $ms2 = $this->filterMs2($ms2->getIons());
+        if ($this->maxPeaks != - 1) {
+            $ms2Ions = $this->filterMs2($ms2->getIons());
+        } else {
+            $ms2Ions = $ms2->getIons();
+        }
+        
         $ms2Id = 1;
-        foreach ($ms2 as $ion) {
+        
+        foreach ($ms2Ions as $ion) {
             $this->ms2Bulk->append(sprintf('(%d, %d, %d, %f, %f)', $ms2Id, $ms1, $this->jobId, $ion->getMassCharge(), $ion->getIntensity()));
             
             $ms2Id ++;
@@ -160,7 +166,8 @@ class RawPreprocessor
         $this->filterCharge = new FilterCharge((int) $job['charge_min'], (int) $job['charge_max']);
         $this->filterMass = new FilterMass((float) $mass['min'], (float) $mass['max']);
         
-        $this->ms1Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms1` (`id`, `job`, `title`, `mass_charge`, `mass`, `charge`, `scans`, `rtinseconds`) VALUES');
+        $this->ms1Bulk = new BulkQuery($this->adodb, 
+            'INSERT IGNORE INTO `raw_ms1` (`id`, `job`, `title`, `mass_charge`, `mass`, `charge`, `scans`, `rtinseconds`) VALUES');
         $this->ms2Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms2` (`id`, `ms1`, `job`, `mz`, `intensity`) VALUES');
     }
 }

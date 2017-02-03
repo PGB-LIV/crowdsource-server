@@ -35,8 +35,7 @@ $workUnitAllocator = new WorkUnitAllocator($adodb);
 
 switch ($requestType) {
     case 'workunit':
-        $allocator = new WorkUnitAllocator($adodb);
-        $workUnit = $allocator->getWorkUnit();
+        $workUnit = $workUnitAllocator->getWorkUnit();
         
         if ($workUnit === false) {
             echo 'parseResult({"type":"nomore"});';
