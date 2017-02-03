@@ -27,9 +27,6 @@ use pgb_liv\php_ms\Reader\MgfReader;
  */
 class Phase1Preprocessor
 {
-    // TODO: Move to config
-    const MS2_PEAK_LIMIT = 50;
-
     private $adodb;
 
     private $jobId;
@@ -116,7 +113,7 @@ class Phase1Preprocessor
         $mgfParser = new MgfReader($this->rawPath);
         
         $rawProcessor = new RawPreprocessor($this->adodb, $mgfParser, $this->jobId);
-        $rawProcessor->setMs2PeakCount(Phase1Preprocessor::MS2_PEAK_LIMIT);
+        $rawProcessor->setMs2PeakCount(MS2_PEAK_LIMIT);
         $rawProcessor->process();
     }
 

@@ -28,3 +28,5 @@ define('DATA_PATH_PREFIX', '/mnt/nas/crowdsourcing/');
 
 define('ADODB_ERROR_LOG_TYPE', 3);
 define('ADODB_ERROR_LOG_DEST', '../log/adodb.log');
+
+define('MS2_PEAK_LIMIT', 50);
