@@ -55,7 +55,8 @@ class RawPreprocessor
     public function __construct(\ADOConnection $conn, MgfReader $rawParser, $jobId)
     {
         if (! is_int($jobId)) {
-            throw new \InvalidArgumentException('Job ID must be an integer value. Valued passed is of type ' . gettype($jobId));
+            throw new \InvalidArgumentException(
+                'Job ID must be an integer value. Valued passed is of type ' . gettype($jobId));
         }
         
         $this->adodb = $conn;
@@ -72,7 +73,8 @@ class RawPreprocessor
     public function setMs2PeakCount($maxPeaks)
     {
         if (! is_int($maxPeaks)) {
-            throw new \InvalidArgumentException('Job ID must be an integer value. Valued passed is of type ' . gettype($maxPeaks));
+            throw new \InvalidArgumentException(
+                'Job ID must be an integer value. Valued passed is of type ' . gettype($maxPeaks));
         }
         
         $this->maxPeaks = $maxPeaks;
@@ -81,8 +83,8 @@ class RawPreprocessor
     private function processMs1($id, SpectraEntry $ms1)
     {
         $this->ms1Bulk->append(
-            sprintf('(%d, %d, %s, %f, %f, %d, %d, %f)', $id, $this->jobId, $this->adodb->quote($ms1->getTitle()), $ms1->getMassCharge(), $ms1->getMass(), 
-                $ms1->getCharge(), $ms1->getScans(), $ms1->getRetentionTime()));
+            sprintf('(%d, %d, %s, %f, %f, %d, %d, %f)', $id, $this->jobId, $this->adodb->quote($ms1->getTitle()), 
+                $ms1->getMassCharge(), $ms1->getMass(), $ms1->getCharge(), $ms1->getScans(), $ms1->getRetentionTime()));
     }
 
     private function filterMs2(array $ms2)
@@ -122,7 +124,8 @@ class RawPreprocessor
         $ms2Id = 1;
         
         foreach ($ms2Ions as $ion) {
-            $this->ms2Bulk->append(sprintf('(%d, %d, %d, %f, %f)', $ms2Id, $ms1, $this->jobId, $ion->getMassCharge(), $ion->getIntensity()));
+            $this->ms2Bulk->append(
+                sprintf('(%d, %d, %d, %f, %f)', $ms2Id, $ms1, $this->jobId, $ion->getMassCharge(), $ion->getIntensity()));
             
             $ms2Id ++;
         }
@@ -155,19 +158,22 @@ class RawPreprocessor
 
     private function initialise()
     {
-        $job = $this->adodb->GetRow('SELECT `charge_min`, `charge_max`, `mass_tolerance` FROM `job_queue` WHERE `id` = ' . $this->jobId);
-        $job['mass_tolerance'] /= 1000000;
+        $job = $this->adodb->GetRow(
+            'SELECT `charge_min`, `charge_max`, `mass_tolerance` FROM `job_queue` WHERE `id` = ' . $this->jobId);
+        $tolerance = $job['mass_tolerance'] / 1000000;
         
         // TODO: This will need to factor the smallest/largest PTM
-        $mass = $this->adodb->GetRow('SELECT MIN(`mass`) AS `min`, MAX(`mass`) AS `max` FROM `fasta_peptides` WHERE `job` = ' . $this->jobId);
-        $mass['min'] -= $mass['min'] * $job['mass_tolerance'];
-        $mass['max'] += $mass['max'] * $job['mass_tolerance'];
+        $mass = $this->adodb->GetRow(
+            'SELECT MIN(`mass`) AS `min`, MAX(`mass`) AS `max` FROM `fasta_peptides` WHERE `job` = ' . $this->jobId);
+        $mass['min'] -= $mass['min'] * $tolerance;
+        $mass['max'] += $mass['max'] * $tolerance;
         
         $this->filterCharge = new FilterCharge((int) $job['charge_min'], (int) $job['charge_max']);
         $this->filterMass = new FilterMass((float) $mass['min'], (float) $mass['max']);
         
         $this->ms1Bulk = new BulkQuery($this->adodb, 
             'INSERT IGNORE INTO `raw_ms1` (`id`, `job`, `title`, `mass_charge`, `mass`, `charge`, `scans`, `rtinseconds`) VALUES');
-        $this->ms2Bulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `raw_ms2` (`id`, `ms1`, `job`, `mz`, `intensity`) VALUES');
+        $this->ms2Bulk = new BulkQuery($this->adodb, 
+            'INSERT IGNORE INTO `raw_ms2` (`id`, `ms1`, `job`, `mz`, `intensity`) VALUES');
     }
 }

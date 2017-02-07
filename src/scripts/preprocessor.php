@@ -34,22 +34,24 @@ if ($jobId !== null) {
 }
 
 $job = $adodb->GetRow('SELECT `id`, `phase` FROM `job_queue` WHERE `state` = \'DONE\' ORDER BY `job_time` ASC');
+$phase = (int) $job['phase'];
+$jobId = (int) $job['id'];
 
 if (empty($job)) {
     die('Exit. Nothing to do.');
 }
 
-echo 'Pre-processing job: ' . $job['id'] . ' Phase: ' . $job['phase'] . PHP_EOL;
+echo 'Pre-processing job: ' . $job['id'] . ' Phase: ' . $phase . PHP_EOL;
 echo 'Started: ' . date('r') . PHP_EOL;
 
-if ($job['phase'] == 0) {
-    $phase1 = new Phase1Preprocessor($adodb, (int) $job['id']);
+if ($phase == 0) {
+    $phase1 = new Phase1Preprocessor($adodb, $jobId);
     $phase1->process();
-} elseif ($job['phase'] == 1) {
-    $phase2 = new Phase2Preprocessor($adodb, (int) $job['id']);
+} elseif ($phase == 1) {
+    $phase2 = new Phase2Preprocessor($adodb, $jobId);
     $phase2->process();
-} elseif ($job['phase'] == 2) {
-    $phase3 = new Phase3Preprocessor($adodb, (int) $job['id']);
+} elseif ($phase == 2) {
+    $phase3 = new Phase3Preprocessor($adodb, $jobId);
     $phase3->process();
 }
 

@@ -98,7 +98,7 @@ class DatabasePreprocessor
         
         // First pass. Insert proteins into database
         foreach ($this->databaseParser as $databaseEntry) {
-            $proteinId = $this->processProtein($databaseEntry);
+            $this->processProtein($databaseEntry);
         }
         
         $this->proteinBulk->close();
@@ -129,14 +129,11 @@ class DatabasePreprocessor
 
     private function processProtein(Protein $protein)
     {
-        $proteinId = $this->proteinId;
         $this->proteinBulk->append(
-            sprintf('(%d, %d, %s, %s, %s)', $proteinId, $this->jobId, $this->adodb->quote($protein->getUniqueIdentifier()), 
+            sprintf('(%d, %d, %s, %s, %s)', $this->proteinId, $this->jobId, $this->adodb->quote($protein->getUniqueIdentifier()), 
                 $this->adodb->quote($protein->getDescription()), $this->adodb->quote($protein->getSequence())));
         
         $this->proteinId ++;
-        
-        return $proteinId;
     }
 
     private function processPeptides($proteinId, $protein)
