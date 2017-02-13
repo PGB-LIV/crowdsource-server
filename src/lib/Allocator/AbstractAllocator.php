@@ -23,6 +23,12 @@ abstract class AbstractAllocator implements AllocatorInterface
 
     protected $jobId;
 
+    private $tableKeys;
+
+    private $tableKeysWhere;
+
+    private $tableName;
+
     private $phase;
 
     /**
@@ -48,6 +54,20 @@ abstract class AbstractAllocator implements AllocatorInterface
     protected function setPhase($phase)
     {
         $this->phase = $phase;
+        $this->tableName = 'workunit' . $phase;
+    }
+
+    protected function setWorkUnitKeys()
+    {
+        $this->tableKeys = func_get_args();
+        $this->tableKeysWhere = '';
+        for ($i = 0; $i < func_num_args(); $i ++) {
+            if ($i > 0) {
+                $this->tableKeysWhere .= ' && ';
+            }
+            
+            $this->tableKeysWhere .= '`' . $this->tableKeys[$i] . '` = %s';
+        }
     }
 
     /**
@@ -56,24 +76,31 @@ abstract class AbstractAllocator implements AllocatorInterface
      *
      * @see \pgb_liv\crowdsource\Allocator\AllocatorInterface::setWorkUnitWorker()
      */
-    public function setWorkUnitWorker($workUnitId, $workerId)
+    public function setWorkUnitWorker($workerId)
     {
-        // TODO: This constructor needs flipping.
-        // Arg1 = WorkerID
-        // ArgN++, PKey values
-        if (! is_int($workUnitId)) {
+        if (! is_int($workerId)) {
             throw new \InvalidArgumentException(
-                'Argument 1 must be an integer value. Valued passed is of type ' . gettype($workUnitId));
+                'Argument 1 must be an integer value. Valued passed is of type ' . gettype($workerId));
         }
         
-        if (! is_int($workUnitId)) {
-            throw new \InvalidArgumentException(
-                'Argument 2 must be an integer value. Valued passed is of type ' . gettype($workerId));
+        if (func_num_args() - 1 < count($this->tableKeys)) {
+            $missingNum = func_num_args();
+            
+            throw new \BadMethodCallException(
+                'Argument ' . $missingNum . ' must be specified. Expecting value for ' .
+                     $this->tableKeys[$missingNum - 2]);
         }
+        
+        $keys = array();
+        for ($i = 1; $i < func_num_args(); $i ++) {
+            $keys[] = $this->adodb->Quote(func_get_arg($i));
+        }
+        
+        $where = vsprintf($this->tableKeysWhere, $keys);
         
         $this->adodb->Execute(
             'UPDATE `' . $this->tableName . '` SET `status` = \'ASSIGNED\', `assigned_to` =' . $workerId . ', `assigned_at` = NOW()
-        WHERE `ms1` = ' . $workUnitId . ' && `job` = ' . $this->jobId);
+        WHERE `job` = ' . $this->jobId . ' && ' . $where);
     }
 
     /**
@@ -84,7 +111,7 @@ abstract class AbstractAllocator implements AllocatorInterface
     protected function isPhaseComplete()
     {
         $incompleteCount = $this->adodb->GetOne(
-            'SELECT COUNT(`id`) FROM `workunit' . $this->phase . '` WHERE `status` != \'COMPLETE\'');
+            'SELECT COUNT(`job`) FROM `workunit' . $this->phase . '` WHERE `status` != \'COMPLETE\'');
         
         return $incompleteCount == 0;
     }

@@ -35,6 +35,7 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
         parent::__construct($conn, $jobId);
         
         $this->setPhase(1);
+        $this->setWorkUnitKeys('ms1');
     }
 
     /**
@@ -79,7 +80,8 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
         $rs = $this->adodb->Execute(
             'SELECT `fpeps`.`id`, `fpeps`.`peptide` FROM `fasta_peptides` AS `fpeps`
             LEFT OUTER JOIN `workunit1_peptides` AS `wu_p` ON `wu_p`.`peptide`=`fpeps`.`id`
-            WHERE `wu_p`.`job` = ' . $this->jobId . ' && `wu_p`.`ms1`=' . $precusorId);
+            WHERE `wu_p`.`job` = ' . $this->jobId .
+                 ' && `wu_p`.`ms1`=' . $precusorId);
         $i = 0;
         
         while (! $rs->EOF) {

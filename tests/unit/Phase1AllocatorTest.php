@@ -38,6 +38,9 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitKeys
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getPeptides
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getFixedModifications
@@ -61,6 +64,80 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(1, $workUnit->ms1);
         $this->assertEquals($ms2, $workUnit->ms2);
         $this->assertEquals($peptides, $workUnit->peptides);
+        
+        $this->cleanUp();
+        
+        return $allocator;
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitKeys
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getWorkUnit
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getPeptides
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getFixedModifications
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getMs2
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getPeptides
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitWorker
+     *
+     * @uses pgb_liv\crowdsource\Allocator\Phase1Allocator
+     */
+    public function testObjectCanAssignWorkUnit()
+    {
+        global $adodb;
+        
+        $ms2 = $this->getMs2();
+        $peptides = $this->getPeptides();
+        $this->createWorkUnit(1, 1, $ms2, $peptides);
+        
+        $allocator = new Phase1Allocator($adodb, 1);
+        $workUnit = $allocator->getWorkUnit();
+        $allocator->setWorkUnitWorker(2130706433, 1);
+        
+        $record = $adodb->GetRow(
+            'SELECT `status`, `assigned_to` FROM `workunit1` WHERE `job` = ' . $workUnit->job . ' && `ms1` = ' .
+            $workUnit->ms1);
+
+        $this->assertEquals('ASSIGNED', $record['status']);
+        $this->assertEquals('2130706433', $record['assigned_to']);
+        
+        $this->cleanUp();
+        
+        return $allocator;
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitKeys
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getWorkUnit
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getPeptides
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getFixedModifications
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getMs2
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getPeptides
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitWorker
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::isPhaseComplete
+     *
+     * @uses pgb_liv\crowdsource\Allocator\Phase1Allocator
+     */
+    public function testObjectCanReassignWorkUnit()
+    {
+        global $adodb;
+        
+        $ms2 = $this->getMs2();
+        $peptides = $this->getPeptides();
+        $this->createWorkUnit(1, 1, $ms2, $peptides);
+        
+        $allocator = new Phase1Allocator($adodb, 1);
+        $allocator->getWorkUnit();
+        $allocator->setWorkUnitWorker(0, 1);
+        
+        $workUnit = $allocator->getWorkUnit();
+        
+        $this->assertEquals(false, $workUnit);
         
         $this->cleanUp();
         
