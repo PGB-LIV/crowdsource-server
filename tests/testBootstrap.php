@@ -16,7 +16,14 @@
  */
 chdir('src/public_html');
 
-require_once '../conf/config.test.php';
+if (file_exists('../conf/config.test.php')) {
+    require_once '../conf/config.test.php';
+} elseif (isset($_ENV['DATABASE_CONFIG_TEST'])) {
+    require_once $_ENV['DATABASE_CONFIG_TEST'];
+} else {
+    die('ERROR: Database config missing');
+}
+
 require_once '../conf/autoload.php';
 require_once '../conf/adodb.php';
 require_once '../vendor/pgb-liv/php-ms/src/autoload.php';
