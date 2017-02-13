@@ -17,6 +17,7 @@
 namespace pgb_liv\crowdsource\Allocator;
 
 use pgb_liv\crowdsource\Core\WorkUnit;
+use pgb_liv\crowdsource\Core\Phase1WorkUnit;
 
 class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
 {
@@ -46,16 +47,12 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
      */
     public function getWorkUnit()
     {
-        $workUnit = new WorkUnit();
-        
-        $workUnit->job = $this->jobId;
-        
         // Select any jobs unassigned or assigned but not completed in the past minute
-        $ms1 = $this->adodb->GetOne(
+        $precursorId = $this->adodb->GetOne(
             'SELECT `ms1` FROM `workunit1` WHERE `job` =' . $this->jobId .
                  ' && (`status` = \'UNASSIGNED\' || ( `completed_at` IS NULL && `assigned_at` < NOW() - INTERVAL 1 MINUTE)) LIMIT 0, 1');
         
-        if (is_null($ms1)) {
+        if (is_null($precursorId)) {
             // All work units are possibly complete
             if ($this->isPhaseComplete()) {
                 $this->setJobDone();
@@ -64,97 +61,70 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
             return false;
         }
         
-        $workUnit->ms1 = (int) $ms1;
-        $workUnit->mods = $this->getFixedModifications();
-        $workUnit->ms2 = $this->getMs2($workUnit->job, $workUnit->ms1);
+        $workUnit = new Phase1WorkUnit((int) $this->jobId, (int) $precursorId);
         
-        // get the peptides array from workunit_peptides
-        $workUnit->peptides = $this->getPeptides($workUnit->ms1);
+        $this->injectMs2($workUnit);
+        $this->injectPeptides($workUnit);
+        $this->injectFixedModifications($workUnit);
         
         return $workUnit;
     }
 
-    private function getPeptides($precusorId)
+    private function injectPeptides(Phase1WorkUnit $workUnit)
     {
-        $peptides = array();
         $rs = $this->adodb->Execute(
             'SELECT `fpeps`.`id`, `fpeps`.`peptide` FROM `fasta_peptides` AS `fpeps`
             LEFT OUTER JOIN `workunit1_peptides` AS `wu_p` ON `wu_p`.`peptide`=`fpeps`.`id`
-            WHERE `wu_p`.`job` = ' . $this->jobId .
-                 ' && `wu_p`.`ms1`=' . $precusorId);
-        $i = 0;
+            WHERE `wu_p`.`job` = ' . $workUnit->getJobId() . ' && `wu_p`.`ms1`=' .
+                 $workUnit->getPrecursorId());
         
-        while (! $rs->EOF) {
-            $peptides[$i]['id'] = (int) $rs->fields['id'];
-            $peptides[$i]['structure'] = $rs->fields['peptide'];
-            $rs->MoveNext();
-            $i ++;
+        foreach ($rs as $record) {
+            $workUnit->addPeptide((int) $record['id'], $record['peptide']);
         }
-        
-        return $peptides;
     }
 
-    private function getFixedModifications()
+    private function injectFixedModifications(Phase1WorkUnit $workUnit)
     {
-        $this->modsForCurrentJob = array();
+        $modifications = array();
         
         $rs = $this->adodb->Execute(
             'SELECT `unimod_modifications`.`mono_mass`, `job_fixed_mod`.`acid` FROM `job_fixed_mod`
     INNER JOIN `unimod_modifications` ON `unimod_modifications`.`record_id` = `job_fixed_mod`.`mod_id` WHERE 
-            `job_fixed_mod`.`job` = ' . $this->jobId);
+            `job_fixed_mod`.`job` = ' . $workUnit->getJobId());
         
-        $i = 0;
-        while (! $rs->EOF) {
-            $this->modsForCurrentJob[$i]['modtype'] = 'fixed';
-            $this->modsForCurrentJob[$i]['modmass'] = (float) $rs->fields['mono_mass'];
-            $this->modsForCurrentJob[$i]['loc'] = $rs->fields['acid'];
-            $rs->MoveNext();
-            $i ++;
+        foreach ($rs as $record) {
+            $workUnit->addFixedModifications((float) $record['mono_mass'], $record['acid']);
         }
-        
-        return $this->modsForCurrentJob;
-    }
-    
-    //
-    /**
-     * Get the MS/MS data for the associated precursor mass ID
-     *
-     * @param int $ms1
-     *            Precursor mass ID to search for
-     * @return array MS/MS m/z and intensity data
-     */
-    private function getMs2($ms1)
-    {
-        if (! is_int($ms1)) {
-            throw new \InvalidArgumentException(
-                'Argument 1 must be an integer value. Valued passed is of type ' . gettype($ms1));
-        }
-        
-        $ms2 = array();
-        
-        $rs = $this->adodb->Execute(
-            'SELECT `mz`, `intensity` FROM `raw_ms2` WHERE `job` = ' . $this->jobId . ' && `ms1` = ' . $ms1);
-        $i = 0;
-        while (! $rs->EOF) {
-            $ms2[$i]['mz'] = (float) $rs->fields['mz'];
-            $ms2[$i]['intensity'] = (float) $rs->fields['intensity'];
-            $rs->MoveNext();
-            $i ++;
-        }
-        
-        return $ms2;
     }
 
-    public function setWorkUnitResults($results)
+    /**
+     * Injects the MS/MS data into the work unit object
+     *
+     * @param Phase1WorkUnit $workUnit
+     *            Work unit to inject into
+     *            
+     */
+    private function injectMs2(Phase1WorkUnit $workUnit)
     {
-        foreach ($results->peptides as $result) {
-            $this->recordPeptideScores((int) $results->ms1, $result);
+        $rs = $this->adodb->Execute(
+            'SELECT `mz`, `intensity` FROM `raw_ms2` WHERE `job` = ' . $workUnit->getJobId() . ' && `ms1` = ' .
+                 $workUnit->getPrecursorId());
+        
+        foreach ($rs as $record) {
+            $workUnit->addFragmentIon((float) $record['mz'], (float) $record['intensity']);
+        }
+    }
+
+    public function setWorkUnitResults(Phase1WorkUnit $workUnit)
+    {
+        foreach ($workUnit->getPeptides() as $peptide) {
+            $this->recordPeptideScores($workUnit->getPrecursorId(), $peptide);
         }
         
         // Mark work unit as complete
         $this->adodb->Execute(
-            'UPDATE `workunit1` SET `status` = \'COMPLETE\', `completed_at` = NOW() WHERE `id` = ' . $results->ms1 .
-                 ' && `job` =' . $this->jobId);
+            'UPDATE `workunit1` SET `status` = \'COMPLETE\', `completed_at` = NOW() WHERE `ms1` = ' .
+                 $workUnit->getPrecursorId() . ' && `job` =' . $this->jobId);
     }
 
     private function recordPeptideScores($ms1Id, $peptide)
@@ -165,7 +135,7 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
         }
         
         // only place the score if > 0
-        if ($peptide->score <= 0) {
+        if ($peptide['score'] <= 0) {
             return;
         }
         

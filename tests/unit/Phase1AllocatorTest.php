@@ -17,6 +17,7 @@
 namespace pgb_liv\crowdsource\Test\Unit;
 
 use pgb_liv\crowdsource\Allocator\Phase1Allocator;
+use pgb_liv\crowdsource\Core\Phase1WorkUnit;
 
 class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
 {
@@ -53,17 +54,12 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
     {
         global $adodb;
         
-        $ms2 = $this->getMs2();
-        $peptides = $this->getPeptides();
-        $this->createWorkUnit(1, 1, $ms2, $peptides);
+        $testUnit = $this->createWorkUnit(1, 1);
         
         $allocator = new Phase1Allocator($adodb, 1);
         $workUnit = $allocator->getWorkUnit();
         
-        $this->assertEquals(1, $workUnit->job);
-        $this->assertEquals(1, $workUnit->ms1);
-        $this->assertEquals($ms2, $workUnit->ms2);
-        $this->assertEquals($peptides, $workUnit->peptides);
+        $this->assertEquals($testUnit, $workUnit);
         
         $this->cleanUp();
         
@@ -88,18 +84,16 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
     {
         global $adodb;
         
-        $ms2 = $this->getMs2();
-        $peptides = $this->getPeptides();
-        $this->createWorkUnit(1, 1, $ms2, $peptides);
+        $this->createWorkUnit(1, 1);
         
         $allocator = new Phase1Allocator($adodb, 1);
         $workUnit = $allocator->getWorkUnit();
         $allocator->setWorkUnitWorker(2130706433, 1);
         
         $record = $adodb->GetRow(
-            'SELECT `status`, `assigned_to` FROM `workunit1` WHERE `job` = ' . $workUnit->job . ' && `ms1` = ' .
-            $workUnit->ms1);
-
+            'SELECT `status`, `assigned_to` FROM `workunit1` WHERE `job` = ' . $workUnit->getJobId() . ' && `ms1` = ' .
+                 $workUnit->getPrecursorId());
+        
         $this->assertEquals('ASSIGNED', $record['status']);
         $this->assertEquals('2130706433', $record['assigned_to']);
         
@@ -138,6 +132,36 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
         $workUnit = $allocator->getWorkUnit();
         
         $this->assertEquals(false, $workUnit);
+        
+        $this->cleanUp();
+        
+        return $allocator;
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitKeys
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getWorkUnit
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getPeptides
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getFixedModifications
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getMs2
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getPeptides
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitWorker
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::isPhaseComplete
+     *
+     * @uses pgb_liv\crowdsource\Allocator\Phase1Allocator
+     */
+    public function testObjectCanSetResults()
+    {
+        global $adodb;
+        
+        $this->createWorkUnit(1, 1);
+        
+        $allocator = new Phase1Allocator($adodb, 1);
+        $workUnit = $allocator->getWorkUnit();
+        $allocator->setWorkUnitResults($workUnit);
         
         $this->cleanUp();
         
@@ -191,25 +215,34 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
         return $ms2;
     }
 
-    private function createWorkUnit($jobId, $ms1Id, $ms2, $peptides)
+    private function createWorkUnit($jobId, $precursorId)
     {
         global $adodb;
         
-        $adodb->Execute('INSERT INTO `workunit1` (`job`, `ms1`) VALUES (' . $jobId . ', ' . $ms1Id . ');');
+        $workUnit = new Phase1WorkUnit($jobId, $precursorId);
+        
+        $adodb->Execute('INSERT INTO `workunit1` (`job`, `ms1`) VALUES (' . $jobId . ', ' . $precursorId . ');');
+        
+        $ms2 = $this->getMs2();
         foreach ($ms2 as $key => $value) {
+            $workUnit->addFragmentIon($value['mz'], $value['intensity']);
             $adodb->Execute(
-                'INSERT INTO `raw_ms2` (`job`, `ms1`, `id`, `mz`, `intensity`) VALUES (' . $jobId . ', ' . $ms1Id . ', ' .
-                     $key . ', ' . $value['mz'] . ', ' . $value['intensity'] . ');');
+                'INSERT INTO `raw_ms2` (`job`, `ms1`, `id`, `mz`, `intensity`) VALUES (' . $jobId . ', ' . $precursorId .
+                     ', ' . $key . ', ' . $value['mz'] . ', ' . $value['intensity'] . ');');
         }
         
+        $peptides = $this->getPeptides();
         foreach ($peptides as $peptide) {
+            $workUnit->addPeptide($peptide['id'], $peptide['structure']);
             $adodb->Execute(
-                'INSERT INTO `workunit1_peptides` (`job`, `ms1`, `peptide`) VALUES (' . $jobId . ', ' . $ms1Id . ', ' .
-                     $peptide['id'] . ');');
+                'INSERT INTO `workunit1_peptides` (`job`, `ms1`, `peptide`) VALUES (' . $jobId . ', ' . $precursorId .
+                     ', ' . $peptide['id'] . ');');
             $adodb->Execute(
                 'INSERT INTO `fasta_peptides` (`job`, `id`, `peptide`) VALUES (' . $jobId . ', ' . $peptide['id'] . ', ' .
                      $adodb->quote($peptide['structure']) . ');');
         }
+        
+        return $workUnit;
     }
 
     private function cleanUp()

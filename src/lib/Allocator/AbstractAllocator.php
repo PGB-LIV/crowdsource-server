@@ -16,6 +16,8 @@
  */
 namespace pgb_liv\crowdsource\Allocator;
 
+use pgb_liv\crowdsource\Core\Phase1WorkUnit;
+
 abstract class AbstractAllocator implements AllocatorInterface
 {
 
@@ -128,5 +130,5 @@ abstract class AbstractAllocator implements AllocatorInterface
 
     abstract public function getWorkUnit();
 
-    abstract public function setWorkUnitResults($results);
+    abstract public function setWorkUnitResults(Phase1WorkUnit $results);
 }
