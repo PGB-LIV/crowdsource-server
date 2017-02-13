@@ -43,10 +43,9 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitKeys
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getWorkUnit
-     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getPeptides
-     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getFixedModifications
-     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getMs2
-     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getPeptides
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectPeptides
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFixedModifications
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFragmentIons
      *
      * @uses pgb_liv\crowdsource\Allocator\Phase1Allocator
      */
@@ -72,10 +71,9 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitKeys
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getWorkUnit
-     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getPeptides
-     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getFixedModifications
-     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getMs2
-     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getPeptides
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectPeptides
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFixedModifications
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFragmentIons
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitWorker
      *
      * @uses pgb_liv\crowdsource\Allocator\Phase1Allocator
@@ -108,10 +106,9 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitKeys
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getWorkUnit
-     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getPeptides
-     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getFixedModifications
-     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getMs2
-     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getPeptides
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectPeptides
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFixedModifications
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFragmentIons
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitWorker
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::isPhaseComplete
      *
@@ -144,10 +141,9 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitKeys
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getWorkUnit
-     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getPeptides
-     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getFixedModifications
-     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getMs2
-     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getPeptides
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectPeptides
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFixedModifications
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFragmentIons
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitWorker
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::isPhaseComplete
      *

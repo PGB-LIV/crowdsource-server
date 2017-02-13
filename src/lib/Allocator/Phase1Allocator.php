@@ -63,7 +63,7 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
         
         $workUnit = new Phase1WorkUnit((int) $this->jobId, (int) $precursorId);
         
-        $this->injectMs2($workUnit);
+        $this->injectFragmentIons($workUnit);
         $this->injectPeptides($workUnit);
         $this->injectFixedModifications($workUnit);
         
@@ -104,7 +104,7 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
      *            Work unit to inject into
      *            
      */
-    private function injectMs2(Phase1WorkUnit $workUnit)
+    private function injectFragmentIons(Phase1WorkUnit $workUnit)
     {
         $rs = $this->adodb->Execute(
             'SELECT `mz`, `intensity` FROM `raw_ms2` WHERE `job` = ' . $workUnit->getJobId() . ' && `ms1` = ' .
