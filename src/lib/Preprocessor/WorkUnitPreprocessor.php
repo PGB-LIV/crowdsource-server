@@ -54,8 +54,8 @@ class WorkUnitPreprocessor
         // As ppm
         $this->massTolerance /= 1000000;
         
-        $this->workUnitBulk = new BulkQuery($this->adodb, 'INSERT INTO `workunit1` (`id`, `job`, `ms1`) VALUES ');
-        $this->workUnitPeptideBulk = new BulkQuery($this->adodb, 'INSERT INTO `workunit1_peptides` (`workunit`, `job`, `peptide`) VALUES ');
+        $this->workUnitBulk = new BulkQuery($this->adodb, 'INSERT INTO `workunit1` (`job`, `ms1`) VALUES ');
+        $this->workUnitPeptideBulk = new BulkQuery($this->adodb, 'INSERT INTO `workunit1_peptides` (`job`, `ms1`, `peptide`) VALUES ');
     }
 
     /**
@@ -100,21 +100,18 @@ class WorkUnitPreprocessor
     {
         $recordSet = $this->adodb->Execute('SELECT `id`, `mass`, `charge` FROM `raw_ms1` WHERE `job` = ' . $this->jobId);
         
-        $workUnitId = 1;
-        foreach ($recordSet as $record) {
-            $peptides = $this->getPeptides($record['mass']);
+        foreach ($recordSet as $precursor) {
+            $peptides = $this->getPeptides($precursor['mass']);
             
             if (count($peptides) === 0) {
                 continue;
             }
             
-            $this->workUnitBulk->append(sprintf('(%d, %d, %d)', $workUnitId, $this->jobId, $record['id']));
+            $this->workUnitBulk->append(sprintf('(%d, %d)', $this->jobId, $precursor['id']));
             
             foreach ($peptides as $peptide) {
-                $this->workUnitPeptideBulk->append(sprintf('(%d, %d, %d)', $workUnitId, $this->jobId, $peptide));
+                $this->workUnitPeptideBulk->append(sprintf('(%d, %d, %d)', $this->jobId, $precursor['id'], $peptide));
             }
-            
-            $workUnitId ++;
         }
     }
 }

@@ -19,7 +19,7 @@ namespace pgb_liv\crowdsource\Core;
 class WorkUnit
 {
 
-    public $type = "workunit";
+    public $type = 'workunit';
 
     public $id;
 

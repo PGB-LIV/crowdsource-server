@@ -36,7 +36,8 @@ class WorkUnitAllocator
      */
     public function recordResults($results)
     {
-        $job = $this->adodb->GetRow('SELECT `id`, `phase` FROM `job_queue` WHERE `id` = ' . $this->adodb->quote($results->job));
+        $job = $this->adodb->GetRow(
+            'SELECT `id`, `phase` FROM `job_queue` WHERE `id` = ' . $this->adodb->quote($results->job));
         if (empty($job)) {
             return false;
         }

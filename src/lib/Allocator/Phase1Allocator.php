@@ -50,11 +50,11 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
         $workUnit->job = $this->jobId;
         
         // Select any jobs unassigned or assigned but not completed in the past minute
-        $rs = $this->adodb->GetRow(
-            'SELECT `id`, `ms1` FROM `workunit1` WHERE `job` =' . $this->jobId .
+        $ms1 = $this->adodb->GetOne(
+            'SELECT `ms1` FROM `workunit1` WHERE `job` =' . $this->jobId .
                  ' && (`status` = \'UNASSIGNED\' || ( `completed_at` IS NULL && `assigned_at` < NOW() - INTERVAL 1 MINUTE)) LIMIT 0, 1');
         
-        if (empty($rs)) {
+        if (is_null($ms1)) {
             // All work units are possibly complete
             if ($this->isPhaseComplete()) {
                 $this->setJobDone();
@@ -63,27 +63,25 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
             return false;
         }
         
-        $workUnit->id = (int) $rs['id'];
-        $workUnit->ms1 = (int) $rs['ms1'];
-        
+        $workUnit->ms1 = (int) $ms1;
         $workUnit->mods = $this->getFixedModifications();
-        
         $workUnit->ms2 = $this->getMs2($workUnit->job, $workUnit->ms1);
         
         // get the peptides array from workunit_peptides
-        $workUnit->peptides = $this->getPeptides($workUnit->id);
+        $workUnit->peptides = $this->getPeptides($workUnit->ms1);
         
         return $workUnit;
     }
 
-    private function getPeptides($workUnitId)
+    private function getPeptides($precusorId)
     {
         $peptides = array();
         $rs = $this->adodb->Execute(
             'SELECT `fpeps`.`id`, `fpeps`.`peptide` FROM `fasta_peptides` AS `fpeps`
-            LEFT OUTER JOIN `workunit_peptides` AS `wu_p` ON `wu_p`.`peptide`=`fpeps`.`id`
-            WHERE `wu_p`.`job` = ' . $this->jobId . ' && `wu_p`.`workunit`=' . $workUnitId);
+            LEFT OUTER JOIN `workunit1_peptides` AS `wu_p` ON `wu_p`.`peptide`=`fpeps`.`id`
+            WHERE `wu_p`.`job` = ' . $this->jobId . ' && `wu_p`.`ms1`=' . $precusorId);
         $i = 0;
+        
         while (! $rs->EOF) {
             $peptides[$i]['id'] = (int) $rs->fields['id'];
             $peptides[$i]['structure'] = $rs->fields['peptide'];
@@ -126,12 +124,14 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
     private function getMs2($ms1)
     {
         if (! is_int($ms1)) {
-            throw new \InvalidArgumentException('Argument 1 must be an integer value. Valued passed is of type ' . gettype($workUnitId));
+            throw new \InvalidArgumentException(
+                'Argument 1 must be an integer value. Valued passed is of type ' . gettype($ms1));
         }
         
         $ms2 = array();
         
-        $rs = $this->adodb->Execute('SELECT `mz`, `intensity` FROM `raw_ms2` WHERE `job` = ' . $this->jobId . ' && `ms1` = ' . $ms1);
+        $rs = $this->adodb->Execute(
+            'SELECT `mz`, `intensity` FROM `raw_ms2` WHERE `job` = ' . $this->jobId . ' && `ms1` = ' . $ms1);
         $i = 0;
         while (! $rs->EOF) {
             $ms2[$i]['mz'] = (float) $rs->fields['mz'];
@@ -146,17 +146,20 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
     public function setWorkUnitResults($results)
     {
         foreach ($results->peptides as $result) {
-            $this->recordPeptideScores((int) $results->workunit, $result);
+            $this->recordPeptideScores((int) $results->ms1, $result);
         }
         
         // Mark work unit as complete
-        $this->adodb->Execute('UPDATE `workunit1` SET `status` = \'COMPLETE\', `completed_at` = NOW() WHERE `id` = ' . $results->workunit);
+        $this->adodb->Execute(
+            'UPDATE `workunit1` SET `status` = \'COMPLETE\', `completed_at` = NOW() WHERE `id` = ' . $results->ms1 .
+                 ' && `job` =' . $this->jobId);
     }
 
-    private function recordPeptideScores($workUnitId, $peptide)
+    private function recordPeptideScores($ms1Id, $peptide)
     {
-        if (! is_int($workUnitId)) {
-            throw new \InvalidArgumentException('Argument 1 must be an integer value. Valued passed is of type ' . gettype($workUnitId));
+        if (! is_int($ms1Id)) {
+            throw new \InvalidArgumentException(
+                'Argument 1 must be an integer value. Valued passed is of type ' . gettype($ms1Id));
         }
         
         // only place the score if > 0
@@ -165,7 +168,7 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
         }
         
         $this->adodb->Execute(
-            'UPDATE `workunit1_peptides` SET `score` = ' . $this->adodb->quote($peptide->score) . ' WHERE `job` = ' . $this->jobId . ' && `workunit` = ' .
-                 $workUnitId . ' && `peptide` = ' . $this->adodb->quote($peptide->id));
+            'UPDATE `workunit1_peptides` SET `score` = ' . $this->adodb->quote($peptide->score) . ' WHERE `job` = ' .
+                 $this->jobId . ' && `ms1` = ' . $ms1Id . ' && `peptide` = ' . $this->adodb->quote($peptide->id));
     }
 }

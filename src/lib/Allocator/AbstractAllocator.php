@@ -37,7 +37,8 @@ abstract class AbstractAllocator implements AllocatorInterface
     public function __construct(\ADOConnection $conn, $jobId)
     {
         if (! is_int($jobId)) {
-            throw new \InvalidArgumentException('Job ID must be an integer value. Valued passed is of type ' . gettype($jobId));
+            throw new \InvalidArgumentException(
+                'Job ID must be an integer value. Valued passed is of type ' . gettype($jobId));
         }
         
         $this->adodb = $conn;
@@ -57,17 +58,22 @@ abstract class AbstractAllocator implements AllocatorInterface
      */
     public function setWorkUnitWorker($workUnitId, $workerId)
     {
+        // TODO: This constructor needs flipping.
+        // Arg1 = WorkerID
+        // ArgN++, PKey values
         if (! is_int($workUnitId)) {
-            throw new \InvalidArgumentException('Argument 1 must be an integer value. Valued passed is of type ' . gettype($workUnitId));
+            throw new \InvalidArgumentException(
+                'Argument 1 must be an integer value. Valued passed is of type ' . gettype($workUnitId));
         }
         
         if (! is_int($workUnitId)) {
-            throw new \InvalidArgumentException('Argument 2 must be an integer value. Valued passed is of type ' . gettype($workerId));
+            throw new \InvalidArgumentException(
+                'Argument 2 must be an integer value. Valued passed is of type ' . gettype($workerId));
         }
         
         $this->adodb->Execute(
             'UPDATE `' . $this->tableName . '` SET `status` = \'ASSIGNED\', `assigned_to` =' . $workerId . ', `assigned_at` = NOW()
-        WHERE `id` = ' . $workUnitId . ' && `job` = ' . $this->jobId);
+        WHERE `ms1` = ' . $workUnitId . ' && `job` = ' . $this->jobId);
     }
 
     /**
@@ -77,7 +83,8 @@ abstract class AbstractAllocator implements AllocatorInterface
      */
     protected function isPhaseComplete()
     {
-        $incompleteCount = $this->adodb->GetOne('SELECT COUNT(`id`) FROM `workunit' . $this->phase . '` WHERE `status` != \'COMPLETE\'');
+        $incompleteCount = $this->adodb->GetOne(
+            'SELECT COUNT(`id`) FROM `workunit' . $this->phase . '` WHERE `status` != \'COMPLETE\'');
         
         return $incompleteCount == 0;
     }
@@ -88,7 +95,8 @@ abstract class AbstractAllocator implements AllocatorInterface
     protected function setJobDone()
     {
         $this->adodb->Execute(
-            'UPDATE `job_queue` SET `state` = \'DONE\' WHERE `id` = ' . $this->jobId . ' && `state` = \'READY\' && phase = \'' . $this->phase . '\'');
+            'UPDATE `job_queue` SET `state` = \'DONE\' WHERE `id` = ' . $this->jobId .
+                 ' && `state` = \'READY\' && phase = \'' . $this->phase . '\'');
     }
 
     abstract public function getWorkUnit();

@@ -34,6 +34,7 @@ if ($jobId !== null) {
 }
 
 $job = $adodb->GetRow('SELECT `id`, `phase` FROM `job_queue` WHERE `state` = \'DONE\' ORDER BY `job_time` ASC');
+
 $phase = (int) $job['phase'];
 $jobId = (int) $job['id'];
 
