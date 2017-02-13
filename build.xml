@@ -29,7 +29,7 @@
 	<property name="phpmd" value="${basedir}/src/vendor/bin/phpmd" />
 	<property name="phpunit" value="${basedir}/src/vendor/bin/phpunit" />
 
-	<property environment="DATABASE_CONFIG_TEST" />
+	<property environment="env" />
 
 	<target name="full-build" depends="prepare,static-analysis,phpunit,phpdox,-check-failure" description="Performs static analysis, runs the tests, and generates project documentation" />
 
