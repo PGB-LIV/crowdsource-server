@@ -144,8 +144,8 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectPeptides
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFixedModifications
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFragmentIons
-     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitWorker
-     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::isPhaseComplete
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::setWorkUnitResults
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::recordPeptideScores
      *
      * @uses pgb_liv\crowdsource\Allocator\Phase1Allocator
      */
@@ -211,6 +211,18 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
         return $ms2;
     }
 
+    private function getFixedModifications()
+    {
+        $modifications = array();
+        $modifications[0] = array(
+            'id' => 4,
+            'mass' => 57.021464,
+            'residue' => 'C'
+        );
+        
+        return $modifications;
+    }
+
     private function createWorkUnit($jobId, $precursorId)
     {
         global $adodb;
@@ -238,6 +250,14 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
                      $adodb->quote($peptide['structure']) . ');');
         }
         
+        $modifications = $this->getFixedModifications();
+        foreach ($modifications as $modification) {
+            $workUnit->addFixedModification($modification['mass'], $modification['residue']);
+            $adodb->Execute(
+                'INSERT INTO `job_fixed_mod` (`job`, `mod_id`, `acid`) VALUES (' . $jobId . ', ' . $modification['id'] .
+                     ', ' . $adodb->quote($modification['residue']) . ');');
+        }
+        
         return $workUnit;
     }
 
@@ -249,5 +269,6 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
         $adodb->Execute('TRUNCATE `raw_ms2`');
         $adodb->Execute('TRUNCATE `workunit1`');
         $adodb->Execute('TRUNCATE `workunit1_peptides`');
+        $adodb->Execute('TRUNCATE `job_fixed_mod`');
     }
 }

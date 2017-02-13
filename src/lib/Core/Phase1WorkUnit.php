@@ -52,11 +52,6 @@ class Phase1WorkUnit
                 'Argument 1 must be a float value. Valued passed is of type ' . gettype($monoMass));
         }
         
-        if (! is_float($residue)) {
-            throw new \InvalidArgumentException(
-                'Argument 2 must be a float value. Valued passed is of type ' . gettype($residue));
-        }
-        
         $this->fixedModifications[] = array(
             'mass' => $monoMass,
             'aa' => $residue
