@@ -22,7 +22,6 @@ if (file_exists('../conf/config.test.php')) {
     require_once $_ENV['DATABASE_CONFIG_TEST'];
 } else {
     // TODO: Remove debug
-    var_dump($argv);
     var_dump($_ENV);
     die('ERROR: Database config missing');
 }

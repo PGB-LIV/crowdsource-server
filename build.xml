@@ -212,12 +212,14 @@
 	</target>
 
 	<target name="phpunit" unless="phpunit.done" depends="prepare" description="Run unit tests with PHPUnit">
+		<echo>Loading config file: ${env.DATABASE_CONFIG_TEST}</echo>
+
 		<exec executable="${phpunit}" resultproperty="result.phpunit" taskname="phpunit" dir="${basedir}">
 			<arg value="--configuration" />
 			<arg path="${basedir}/build/phpunit.xml" />
 			<arg value="--coverage-xml" />
 			<arg path="${basedir}/build/logs/coverage/xml" />
-		    <env key="DATABASE_CONFIG_TEST" value="${env.DATABASE_CONFIG_TEST}"/>
+			<env key="DATABASE_CONFIG_TEST" value="${env.DATABASE_CONFIG_TEST}" />
 		</exec>
 
 		<property name="phpunit.done" value="true" />
