@@ -117,8 +117,8 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
 
     public function setWorkUnitResults(Phase1WorkUnit $workUnit)
     {
-        foreach ($workUnit->getPeptides() as $peptide) {
-            $this->recordPeptideScores($workUnit->getPrecursorId(), $peptide);
+        foreach ($workUnit->getPeptides() as $peptideId => $peptide) {
+            $this->recordPeptideScores($workUnit->getPrecursorId(), $peptideId, $peptide);
         }
         
         // Mark work unit as complete
@@ -127,20 +127,15 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
                  $workUnit->getPrecursorId() . ' && `job` =' . $this->jobId);
     }
 
-    private function recordPeptideScores($ms1Id, $peptide)
+    private function recordPeptideScores($precursorId, $peptideId, array $peptide)
     {
-        if (! is_int($ms1Id)) {
-            throw new \InvalidArgumentException(
-                'Argument 1 must be an integer value. Valued passed is of type ' . gettype($ms1Id));
-        }
-        
         // only place the score if > 0
-        if ($peptide['score'] <= 0) {
+        if (is_null($peptide['score']) || $peptide['score'] <= 0) {
             return;
         }
         
         $this->adodb->Execute(
-            'UPDATE `workunit1_peptides` SET `score` = ' . $this->adodb->quote($peptide->score) . ' WHERE `job` = ' .
-                 $this->jobId . ' && `ms1` = ' . $ms1Id . ' && `peptide` = ' . $this->adodb->quote($peptide->id));
+            'UPDATE `workunit1_peptides` SET `score` = ' . $peptide['score'] . ' WHERE `job` = ' . $this->jobId .
+                 ' && `ms1` = ' . $precursorId . ' && `peptide` = ' . $peptideId);
     }
 }

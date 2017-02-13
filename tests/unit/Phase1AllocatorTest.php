@@ -146,6 +146,7 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFragmentIons
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::setWorkUnitResults
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::recordPeptideScores
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::addPeptideScore
      *
      * @uses pgb_liv\crowdsource\Allocator\Phase1Allocator
      */
@@ -157,6 +158,9 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
         
         $allocator = new Phase1Allocator($adodb, 1);
         $workUnit = $allocator->getWorkUnit();
+        $workUnit->addPeptideScore(0, 250);
+        $workUnit->addPeptideScore(1, 0);
+        
         $allocator->setWorkUnitResults($workUnit);
         
         $this->cleanUp();
@@ -167,13 +171,17 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
     private function getPeptides()
     {
         $peptides = array();
-        $peptides[0] = array(
-            'id' => 0,
-            'structure' => 'PEPTIDE'
+        $peptides[] = array(
+            'structure' => 'PEPTIDE',
+            'score' => null
         );
-        $peptides[1] = array(
-            'id' => 1,
-            'structure' => 'PEPTIDER'
+        $peptides[] = array(
+            'structure' => 'PEPTIDER',
+            'score' => null
+        );
+        $peptides[] = array(
+            'structure' => 'PEPTIDEK',
+            'score' => null
         );
         
         return $peptides;
@@ -240,13 +248,13 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
         }
         
         $peptides = $this->getPeptides();
-        foreach ($peptides as $peptide) {
-            $workUnit->addPeptide($peptide['id'], $peptide['structure']);
+        foreach ($peptides as $id => $peptide) {
+            $workUnit->addPeptide($id, $peptide['structure']);
             $adodb->Execute(
                 'INSERT INTO `workunit1_peptides` (`job`, `ms1`, `peptide`) VALUES (' . $jobId . ', ' . $precursorId .
-                     ', ' . $peptide['id'] . ');');
+                     ', ' . $id . ');');
             $adodb->Execute(
-                'INSERT INTO `fasta_peptides` (`job`, `id`, `peptide`) VALUES (' . $jobId . ', ' . $peptide['id'] . ', ' .
+                'INSERT INTO `fasta_peptides` (`job`, `id`, `peptide`) VALUES (' . $jobId . ', ' . $id . ', ' .
                      $adodb->quote($peptide['structure']) . ');');
         }
         

@@ -83,11 +83,32 @@ class Phase1WorkUnit
                 'Argument 1 must be a float value. Valued passed is of type ' . gettype($id));
         }
         
-        $this->peptides[] = array(
-            'id' => $id,
+        $this->peptides[$id] = array(
             'sequence' => $sequence,
             'score' => null
         );
+    }
+
+    public function addPeptideScore($id, $score)
+    {
+        if (! is_int($id)) {
+            throw new \InvalidArgumentException(
+                'Argument 1 must be a float value. Valued passed is of type ' . gettype($id));
+        }
+        
+        if (! ! is_float($score)) {
+            throw new \InvalidArgumentException(
+                'Argument 2 must be a float value. Valued passed is of type ' . gettype($score));
+        }
+        
+        if (! isset($this->peptides[$id])) {
+            $this->peptides[$id] = array(
+                'sequence' => null,
+                'score' => null
+            );
+        }
+        
+        $this->peptides[$id]['score'] = $score;
     }
 
     public function getJobId()
