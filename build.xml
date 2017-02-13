@@ -29,8 +29,6 @@
 	<property name="phpmd" value="${basedir}/src/vendor/bin/phpmd" />
 	<property name="phpunit" value="${basedir}/src/vendor/bin/phpunit" />
 
-	<property environment="env" />
-
 	<target name="full-build" depends="prepare,static-analysis,phpunit,phpdox,-check-failure" description="Performs static analysis, runs the tests, and generates project documentation" />
 
 	<target name="full-build-parallel" depends="prepare,static-analysis-parallel,phpunit,phpdox,-check-failure" description="Performs static analysis (executing the tools in parallel), runs the tests, and generates project documentation" />
@@ -212,14 +210,14 @@
 	</target>
 
 	<target name="phpunit" unless="phpunit.done" depends="prepare" description="Run unit tests with PHPUnit">
-		<echo>Loading config file: ${env.DATABASE_CONFIG_TEST}</echo>
+		<echo>Loading config file: ${PHPUNIT_CONF_PATH}</echo>
 
 		<exec executable="${phpunit}" resultproperty="result.phpunit" taskname="phpunit" dir="${basedir}">
 			<arg value="--configuration" />
 			<arg path="${basedir}/build/phpunit.xml" />
 			<arg value="--coverage-xml" />
 			<arg path="${basedir}/build/logs/coverage/xml" />
-			<env key="DATABASE_CONFIG_TEST" value="${env.DATABASE_CONFIG_TEST}" />
+			<env key="PHPUNIT_CONF_PATH" file="${PHPUNIT_CONF_PATH}" />
 		</exec>
 
 		<property name="phpunit.done" value="true" />

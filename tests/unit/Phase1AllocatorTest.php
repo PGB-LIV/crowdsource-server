@@ -137,6 +137,8 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
 
     private function cleanUp()
     {
+        global $adodb;
+        
         $adodb->Execute('TRUNCATE `fasta_peptides`');
         $adodb->Execute('TRUNCATE `raw_ms2`');
         $adodb->Execute('TRUNCATE `workunit1`');

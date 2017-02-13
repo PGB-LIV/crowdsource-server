@@ -16,13 +16,14 @@
  */
 chdir('src/public_html');
 
+$envTestConf = getenv('PHPUNIT_CONF_PATH');
+
 if (file_exists('../conf/config.test.php')) {
     require_once '../conf/config.test.php';
-} elseif (isset($_ENV['DATABASE_CONFIG_TEST'])) {
-    require_once $_ENV['DATABASE_CONFIG_TEST'];
+} elseif ($envTestConf !== false && file_exists($envTestConf)) {
+    require_once $envTestConf;
 } else {
-    // TODO: Remove debug
-    var_dump($_ENV);
+    var_dump($envTestConf);
     die('ERROR: Database config missing');
 }
 
