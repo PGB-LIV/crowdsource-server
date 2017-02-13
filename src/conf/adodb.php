@@ -21,3 +21,8 @@ $adodb = newAdoConnection(DB_DRIVER);
 $adodb->Connect(DB_HOST, DB_USER, DB_PASS, DB_DB);
 
 $adodb->setFetchmode(ADODB_FETCH_ASSOC);
+
+if (!file_exists(ADODB_ERROR_LOG_DEST))
+{
+    touch(ADODB_ERROR_LOG_DEST);
+}
