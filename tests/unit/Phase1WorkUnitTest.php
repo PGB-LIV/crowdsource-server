@@ -474,7 +474,7 @@ class Phase1WorkUnitTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::__construct
-     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::toJson
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::fromJson
      *
      * @uses pgb_liv\crowdsource\Core\Phase1WorkUnit
      */

@@ -86,6 +86,31 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitKeys
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getWorkUnit
+     *
+     * @uses pgb_liv\crowdsource\Allocator\Phase1Allocator
+     */
+    public function testObjectCanGetWorkUnitNoJob()
+    {
+        global $adodb;
+        
+        $this->cleanUp();
+        
+        $testUnit = $this->createWorkUnit(1, 1);
+        
+        $allocator = new Phase1Allocator($adodb, 1);
+        $workUnit = $allocator->getWorkUnit();
+        
+        $this->assertEquals(false, $workUnit);
+        
+        $this->cleanUp();
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitKeys
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectPeptides
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFixedModifications
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFragmentIons

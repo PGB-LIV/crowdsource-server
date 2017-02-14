@@ -143,6 +143,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::getWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::recordResults
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::toJson
      *
      * @uses pgb_liv\crowdsource\Allocator\WorkUnitAllocator
      */
@@ -172,6 +173,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::getWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::recordResults
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::toJson
      *
      * @uses pgb_liv\crowdsource\Allocator\WorkUnitAllocator
      */
@@ -202,6 +204,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::getWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::recordResults
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::toJson
      *
      * @uses pgb_liv\crowdsource\Allocator\WorkUnitAllocator
      */
