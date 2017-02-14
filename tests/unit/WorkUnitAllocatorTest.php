@@ -63,6 +63,27 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
      *
      * @uses pgb_liv\crowdsource\Allocator\WorkUnitAllocator
      */
+    public function testObjectCanGetWorkUnitPhase1ForgedRemoteAddr()
+    {
+        global $adodb;
+        
+        $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+        $this->createJob(1, 1);
+        $testUnit = $this->createWorkUnit(1, 1);
+        $allocator = new WorkUnitAllocator($adodb);
+        $workUnit = $allocator->getWorkUnit();
+        
+        $this->assertEquals($testUnit, $workUnit);
+        
+        $this->cleanUp();
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::getWorkUnit
+     *
+     * @uses pgb_liv\crowdsource\Allocator\WorkUnitAllocator
+     */
     public function testObjectCanGetWorkUnitNoJob()
     {
         global $adodb;
@@ -135,7 +156,67 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
         $workUnit->addPeptideScore(1, 46.16);
         $workUnit->addPeptideScore(0, 25.92);
         
-        $allocator->recordResults($workUnit);
+        $isSuccess = $allocator->recordResults($workUnit);
+        $this->assertEquals(true, $isSuccess);
+        
+        $this->cleanUp();
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::getWorkUnit
+     * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::recordResults
+     *
+     * @uses pgb_liv\crowdsource\Allocator\WorkUnitAllocator
+     */
+    public function testObjectCanRecordResultsNoJob()
+    {
+        global $adodb;
+        
+        $this->createJob(1, 1);
+        $testUnit = $this->createWorkUnit(1, 1);
+        $allocator = new WorkUnitAllocator($adodb);
+        $workUnit = $allocator->getWorkUnit();
+        
+        $this->assertEquals($testUnit, $workUnit);
+        
+        $workUnit->addPeptideScore(0, 120.6);
+        $workUnit->addPeptideScore(1, 46.16);
+        $workUnit->addPeptideScore(0, 25.92);
+        
+        $this->cleanUp();
+        $isSuccess = $allocator->recordResults($workUnit);
+        $this->assertEquals(false, $isSuccess);
+        
+        $this->cleanUp();
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::getWorkUnit
+     * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::recordResults
+     *
+     * @uses pgb_liv\crowdsource\Allocator\WorkUnitAllocator
+     */
+    public function testObjectCanRecordResultsUnknownPhase()
+    {
+        global $adodb;
+        
+        $this->createJob(1, 1);
+        $testUnit = $this->createWorkUnit(1, 1);
+        $allocator = new WorkUnitAllocator($adodb);
+        $workUnit = $allocator->getWorkUnit();
+        
+        $this->assertEquals($testUnit, $workUnit);
+        
+        $workUnit->addPeptideScore(0, 120.6);
+        $workUnit->addPeptideScore(1, 46.16);
+        $workUnit->addPeptideScore(0, 25.92);
+        
+        $this->cleanUp();
+        $this->createJob(1, 127);
+        $isSuccess = $allocator->recordResults($workUnit);
+        $this->assertEquals(false, $isSuccess);
         
         $this->cleanUp();
     }

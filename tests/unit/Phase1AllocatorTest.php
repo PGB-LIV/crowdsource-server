@@ -24,6 +24,7 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::__construct
      *
      * @uses pgb_liv\crowdsource\Allocator\Phase1Allocator
      */
@@ -35,6 +36,20 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf('pgb_liv\crowdsource\Allocator\Phase1Allocator', $allocator);
         
         return $allocator;
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::__construct
+     * @expectedException InvalidArgumentException
+     *
+     * @uses pgb_liv\crowdsource\Allocator\Phase1Allocator
+     */
+    public function testObjectCanBeConstructedForInvalidConstructorArguments()
+    {
+        global $adodb;
+        
+        $allocator = new Phase1Allocator($adodb, 'fail');
     }
 
     /**
@@ -61,8 +76,6 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($testUnit, $workUnit);
         
         $this->cleanUp();
-        
-        return $allocator;
     }
 
     /**
@@ -96,8 +109,6 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('2130706433', $record['assigned_to']);
         
         $this->cleanUp();
-        
-        return $allocator;
     }
 
     /**
@@ -131,8 +142,6 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(false, $workUnit);
         
         $this->cleanUp();
-        
-        return $allocator;
     }
 
     /**
@@ -164,8 +173,42 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
         $allocator->setWorkUnitResults($workUnit);
         
         $this->cleanUp();
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitKeys
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getWorkUnit
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectPeptides
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFixedModifications
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFragmentIons
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::setWorkUnitResults
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::recordPeptideScores
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::addPeptideScore
+     *
+     * @uses pgb_liv\crowdsource\Allocator\Phase1Allocator
+     */
+    public function testObjectCanSetJobDone()
+    {
+        global $adodb;
         
-        return $allocator;
+        $testUnit = $this->createWorkUnit(1, 1);
+        
+        $allocator = new Phase1Allocator($adodb, 1);
+        $workUnit = $allocator->getWorkUnit();
+        $this->assertEquals($testUnit, $workUnit);
+        
+        $workUnit->addPeptideScore(0, 250.9);
+        $workUnit->addPeptideScore(1, 0.0);
+        
+        $allocator->setWorkUnitResults($workUnit);
+        
+        $workUnit = $allocator->getWorkUnit();
+        $this->assertEquals(false, $workUnit);
+        
+        $this->cleanUp();
     }
 
     private function getPeptides()

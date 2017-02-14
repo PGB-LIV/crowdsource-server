@@ -57,6 +57,7 @@ class WorkUnitAllocator
         }
         
         $allocator->setWorkUnitResults($workUnit);
+        return true;
     }
 
     /**
