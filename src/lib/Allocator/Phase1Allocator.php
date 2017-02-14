@@ -84,9 +84,7 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
     }
 
     private function injectFixedModifications(Phase1WorkUnit $workUnit)
-    {
-        $modifications = array();
-        
+    {        
         $rs = $this->adodb->Execute(
             'SELECT `unimod_modifications`.`mono_mass`, `job_fixed_mod`.`acid` FROM `job_fixed_mod`
     INNER JOIN `unimod_modifications` ON `unimod_modifications`.`record_id` = `job_fixed_mod`.`mod_id` WHERE 

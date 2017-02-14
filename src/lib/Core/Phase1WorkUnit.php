@@ -52,9 +52,14 @@ class Phase1WorkUnit
                 'Argument 1 must be a float value. Valued passed is of type ' . gettype($monoMass));
         }
         
+        if (strlen($residue) != 1) {
+            throw new \InvalidArgumentException(
+                'Argument 2 must be a single char value. Valued passed is of length ' . strlen($residue));
+        }
+        
         $this->fixedModifications[] = array(
             'mass' => $monoMass,
-            'aa' => $residue
+            'residue' => $residue
         );
     }
 
@@ -96,7 +101,7 @@ class Phase1WorkUnit
                 'Argument 1 must be a float value. Valued passed is of type ' . gettype($id));
         }
         
-        if (! ! is_float($score)) {
+        if (! is_float($score)) {
             throw new \InvalidArgumentException(
                 'Argument 2 must be a float value. Valued passed is of type ' . gettype($score));
         }
@@ -124,5 +129,15 @@ class Phase1WorkUnit
     public function getPeptides()
     {
         return $this->peptides;
+    }
+
+    public function getFixedModifications()
+    {
+        return $this->fixedModifications;
+    }
+
+    public function getFragmentIons()
+    {
+        return $this->fragmentIons;
     }
 }

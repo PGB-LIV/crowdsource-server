@@ -158,8 +158,8 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
         
         $allocator = new Phase1Allocator($adodb, 1);
         $workUnit = $allocator->getWorkUnit();
-        $workUnit->addPeptideScore(0, 250);
-        $workUnit->addPeptideScore(1, 0);
+        $workUnit->addPeptideScore(0, 250.9);
+        $workUnit->addPeptideScore(1, 0.0);
         
         $allocator->setWorkUnitResults($workUnit);
         
