@@ -17,6 +17,7 @@
 namespace pgb_liv\crowdsource\Allocator;
 
 use pgb_liv\crowdsource\Core\WorkUnit;
+use pgb_liv\crowdsource\Core\Phase1WorkUnit;
 
 class WorkUnitAllocator
 {
@@ -34,9 +35,13 @@ class WorkUnitAllocator
      * @param array $results
      *            An array of WorkUnit's with scores
      */
-    public function recordResults($workUnit)
+    public function recordResults($jsonStr)
     {
-        $phase = $this->adodb->GetOne('SELECT `phase` FROM `job_queue` WHERE `id` = ' . $workUnit->getJobId());
+        $decoded = json_decode($jsonStr);
+        $jobId = (int) $decoded->job;
+        
+        $phase = $this->adodb->GetOne(
+            'SELECT `phase` FROM `job_queue` WHERE `id` = ' . $this->adodb->quote($decoded->job));
         if (is_null($phase)) {
             return false;
         }
@@ -44,6 +49,7 @@ class WorkUnitAllocator
         $allocator = null;
         switch ($phase) {
             case '1':
+                $workUnit = Phase1WorkUnit::fromJson($jsonStr);
                 $allocator = new Phase1Allocator($this->adodb, $workUnit->getJobId());
                 break;
             case '2':

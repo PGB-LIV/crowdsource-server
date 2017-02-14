@@ -41,7 +41,7 @@ switch ($requestType) {
             echo 'parseResult({"type":"nomore"});';
         }
         
-        echo 'parseResult(' . json_encode($workUnit) . ');';
+        echo 'parseResult(' . $workUnit->toJson() . ');';
         break;
     
     case 'terminate':
@@ -49,7 +49,7 @@ switch ($requestType) {
         break;
     
     case 'result':
-        $workUnitAllocator->recordResults(json_decode($_GET['result']));
+        $workUnitAllocator->recordResults($_GET['result']);
         echo 'parseResult({"type":"confirmation"})';
         break;
     

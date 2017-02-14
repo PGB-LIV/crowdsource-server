@@ -345,4 +345,182 @@ class Phase1WorkUnitTest extends \PHPUnit_Framework_TestCase
         );
         $workUnit->addPeptideScore($peptides[0]['id'], $peptides[0]['score']);
     }
+
+    /**
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::__construct
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::setFragmentTolerance
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::getFragmentTolerance
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::getFragmentToleranceUnit
+     *
+     * @uses pgb_liv\crowdsource\Core\Phase1WorkUnit
+     */
+    public function testObjectCanGetSetValidFragmentTolerance1()
+    {
+        $jobId = 1;
+        $precursorId = 2;
+        $workUnit = new Phase1WorkUnit($jobId, $precursorId);
+        $fragTol = 10.0;
+        $fragUnit = 'ppm';
+        $workUnit->setFragmentTolerance($fragTol, $fragUnit);
+        
+        $this->assertEquals($fragTol, $workUnit->getFragmentTolerance());
+        $this->assertEquals($fragUnit, $workUnit->getFragmentToleranceUnit());
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::__construct
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::setFragmentTolerance
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::getFragmentTolerance
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::getFragmentToleranceUnit
+     *
+     * @uses pgb_liv\crowdsource\Core\Phase1WorkUnit
+     */
+    public function testObjectCanGetSetValidFragmentTolerance2()
+    {
+        $jobId = 1;
+        $precursorId = 2;
+        $workUnit = new Phase1WorkUnit($jobId, $precursorId);
+        $fragTol = 0.05;
+        $fragUnit = 'da';
+        $workUnit->setFragmentTolerance($fragTol, $fragUnit);
+        
+        $this->assertEquals($fragTol, $workUnit->getFragmentTolerance());
+        $this->assertEquals($fragUnit, $workUnit->getFragmentToleranceUnit());
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::__construct
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::setFragmentTolerance
+     * @expectedException InvalidArgumentException
+     *
+     * @uses pgb_liv\crowdsource\Core\Phase1WorkUnit
+     */
+    public function testObjectCanSetInvalidFragmentTolerance1()
+    {
+        $jobId = 1;
+        $precursorId = 2;
+        $workUnit = new Phase1WorkUnit($jobId, $precursorId);
+        $fragTol = 'fail';
+        $fragUnit = 'da';
+        $workUnit->setFragmentTolerance($fragTol, $fragUnit);
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::__construct
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::setFragmentTolerance
+     * @expectedException InvalidArgumentException
+     *
+     * @uses pgb_liv\crowdsource\Core\Phase1WorkUnit
+     */
+    public function testObjectCanSetInvalidFragmentTolerance2()
+    {
+        $jobId = 1;
+        $precursorId = 2;
+        $workUnit = new Phase1WorkUnit($jobId, $precursorId);
+        $fragTol = 0.05;
+        $fragUnit = 'dalton';
+        $workUnit->setFragmentTolerance($fragTol, $fragUnit);
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::__construct
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::toJson
+     *
+     * @uses pgb_liv\crowdsource\Core\Phase1WorkUnit
+     */
+    public function testObjectCanGetValidJsonFromWorkUnit()
+    {
+        $json = '{"job":1,"precursor":2,"fragments":[{"mz":79.97,"intensity":150.5}],"peptides":{"512":{"sequence":"PEPTIDE"},"213":{"sequence":"PEPTIDER"},"0":{"sequence":"PEPTIDEK"}},"fixedMods":[{"mass":79.97,"residue":"C"}],"fragTol":0.05,"fragTolUnit":"da"}';
+        $jobId = 1;
+        $precursorId = 2;
+        $workUnit = new Phase1WorkUnit($jobId, $precursorId);
+        $fragTol = 0.05;
+        $fragUnit = 'da';
+        $workUnit->setFragmentTolerance($fragTol, $fragUnit);
+        
+        $mods = array();
+        $mods[] = array(
+            'mass' => 79.97,
+            'residue' => 'C'
+        );
+        $workUnit->addFixedModification($mods[0]['mass'], $mods[0]['residue']);
+        
+        $fragments = array();
+        $fragments[] = array(
+            'mz' => 79.97,
+            'intensity' => 150.5
+        );
+        $workUnit->addFragmentIon($fragments[0]['mz'], $fragments[0]['intensity']);
+        
+        $peptides = array();
+        $peptides[512] = array(
+            'sequence' => 'PEPTIDE',
+            'score' => null
+        );
+        $peptides[213] = array(
+            'sequence' => 'PEPTIDER',
+            'score' => null
+        );
+        $peptides[0] = array(
+            'sequence' => 'PEPTIDEK',
+            'score' => null
+        );
+        $workUnit->addPeptide(512, $peptides[512]['sequence']);
+        $workUnit->addPeptide(213, $peptides[213]['sequence']);
+        $workUnit->addPeptide(0, $peptides[0]['sequence']);
+        
+        $this->assertEquals($json, $workUnit->toJson());
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::__construct
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::toJson
+     *
+     * @uses pgb_liv\crowdsource\Core\Phase1WorkUnit
+     */
+    public function testObjectCanGetValidWorkUnitFromJson()
+    {
+        $json = '{"job":1,"precursor":2,"fragments":[{"mz":79.97,"intensity":150.5}],"peptides":{"512":{"sequence":"PEPTIDE","score":120.6},"213":{"sequence":"PEPTIDER","score":23.6},"0":{"sequence":"PEPTIDEK"}},"fixedMods":[{"mass":79.97,"residue":"C"}],"fragTol":0.05,"fragTolUnit":"da"}';
+        $jobId = 1;
+        $precursorId = 2;
+        $workUnit = new Phase1WorkUnit($jobId, $precursorId);
+        $fragTol = 0.05;
+        $fragUnit = 'da';
+        $workUnit->setFragmentTolerance($fragTol, $fragUnit);
+        
+        $mods = array();
+        $mods[] = array(
+            'mass' => 79.97,
+            'residue' => 'C'
+        );
+        $workUnit->addFixedModification($mods[0]['mass'], $mods[0]['residue']);
+        
+        $fragments = array();
+        $fragments[] = array(
+            'mz' => 79.97,
+            'intensity' => 150.5
+        );
+        $workUnit->addFragmentIon($fragments[0]['mz'], $fragments[0]['intensity']);
+        
+        $peptides = array();
+        $peptides[512] = array(
+            'sequence' => 'PEPTIDE',
+            'score' => 120.6
+        );
+        $peptides[213] = array(
+            'sequence' => 'PEPTIDER',
+            'score' => 23.6
+        );
+        $peptides[0] = array(
+            'sequence' => 'PEPTIDEK',
+            'score' => null
+        );
+        $workUnit->addPeptide(512, $peptides[512]['sequence']);
+        $workUnit->addPeptide(213, $peptides[213]['sequence']);
+        $workUnit->addPeptide(0, $peptides[0]['sequence']);
+        $workUnit->addPeptideScore(512, $peptides[512]['score']);
+        $workUnit->addPeptideScore(213, $peptides[213]['score']);
+        
+        $this->assertEquals($workUnit, Phase1WorkUnit::fromJson($json));
+    }
 }

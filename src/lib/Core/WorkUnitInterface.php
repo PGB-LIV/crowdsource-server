@@ -18,5 +18,8 @@ namespace pgb_liv\crowdsource\Core;
 
 interface WorkUnitInterface
 {
+
     public function getJobId();
+
+    public function toJson();
 }

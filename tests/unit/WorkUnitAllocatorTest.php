@@ -46,6 +46,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
     public function testObjectCanGetWorkUnitPhase1()
     {
         global $adodb;
+        $this->cleanUp();
         
         $this->createJob(1, 1);
         $testUnit = $this->createWorkUnit(1, 1);
@@ -66,6 +67,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
     public function testObjectCanGetWorkUnitPhase1ForgedRemoteAddr()
     {
         global $adodb;
+        $this->cleanUp();
         
         $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
         $this->createJob(1, 1);
@@ -87,6 +89,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
     public function testObjectCanGetWorkUnitNoJob()
     {
         global $adodb;
+        $this->cleanUp();
         
         $allocator = new WorkUnitAllocator($adodb);
         $workUnit = $allocator->getWorkUnit();
@@ -105,6 +108,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
     public function testObjectCanGetWorkUnitUnknownPhase()
     {
         global $adodb;
+        $this->cleanUp();
         
         $this->createJob(1, 127);
         $allocator = new WorkUnitAllocator($adodb);
@@ -124,6 +128,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
     public function testObjectCanGetWorkUnitNoWorkUnit()
     {
         global $adodb;
+        $this->cleanUp();
         
         $this->createJob(1, 1);
         $allocator = new WorkUnitAllocator($adodb);
@@ -144,6 +149,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
     public function testObjectCanRecordResults()
     {
         global $adodb;
+        $this->cleanUp();
         
         $this->createJob(1, 1);
         $testUnit = $this->createWorkUnit(1, 1);
@@ -156,7 +162,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
         $workUnit->addPeptideScore(1, 46.16);
         $workUnit->addPeptideScore(0, 25.92);
         
-        $isSuccess = $allocator->recordResults($workUnit);
+        $isSuccess = $allocator->recordResults($workUnit->toJson(true));
         $this->assertEquals(true, $isSuccess);
         
         $this->cleanUp();
@@ -172,6 +178,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
     public function testObjectCanRecordResultsNoJob()
     {
         global $adodb;
+        $this->cleanUp();
         
         $this->createJob(1, 1);
         $testUnit = $this->createWorkUnit(1, 1);
@@ -185,7 +192,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
         $workUnit->addPeptideScore(0, 25.92);
         
         $this->cleanUp();
-        $isSuccess = $allocator->recordResults($workUnit);
+        $isSuccess = $allocator->recordResults($workUnit->toJson(true));
         $this->assertEquals(false, $isSuccess);
         
         $this->cleanUp();
@@ -201,6 +208,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
     public function testObjectCanRecordResultsUnknownPhase()
     {
         global $adodb;
+        $this->cleanUp();
         
         $this->createJob(1, 1);
         $testUnit = $this->createWorkUnit(1, 1);
@@ -215,7 +223,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
         
         $this->cleanUp();
         $this->createJob(1, 127);
-        $isSuccess = $allocator->recordResults($workUnit);
+        $isSuccess = $allocator->recordResults($workUnit->toJson(true));
         $this->assertEquals(false, $isSuccess);
         
         $this->cleanUp();
@@ -289,6 +297,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
         global $adodb;
         
         $workUnit = new Phase1WorkUnit($jobId, $precursorId);
+        $workUnit->setFragmentTolerance(10.0, 'ppm');
         
         $adodb->Execute('INSERT INTO `workunit1` (`job`, `ms1`) VALUES (' . $jobId . ', ' . $precursorId . ');');
         
@@ -327,7 +336,8 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
         global $adodb;
         
         $adodb->Execute(
-            'INSERT INTO `job_queue` (`id`, `phase`, `state`) VALUES (' . $jobId . ', \'' . $phase . '\', \'READY\');');
+            'INSERT INTO `job_queue` (`id`, `phase`, `state`, `fragment_tolerance`, `fragment_tolerance_unit`) VALUES (' .
+                 $jobId . ', \'' . $phase . '\', \'READY\', 10, \'ppm\');');
     }
 
     private function cleanUp()

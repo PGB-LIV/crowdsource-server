@@ -29,6 +29,10 @@ class Phase1WorkUnit implements WorkUnitInterface
 
     private $peptides = array();
 
+    private $fragmentTolerance;
+
+    private $fragmentToleranceUnit;
+
     public function __construct($jobId, $precursorId)
     {
         if (! is_int($jobId)) {
@@ -85,7 +89,7 @@ class Phase1WorkUnit implements WorkUnitInterface
     {
         if (! is_int($id)) {
             throw new \InvalidArgumentException(
-                'Argument 1 must be a float value. Valued passed is of type ' . gettype($id));
+                'Argument 1 must be an int value. Valued passed is of type ' . gettype($id));
         }
         
         $this->peptides[$id] = array(
@@ -98,7 +102,7 @@ class Phase1WorkUnit implements WorkUnitInterface
     {
         if (! is_int($id)) {
             throw new \InvalidArgumentException(
-                'Argument 1 must be a float value. Valued passed is of type ' . gettype($id));
+                'Argument 1 must be an int value. Valued passed is of type ' . gettype($id));
         }
         
         if (! is_float($score)) {
@@ -114,6 +118,22 @@ class Phase1WorkUnit implements WorkUnitInterface
         }
         
         $this->peptides[$id]['score'] = $score;
+    }
+
+    public function setFragmentTolerance($tolerance, $unit)
+    {
+        if (! is_float($tolerance) && ! is_int($tolerance)) {
+            throw new \InvalidArgumentException(
+                'Argument 1 must be a float or int value. Valued passed is of type ' . gettype($tolerance));
+        }
+        
+        if ($unit != 'da' && $unit != 'ppm') {
+            throw new \InvalidArgumentException(
+                'Argument 2 must equal "da" or "ppm". Valued passed is "' . gettype($unit) . '"');
+        }
+        
+        $this->fragmentTolerance = $tolerance;
+        $this->fragmentToleranceUnit = $unit;
     }
 
     public function getJobId()
@@ -139,5 +159,64 @@ class Phase1WorkUnit implements WorkUnitInterface
     public function getFragmentIons()
     {
         return $this->fragmentIons;
+    }
+
+    public function getFragmentTolerance()
+    {
+        return $this->fragmentTolerance;
+    }
+
+    public function getFragmentToleranceUnit()
+    {
+        return $this->fragmentToleranceUnit;
+    }
+
+    public function toJson($includeScore = false)
+    {
+        $data['job'] = $this->jobId;
+        $data['precursor'] = $this->precursorId;
+        $data['fragments'] = $this->fragmentIons;
+        
+        // Reformat as we do not want the null score being sent
+        $data['peptides'] = array();
+        foreach ($this->peptides as $key => $peptide) {
+            $data['peptides'][$key] = array();
+            $data['peptides'][$key]['sequence'] = $peptide['sequence'];
+            if ($includeScore) {
+                $data['peptides'][$key]['score'] = $peptide['score'];
+            }
+        }
+        
+        $data['fixedMods'] = $this->fixedModifications;
+        
+        $data['fragTol'] = $this->fragmentTolerance;
+        $data['fragTolUnit'] = $this->fragmentToleranceUnit;
+        
+        return json_encode($data);
+    }
+
+    public static function fromJson($jsonStr)
+    {
+        $jsonObj = json_decode($jsonStr, true);
+        
+        $workUnit = new Phase1WorkUnit($jsonObj['job'], $jsonObj['precursor']);
+        $workUnit->setFragmentTolerance($jsonObj['fragTol'], $jsonObj['fragTolUnit']);
+        foreach ($jsonObj['fixedMods'] as $mod) {
+            $workUnit->addFixedModification($mod['mass'], $mod['residue']);
+        }
+        
+        foreach ($jsonObj['peptides'] as $key => $peptide) {
+            $workUnit->addPeptide($key, $peptide['sequence']);
+            
+            if (isset($peptide['score'])) {
+                $workUnit->addPeptideScore($key, $peptide['score']);
+            }
+        }
+        
+        foreach ($jsonObj['fragments'] as $fragment) {
+            $workUnit->addFragmentIon($fragment['mz'], $fragment['intensity']);
+        }
+        
+        return $workUnit;
     }
 }
