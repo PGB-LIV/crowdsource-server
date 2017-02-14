@@ -67,6 +67,7 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
     public function testObjectCanGetWorkUnit()
     {
         global $adodb;
+        $this->cleanUp();
         
         $testUnit = $this->createWorkUnit(1, 1);
         
@@ -91,15 +92,19 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
      *
      * @uses pgb_liv\crowdsource\Allocator\Phase1Allocator
      */
-    public function testObjectCanAssignWorkUnit()
+    public function testObjectCanAssignWorkUnitValidId()
     {
         global $adodb;
+        $this->cleanUp();
         
-        $this->createWorkUnit(1, 1);
+        $testUnit = $this->createWorkUnit(1, 1);
         
         $allocator = new Phase1Allocator($adodb, 1);
         $workUnit = $allocator->getWorkUnit();
-        $allocator->setWorkUnitWorker(2130706433, 1);
+        
+        $this->assertEquals($testUnit, $workUnit);
+        
+        $allocator->setWorkUnitWorker(2130706433, $workUnit);
         
         $record = $adodb->GetRow(
             'SELECT `status`, `assigned_to` FROM `workunit1` WHERE `job` = ' . $workUnit->getJobId() . ' && `ms1` = ' .
@@ -121,6 +126,37 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFixedModifications
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFragmentIons
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitWorker
+     * @expectedException InvalidArgumentException
+     *
+     * @uses pgb_liv\crowdsource\Allocator\Phase1Allocator
+     */
+    public function testObjectCanAssignWorkUnitInvalidID()
+    {
+        global $adodb;
+        $this->cleanUp();
+        
+        $testUnit = $this->createWorkUnit(1, 1);
+        
+        $allocator = new Phase1Allocator($adodb, 1);
+        $workUnit = $allocator->getWorkUnit();
+        
+        $this->assertEquals($testUnit, $workUnit);
+        
+        $allocator->setWorkUnitWorker('fail', $workUnit);
+        
+        $this->cleanUp();
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::__construct
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitKeys
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getWorkUnit
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectPeptides
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFixedModifications
+     * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFragmentIons
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitWorker
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::isPhaseComplete
      *
      * @uses pgb_liv\crowdsource\Allocator\Phase1Allocator
@@ -128,14 +164,15 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
     public function testObjectCanReassignWorkUnit()
     {
         global $adodb;
+        $this->cleanUp();
         
         $ms2 = $this->getMs2();
         $peptides = $this->getPeptides();
         $this->createWorkUnit(1, 1, $ms2, $peptides);
         
         $allocator = new Phase1Allocator($adodb, 1);
-        $allocator->getWorkUnit();
-        $allocator->setWorkUnitWorker(0, 1);
+        $workUnit = $allocator->getWorkUnit();
+        $allocator->setWorkUnitWorker(0, $workUnit);
         
         $workUnit = $allocator->getWorkUnit();
         
@@ -162,6 +199,7 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
     public function testObjectCanSetResults()
     {
         global $adodb;
+        $this->cleanUp();
         
         $this->createWorkUnit(1, 1);
         
@@ -180,6 +218,7 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setWorkUnitKeys
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setJobDone
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::getWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectPeptides
      * @covers pgb_liv\crowdsource\Allocator\Phase1Allocator::injectFixedModifications
@@ -193,6 +232,7 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
     public function testObjectCanSetJobDone()
     {
         global $adodb;
+        $this->cleanUp();
         
         $testUnit = $this->createWorkUnit(1, 1);
         

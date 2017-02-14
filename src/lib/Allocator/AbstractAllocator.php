@@ -16,7 +16,7 @@
  */
 namespace pgb_liv\crowdsource\Allocator;
 
-use pgb_liv\crowdsource\Core\Phase1WorkUnit;
+use pgb_liv\crowdsource\Core\WorkUnitInterface;
 
 abstract class AbstractAllocator implements AllocatorInterface
 {
@@ -78,7 +78,7 @@ abstract class AbstractAllocator implements AllocatorInterface
      *
      * @see \pgb_liv\crowdsource\Allocator\AllocatorInterface::setWorkUnitWorker()
      */
-    public function setWorkUnitWorker($workerId)
+    protected function recordWorkUnitWorker($workerId)
     {
         if (! is_int($workerId)) {
             throw new \InvalidArgumentException(
@@ -130,5 +130,5 @@ abstract class AbstractAllocator implements AllocatorInterface
 
     abstract public function getWorkUnit();
 
-    abstract public function setWorkUnitResults(Phase1WorkUnit $results);
+    abstract public function setWorkUnitResults(WorkUnitInterface $workUnit);
 }

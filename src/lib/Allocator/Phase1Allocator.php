@@ -18,6 +18,7 @@ namespace pgb_liv\crowdsource\Allocator;
 
 use pgb_liv\crowdsource\Core\WorkUnit;
 use pgb_liv\crowdsource\Core\Phase1WorkUnit;
+use pgb_liv\crowdsource\Core\WorkUnitInterface;
 
 class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
 {
@@ -61,7 +62,7 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
             return false;
         }
         
-        $workUnit = new Phase1WorkUnit((int) $this->jobId, (int) $precursorId);
+        $workUnit = new Phase1WorkUnit($this->jobId, (int) $precursorId);
         
         $this->injectFragmentIons($workUnit);
         $this->injectPeptides($workUnit);
@@ -84,7 +85,7 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
     }
 
     private function injectFixedModifications(Phase1WorkUnit $workUnit)
-    {        
+    {
         $rs = $this->adodb->Execute(
             'SELECT `unimod_modifications`.`mono_mass`, `job_fixed_mod`.`acid` FROM `job_fixed_mod`
     INNER JOIN `unimod_modifications` ON `unimod_modifications`.`record_id` = `job_fixed_mod`.`mod_id` WHERE 
@@ -113,7 +114,7 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
         }
     }
 
-    public function setWorkUnitResults(Phase1WorkUnit $workUnit)
+    public function setWorkUnitResults(WorkUnitInterface $workUnit)
     {
         foreach ($workUnit->getPeptides() as $peptideId => $peptide) {
             $this->recordPeptideScores($workUnit->getPrecursorId(), $peptideId, $peptide);
@@ -135,5 +136,10 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
         $this->adodb->Execute(
             'UPDATE `workunit1_peptides` SET `score` = ' . $peptide['score'] . ' WHERE `job` = ' . $this->jobId .
                  ' && `ms1` = ' . $precursorId . ' && `peptide` = ' . $peptideId);
+    }
+
+    public function setWorkUnitWorker($workerId, WorkUnitInterface $workUnit)
+    {
+        $this->recordWorkUnitWorker($workerId, $workUnit->getPrecursorId());
     }
 }

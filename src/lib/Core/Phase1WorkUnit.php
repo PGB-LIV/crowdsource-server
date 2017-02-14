@@ -16,7 +16,7 @@
  */
 namespace pgb_liv\crowdsource\Core;
 
-class Phase1WorkUnit
+class Phase1WorkUnit implements WorkUnitInterface
 {
 
     private $jobId;

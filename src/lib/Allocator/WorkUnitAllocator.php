@@ -90,8 +90,6 @@ class WorkUnitAllocator
         $workUnit = $allocator->getWorkUnit();
         // If false, no job was available for allocation
         if ($workUnit !== false) {
-            // TODO: This will not scale for Phase2/3
-            
             $workerId = 0;
             if (isset($_SERVER['REMOTE_ADDR'])) {
                 $workerId = ip2long($_SERVER['REMOTE_ADDR']);
@@ -99,7 +97,8 @@ class WorkUnitAllocator
                 // If REMOTE_ADDR is missing then either the server is configured wrong or we are in a unit test
                 $workerId = ip2long('127.0.0.1');
             }
-            $allocator->setWorkUnitWorker($workerId, $workUnit->getPrecursorId());
+            
+            $allocator->setWorkUnitWorker($workerId, $workUnit);
         }
         
         return $workUnit;
