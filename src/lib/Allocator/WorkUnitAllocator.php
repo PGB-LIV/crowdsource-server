@@ -34,36 +34,35 @@ class WorkUnitAllocator
      * @param array $results
      *            An array of WorkUnit's with scores
      */
-    public function recordResults($results)
+    public function recordResults($workUnit)
     {
-        $job = $this->adodb->GetRow(
-            'SELECT `id`, `phase` FROM `job_queue` WHERE `id` = ' . $this->adodb->quote($results->job));
-        if (empty($job)) {
+        $phase = $this->adodb->GetOne('SELECT `phase` FROM `job_queue` WHERE `id` = ' . $workUnit->getJobId());
+        if (is_null($phase)) {
             return false;
         }
         
         $allocator = null;
-        switch ($job['phase']) {
+        switch ($phase) {
             case '1':
-                $allocator = new Phase1Allocator($this->adodb, (int) $job['id']);
+                $allocator = new Phase1Allocator($this->adodb, $workUnit->getJobId());
                 break;
             case '2':
-                $allocator = new Phase2Allocator($this->adodb, (int) $job['id']);
+                $allocator = new Phase2Allocator($this->adodb, $workUnit->getJobId());
                 break;
             case '3':
-                $allocator = new Phase3Allocator($this->adodb, (int) $job['id']);
+                $allocator = new Phase3Allocator($this->adodb, $workUnit->getJobId());
                 break;
             default:
                 return false;
         }
         
-        $allocator->setWorkUnitResults($results);
+        $allocator->setWorkUnitResults($workUnit);
     }
 
     /**
      * Gets the next available work unit for the requester.
      *
-     * @return boolean|\pgb_liv\crowdsource\Allocator\The The next available job or false if none are available.
+     * @return boolean|\pgb_liv\crowdsource\Core\Phase1WorkUnit The next available job or false if none are available.
      */
     public function getWorkUnit()
     {
@@ -90,7 +89,16 @@ class WorkUnitAllocator
         $workUnit = $allocator->getWorkUnit();
         // If false, no job was available for allocation
         if ($workUnit !== false) {
-            $allocator->setWorkUnitWorker((int) $workUnit->id, ip2long($_SERVER['REMOTE_ADDR']));
+            // TODO: This will not scale for Phase2/3
+            
+            $workerId = 0;
+            if (isset($_SERVER['REMOTE_ADDR'])) {
+                $workerId = ip2long($_SERVER['REMOTE_ADDR']);
+            } else {
+                // If REMOTE_ADDR is missing then either the server is configured wrong or we are in a unit test
+                $workerId = ip2long('127.0.0.1');
+            }
+            $allocator->setWorkUnitWorker($workerId, $workUnit->getPrecursorId());
         }
         
         return $workUnit;
