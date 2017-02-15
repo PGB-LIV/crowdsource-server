@@ -430,7 +430,7 @@ class Phase1WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanGetValidJsonFromWorkUnit()
     {
-        $json = '{"job":1,"precursor":2,"fragments":[{"mz":79.97,"intensity":150.5}],"peptides":{"512":{"sequence":"PEPTIDE"},"213":{"sequence":"PEPTIDER"},"0":{"sequence":"PEPTIDEK"}},"fixedMods":[{"mass":79.97,"residue":"C"}],"fragTol":0.05,"fragTolUnit":"da"}';
+        $json = '{"job":1,"precursor":2,"fragments":[{"mz":79.97,"intensity":150.5}],"peptides":[{"id":512,"sequence":"PEPTIDE"},{"id":213,"sequence":"PEPTIDER"},{"id":0,"sequence":"PEPTIDEK"}],"fixedMods":[{"mass":79.97,"residue":"C"}],"fragTol":0.05,"fragTolUnit":"da"}';
         $jobId = 1;
         $precursorId = 2;
         $workUnit = new Phase1WorkUnit($jobId, $precursorId);
@@ -480,7 +480,7 @@ class Phase1WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanGetValidWorkUnitFromJson()
     {
-        $json = '{"job":1,"precursor":2,"fragments":[{"mz":79.97,"intensity":150.5}],"peptides":{"512":{"sequence":"PEPTIDE","score":120.6},"213":{"sequence":"PEPTIDER","score":23.6},"0":{"sequence":"PEPTIDEK"}},"fixedMods":[{"mass":79.97,"residue":"C"}],"fragTol":0.05,"fragTolUnit":"da"}';
+        $json = '{"job":1,"precursor":2,"fragments":[{"mz":79.97,"intensity":150.5}],"peptides":[{"id":512,"sequence":"PEPTIDE","score":120.6},{"id":213,"sequence":"PEPTIDER","score":23.6},{"id":0,"sequence":"PEPTIDEK"}],"fixedMods":[{"mass":79.97,"residue":"C"}],"fragTol":0.05,"fragTolUnit":"da"}';
         $jobId = 1;
         $precursorId = 2;
         $workUnit = new Phase1WorkUnit($jobId, $precursorId);

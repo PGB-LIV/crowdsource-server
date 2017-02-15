@@ -173,6 +173,7 @@ class Phase1WorkUnit implements WorkUnitInterface
 
     public function toJson($includeScore = false)
     {
+        $data = array();
         $data['job'] = $this->jobId;
         $data['precursor'] = $this->precursorId;
         $data['fragments'] = $this->fragmentIons;
@@ -180,11 +181,14 @@ class Phase1WorkUnit implements WorkUnitInterface
         // Reformat as we do not want the null score being sent
         $data['peptides'] = array();
         foreach ($this->peptides as $key => $peptide) {
-            $data['peptides'][$key] = array();
-            $data['peptides'][$key]['sequence'] = $peptide['sequence'];
+            $peptideData = array();
+            $peptideData['id'] = $key;
+            $peptideData['sequence'] = $peptide['sequence'];
             if ($includeScore) {
-                $data['peptides'][$key]['score'] = $peptide['score'];
+                $peptideData['score'] = $peptide['score'];
             }
+            
+            $data['peptides'][] = $peptideData;
         }
         
         $data['fixedMods'] = $this->fixedModifications;
@@ -205,11 +209,11 @@ class Phase1WorkUnit implements WorkUnitInterface
             $workUnit->addFixedModification($mod['mass'], $mod['residue']);
         }
         
-        foreach ($jsonObj['peptides'] as $key => $peptide) {
-            $workUnit->addPeptide($key, $peptide['sequence']);
+        foreach ($jsonObj['peptides'] as $peptide) {
+            $workUnit->addPeptide($peptide['id'], $peptide['sequence']);
             
             if (isset($peptide['score'])) {
-                $workUnit->addPeptideScore($key, $peptide['score']);
+                $workUnit->addPeptideScore($peptide['id'], $peptide['score']);
             }
         }
         
