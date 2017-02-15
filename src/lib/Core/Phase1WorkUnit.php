@@ -94,30 +94,41 @@ class Phase1WorkUnit implements WorkUnitInterface
         
         $this->peptides[$id] = array(
             'sequence' => $sequence,
-            'score' => null
+            'score' => null,
+            'ionsMatched' => null
         );
     }
 
-    public function addPeptideScore($id, $score)
+    public function addPeptideScore($id, $score, $ionsMatched = null)
     {
         if (! is_int($id)) {
             throw new \InvalidArgumentException(
                 'Argument 1 must be an int value. Valued passed is of type ' . gettype($id));
         }
         
-        if (! is_float($score)) {
+        if (! is_float($score) && ! is_int($score)) {
             throw new \InvalidArgumentException(
-                'Argument 2 must be a float value. Valued passed is of type ' . gettype($score));
+                'Argument 2 must be an int or float value. Valued passed is of type ' . gettype($score));
+        }
+        
+        if (! is_int($ionsMatched) && ! is_null($ionsMatched)) {
+            throw new \InvalidArgumentException(
+                'Argument 3 must be an int value. Valued passed is of type ' . gettype($ionsMatched));
         }
         
         if (! isset($this->peptides[$id])) {
             $this->peptides[$id] = array(
                 'sequence' => null,
-                'score' => null
+                'score' => null,
+                'ionsMatched' => null
             );
         }
         
         $this->peptides[$id]['score'] = $score;
+        
+        if (! is_null($ionsMatched)) {
+            $this->peptides[$id]['ionsMatched'] = $ionsMatched;
+        }
     }
 
     public function setFragmentTolerance($tolerance, $unit)
@@ -203,24 +214,62 @@ class Phase1WorkUnit implements WorkUnitInterface
     {
         $jsonObj = json_decode($jsonStr, true);
         
-        $workUnit = new Phase1WorkUnit($jsonObj['job'], $jsonObj['precursor']);
-        $workUnit->setFragmentTolerance($jsonObj['fragTol'], $jsonObj['fragTolUnit']);
-        foreach ($jsonObj['fixedMods'] as $mod) {
-            $workUnit->addFixedModification($mod['mass'], $mod['residue']);
+        if (is_null($jsonObj)) {
+            throw new \InvalidArgumentException('Input must be a valid JSON string value.');
         }
         
-        foreach ($jsonObj['peptides'] as $peptide) {
-            $workUnit->addPeptide($peptide['id'], $peptide['sequence']);
-            
-            if (isset($peptide['score'])) {
-                $workUnit->addPeptideScore($peptide['id'], $peptide['score']);
+        if (! isset($jsonObj['job']) || ! is_int($jsonObj['job'])) {
+            throw new \InvalidArgumentException(
+                '"job" must be an int value. Valued passed is of type ' . gettype($jsonObj['job']));
+        }
+        
+        if (! isset($jsonObj['precursor']) || ! is_int($jsonObj['precursor'])) {
+            throw new \InvalidArgumentException(
+                '"precursor" must be an int value. Valued passed is of type ' . gettype($jsonObj['precursor']));
+        }
+        
+        // Initialise object
+        $workUnit = new Phase1WorkUnit($jsonObj['job'], $jsonObj['precursor']);
+        
+        // Parse fragment tolerance
+        if (isset($jsonObj['fragTol']) && isset($jsonObj['fragTolUnit'])) {
+            $workUnit->setFragmentTolerance($jsonObj['fragTol'], $jsonObj['fragTolUnit']);
+        }
+        
+        // Parse fixed modifications
+        if (isset($jsonObj['fixedMods'])) {
+            foreach ($jsonObj['fixedMods'] as $mod) {
+                $workUnit->addFixedModification($mod['mass'], $mod['residue']);
             }
         }
         
-        foreach ($jsonObj['fragments'] as $fragment) {
-            $workUnit->addFragmentIon($fragment['mz'], $fragment['intensity']);
+        // Parse peptides
+        if (isset($jsonObj['peptides'])) {
+            foreach ($jsonObj['peptides'] as $peptide) {
+                if (! isset($peptide['id']) || ! is_int($peptide['id'])) {
+                    throw new \InvalidArgumentException(
+                        'A peptide "ID" must be an int value. Valued passed is of type ' . gettype($peptide['id']));
+                }
+                
+                if (isset($peptide['sequence'])) {
+                    $workUnit->addPeptide($peptide['id'], $peptide['sequence']);
+                }
+                
+                if (isset($peptide['score']) && isset($peptide['ionsMatched'])) {
+                    $workUnit->addPeptideScore($peptide['id'], $peptide['score'], $peptide['ionsMatched']);
+                } else 
+                    if (isset($peptide['score'])) {
+                        $workUnit->addPeptideScore($peptide['id'], $peptide['score']);
+                    }
+            }
         }
         
+        // Parse fragments
+        if (isset($jsonObj['fragments'])) {
+            foreach ($jsonObj['fragments'] as $fragment) {
+                $workUnit->addFragmentIon($fragment['mz'], $fragment['intensity']);
+            }
+        }
         return $workUnit;
     }
 }

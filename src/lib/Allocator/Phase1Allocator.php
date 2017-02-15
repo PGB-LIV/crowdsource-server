@@ -141,9 +141,10 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
             return;
         }
         
+        $ionsMatched = is_null($peptide['ionsMatched']) ? 'NULL' : $peptide['ionsMatched'];
         $this->adodb->Execute(
-            'UPDATE `workunit1_peptides` SET `score` = ' . $peptide['score'] . ' WHERE `job` = ' . $this->jobId .
-                 ' && `ms1` = ' . $precursorId . ' && `peptide` = ' . $peptideId);
+            'UPDATE `workunit1_peptides` SET `score` = ' . $peptide['score'] . ', `ions_matched` = ' . $ionsMatched .
+                 ' WHERE `job` = ' . $this->jobId . ' && `ms1` = ' . $precursorId . ' && `peptide` = ' . $peptideId);
     }
 
     public function setWorkUnitWorker($workerId, WorkUnitInterface $workUnit)

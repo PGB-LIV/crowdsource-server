@@ -40,8 +40,7 @@ class WorkUnitAllocator
         $decoded = json_decode($jsonStr);
         $jobId = (int) $decoded->job;
         
-        $phase = $this->adodb->GetOne(
-            'SELECT `phase` FROM `job_queue` WHERE `id` = ' . $this->adodb->quote($decoded->job));
+        $phase = $this->adodb->GetOne('SELECT `phase` FROM `job_queue` WHERE `id` = ' . $this->adodb->quote($jobId));
         if (is_null($phase)) {
             return false;
         }

@@ -225,7 +225,8 @@ class Phase1WorkUnitTest extends \PHPUnit_Framework_TestCase
         $peptides = array();
         $peptides[] = array(
             'sequence' => 'PEPTIDE',
-            'score' => null
+            'score' => null,
+            'ionsMatched' => null
         );
         $workUnit->addPeptide(0, $peptides[0]['sequence']);
         
@@ -271,7 +272,8 @@ class Phase1WorkUnitTest extends \PHPUnit_Framework_TestCase
         $peptides = array();
         $peptides[] = array(
             'sequence' => 'PEPTIDE',
-            'score' => 120.6
+            'score' => 120.6,
+            'ionsMatched' => null
         );
         $workUnit->addPeptide(0, $peptides[0]['sequence']);
         $workUnit->addPeptideScore(0, $peptides[0]['score']);
@@ -295,7 +297,8 @@ class Phase1WorkUnitTest extends \PHPUnit_Framework_TestCase
         $peptides = array();
         $peptides[] = array(
             'sequence' => null,
-            'score' => 120.6
+            'score' => 120.6,
+            'ionsMatched' => null
         );
         $workUnit->addPeptideScore(0, $peptides[0]['score']);
         
@@ -478,7 +481,7 @@ class Phase1WorkUnitTest extends \PHPUnit_Framework_TestCase
      *
      * @uses pgb_liv\crowdsource\Core\Phase1WorkUnit
      */
-    public function testObjectCanGetValidWorkUnitFromJson()
+    public function testObjectCanGetValidWorkUnitFromJson1()
     {
         $json = '{"job":1,"precursor":2,"fragments":[{"mz":79.97,"intensity":150.5}],"peptides":[{"id":512,"sequence":"PEPTIDE","score":120.6},{"id":213,"sequence":"PEPTIDER","score":23.6},{"id":0,"sequence":"PEPTIDEK"}],"fixedMods":[{"mass":79.97,"residue":"C"}],"fragTol":0.05,"fragTolUnit":"da"}';
         $jobId = 1;
@@ -522,5 +525,49 @@ class Phase1WorkUnitTest extends \PHPUnit_Framework_TestCase
         $workUnit->addPeptideScore(213, $peptides[213]['score']);
         
         $this->assertEquals($workUnit, Phase1WorkUnit::fromJson($json));
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::__construct
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::fromJson
+     *
+     * @uses pgb_liv\crowdsource\Core\Phase1WorkUnit
+     */
+    public function testObjectCanGetValidWorkUnitFromJson2()
+    {
+        $json = '{"job":1,"precursor":1,"peptides":[{"id":44982,"score":2,"ionsMatched":2},{"id":1516198,"score":2,"ionsMatched":2},{"id":150121,"score":1,"ionsMatched":1},{"id":712838,"score":1,"ionsMatched":1},{"id":1534399,"score":1,"ionsMatched":1},{"id":1968911,"score":1,"ionsMatched":1},{"id":3177860,"score":1,"ionsMatched":1},{"id":3276166,"score":1,"ionsMatched":1},{"id":3373588,"score":1,"ionsMatched":1},{"id":3560751,"score":1,"ionsMatched":1}]}';
+        $jobId = 1;
+        $precursorId = 1;
+        $workUnit = new Phase1WorkUnit($jobId, $precursorId);
+        
+        $workUnit->addPeptideScore(44982, 2, 2);
+        $workUnit->addPeptideScore(1516198, 2, 2);
+        
+        $workUnit->addPeptideScore(150121, 1, 1);
+        $workUnit->addPeptideScore(712838, 1, 1);
+        
+        $workUnit->addPeptideScore(1534399, 1, 1);
+        $workUnit->addPeptideScore(1968911, 1, 1);
+        
+        $workUnit->addPeptideScore(3177860, 1, 1);
+        $workUnit->addPeptideScore(3276166, 1, 1);
+        
+        $workUnit->addPeptideScore(3373588, 1, 1);
+        $workUnit->addPeptideScore(3560751, 1, 1);
+        
+        $this->assertEquals($workUnit, Phase1WorkUnit::fromJson($json));
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::__construct
+     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::fromJson
+     * @expectedException InvalidArgumentException
+     *
+     * @uses pgb_liv\crowdsource\Core\Phase1WorkUnit
+     */
+    public function testObjectCanGetInvalidWorkUnitFromJson()
+    {
+        $json = '{"job":1,"precursor":1,"peptides":[{"id":44982,"score":2,"ionsMatched":2},{"id":1516198,"score":2,"ionsMatched":2},{"id":150121,"score":1,"ionsMatched":1},{"id":712838,"score":1,"ionsMatched":1},{"id":1534399,"score":1,"ionsMatched":1}{"id":1968911,"score":1,"ionsMatched":1},{"id":3177860,"score":1,"ionsMatched":1},{"id":3276166,"score":1,"ionsMatched":1},{"id":3373588,"score":1,"ionsMatched":1},{"id":3560751,"score":1,"ionsMatched":1}]}';
+        Phase1WorkUnit::fromJson($json);
     }
 }
