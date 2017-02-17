@@ -32,7 +32,7 @@ class PeptideTest extends \PHPUnit_Framework_TestCase
         $peptide = new Peptide(10);
         $this->assertInstanceOf('pgb_liv\crowdsource\Core\Peptide', $peptide);
         
-        return peptide;
+        return $peptide;
     }
 
     /**

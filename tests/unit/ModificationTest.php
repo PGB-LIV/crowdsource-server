@@ -85,8 +85,9 @@ class ModificationTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @covers pgb_liv\crowdsource\Core\Modification::__construct
-     * @covers pgb_liv\crowdsource\Core\Modification::getMz
-     * @covers pgb_liv\crowdsource\Core\Modification::getIntensity
+     * @covers pgb_liv\crowdsource\Core\Modification::getId
+     * @covers pgb_liv\crowdsource\Core\Modification::getMonoisotopicMass
+     * @covers pgb_liv\crowdsource\Core\Modification::getResidues
      *
      * @uses pgb_liv\crowdsource\Core\Modification
      */
