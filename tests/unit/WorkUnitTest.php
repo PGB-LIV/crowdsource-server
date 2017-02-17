@@ -18,9 +18,9 @@ namespace pgb_liv\crowdsource\Test\Unit;
 
 use pgb_liv\crowdsource\Core\WorkUnit;
 use pgb_liv\crowdsource\Core\Peptide;
-use pgb_liv\crowdsource\Core\PeptideModification;
 use pgb_liv\crowdsource\Core\FragmentIon;
 use pgb_liv\crowdsource\Core\Tolerance;
+use pgb_liv\crowdsource\Core\Modification;
 
 class WorkUnitTest extends \PHPUnit_Framework_TestCase
 {
@@ -97,7 +97,7 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
         $workUnit = new WorkUnit($jobId, $precursorId);
         
         $mods = array();
-        $mods[25] = new PeptideModification(25, 79.97, array(
+        $mods[25] = new Modification(25, 79.97, array(
             'C'
         ));
         $workUnit->addFixedModification($mods[25]);
@@ -185,7 +185,7 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
         $workUnit->setFragmentTolerance(new Tolerance($fragTol, $fragUnit));
         
         $mods = array();
-        $mods[4] = new PeptideModification(4, 79.97, array(
+        $mods[4] = new Modification(4, 79.97, array(
             'C'
         ));
         $workUnit->addFixedModification($mods[4]);
@@ -226,7 +226,7 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
         $workUnit->setFragmentTolerance(new Tolerance($fragTol, $fragUnit));
         
         $mods = array();
-        $mods[21] = new PeptideModification(21, 79.97, array(
+        $mods[21] = new Modification(21, 79.97, array(
             'C'
         ));
         $workUnit->addFixedModification($mods[21]);

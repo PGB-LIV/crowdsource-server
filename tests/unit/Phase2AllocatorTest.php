@@ -21,7 +21,6 @@ use pgb_liv\crowdsource\Core\WorkUnit;
 use pgb_liv\crowdsource\Core\FragmentIon;
 use pgb_liv\crowdsource\Core\Tolerance;
 use pgb_liv\crowdsource\Core\Peptide;
-use pgb_liv\crowdsource\Core\PeptideModification;
 use pgb_liv\crowdsource\Core\Modification;
 
 class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
@@ -436,7 +435,7 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
         
         $modifications = $this->getFixedModifications();
         foreach ($modifications as $key => $modification) {
-            $mod = new PeptideModification($modification['id'], $modification['mass'], 
+            $mod = new Modification($modification['id'], $modification['mass'], 
                 array(
                     $modification['residue']
                 ));

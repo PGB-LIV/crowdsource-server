@@ -18,7 +18,7 @@ namespace pgb_liv\crowdsource\Allocator;
 
 use pgb_liv\crowdsource\Core\WorkUnit;
 use pgb_liv\crowdsource\Core\FragmentIon;
-use pgb_liv\crowdsource\Core\PeptideModification;
+use pgb_liv\crowdsource\Core\Modification;
 
 abstract class AbstractAllocator implements AllocatorInterface
 {
@@ -138,7 +138,7 @@ abstract class AbstractAllocator implements AllocatorInterface
             `job_fixed_mod`.`job` = ' . $workUnit->getJobId());
         
         foreach ($rs as $record) {
-            $modification = new PeptideModification((int) $record['mod_id'], (float) $record['mono_mass'], 
+            $modification = new Modification((int) $record['mod_id'], (float) $record['mono_mass'], 
                 array(
                     $record['acid']
                 ));

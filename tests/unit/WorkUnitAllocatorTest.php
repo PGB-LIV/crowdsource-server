@@ -21,7 +21,7 @@ use pgb_liv\crowdsource\Allocator\WorkUnitAllocator;
 use pgb_liv\crowdsource\Core\Tolerance;
 use pgb_liv\crowdsource\Core\FragmentIon;
 use pgb_liv\crowdsource\Core\Peptide;
-use pgb_liv\crowdsource\Core\PeptideModification;
+use pgb_liv\crowdsource\Core\Modification;
 
 class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
 {
@@ -346,7 +346,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
         
         $modifications = $this->getFixedModifications();
         foreach ($modifications as $modification) {
-            $mod = new PeptideModification(4, $modification['mass'], 
+            $mod = new Modification(4, $modification['mass'], 
                 array(
                     $modification['residue']
                 ));

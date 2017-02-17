@@ -73,7 +73,7 @@ class WorkUnit
         $this->precursorId = $precursorId;
     }
 
-    public function addFixedModification(PeptideModification $modification)
+    public function addFixedModification(Modification $modification)
     {
         $this->fixedModifications[$modification->getId()] = $modification;
     }
@@ -224,7 +224,7 @@ class WorkUnit
         if (isset($jsonObj[WorkUnit::JSON_FIXED_MODIFICATIONS])) {
             foreach ($jsonObj[WorkUnit::JSON_FIXED_MODIFICATIONS] as $mod) {
                 $residues = str_split($mod['residues']);
-                $workUnit->addFixedModification(new PeptideModification($mod['id'], $mod['mass'], $residues));
+                $workUnit->addFixedModification(new Modification($mod['id'], $mod['mass'], $residues));
             }
         }
         
