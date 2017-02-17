@@ -20,7 +20,6 @@ namespace pgb_liv\crowdsource\Preprocessor;
  * Logic for performing all phase 2 preprocessing
  *
  * @author Andrew Collins
- *        
  */
 class Phase2Preprocessor extends AbstractPreprocessor
 {
@@ -128,11 +127,9 @@ class Phase2Preprocessor extends AbstractPreprocessor
     private function getPtmCandidates()
     {
         // Select best peptides
-        $peptides = $this->adodb->Execute(
+        return $this->adodb->Execute(
             'SELECT `f`.`id`, `f`.`peptide`, `f`.`mass_modified`, MAX(`score`) AS `bestscore` FROM `workunit1_peptides` `w` LEFT JOIN `fasta_peptides` `f` ON `f`.`id` = `w`.`peptide` WHERE `w`.`job` = ' .
                  $this->jobId . ' GROUP BY `w`.`peptide` HAVING `bestscore` >= 5 ORDER BY `f`.`id` ASC');
-        
-        return $peptides;
     }
 
     /**

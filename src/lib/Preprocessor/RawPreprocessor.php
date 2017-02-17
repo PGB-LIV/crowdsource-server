@@ -45,13 +45,6 @@ class RawPreprocessor
 
     private $filterMass;
 
-    /**
-     * Creates a new instance with the specified parser as input
-     *
-     * @param ADOdbConnection $conn            
-     * @param MgfReader $rawParser            
-     * @param int $jobId            
-     */
     public function __construct(\ADOConnection $conn, MgfReader $rawParser, $jobId)
     {
         if (! is_int($jobId)) {
@@ -68,7 +61,8 @@ class RawPreprocessor
      * Sets the max number of peaks the MS2 level data is allowed to contain.
      * The highest intensity peaks are used for selection.
      *
-     * @param int $maxPeaks            
+     * @param int $maxPeaks
+     *            Maximum number of peaks to analyse. Ordered by intensity
      */
     public function setMs2PeakCount($maxPeaks)
     {

@@ -20,7 +20,6 @@ namespace pgb_liv\crowdsource\Core;
  * Class to encapsulate peptide properties
  *
  * @author Andrew Collins
- *        
  */
 class Peptide
 {

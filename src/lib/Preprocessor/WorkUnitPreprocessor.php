@@ -22,8 +22,7 @@ use pgb_liv\crowdsource\BulkQuery;
  * Accepts a Job ID and generates potential identification
  * candidates for the associated job spectra.
  *
- * @author acollins
- *        
+ * @author Andrew Collins
  */
 class WorkUnitPreprocessor
 {
@@ -41,7 +40,8 @@ class WorkUnitPreprocessor
     public function __construct(\ADOConnection $conn, $jobId)
     {
         if (! is_int($jobId)) {
-            throw new \InvalidArgumentException('Job ID must be an integer value. Valued passed is of type ' . gettype($jobId));
+            throw new \InvalidArgumentException(
+                'Job ID must be an integer value. Valued passed is of type ' . gettype($jobId));
         }
         
         $this->adodb = $conn;
@@ -50,12 +50,14 @@ class WorkUnitPreprocessor
 
     private function initialise()
     {
-        $this->massTolerance = $this->adodb->GetOne('SELECT `mass_tolerance` FROM `job_queue` WHERE `id` = ' . $this->jobId);
+        $this->massTolerance = $this->adodb->GetOne(
+            'SELECT `mass_tolerance` FROM `job_queue` WHERE `id` = ' . $this->jobId);
         // As ppm
         $this->massTolerance /= 1000000;
         
         $this->workUnitBulk = new BulkQuery($this->adodb, 'INSERT INTO `workunit1` (`job`, `ms1`) VALUES ');
-        $this->workUnitPeptideBulk = new BulkQuery($this->adodb, 'INSERT INTO `workunit1_peptides` (`job`, `ms1`, `peptide`) VALUES ');
+        $this->workUnitPeptideBulk = new BulkQuery($this->adodb, 
+            'INSERT INTO `workunit1_peptides` (`job`, `ms1`, `peptide`) VALUES ');
     }
 
     /**
@@ -84,7 +86,8 @@ class WorkUnitPreprocessor
         $pepMassHigh = $spectraMass + $tolerance;
         
         return $this->adodb->GetCol(
-            'SELECT `id` FROM `fasta_peptides` WHERE `job` = ' . $this->jobId . ' && `mass_modified` BETWEEN ' . $pepMassLow . ' AND ' . $pepMassHigh);
+            'SELECT `id` FROM `fasta_peptides` WHERE `job` = ' . $this->jobId . ' && `mass_modified` BETWEEN ' .
+                 $pepMassLow . ' AND ' . $pepMassHigh);
     }
 
     public function process()

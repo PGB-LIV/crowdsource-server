@@ -20,7 +20,6 @@ namespace pgb_liv\crowdsource\Preprocessor;
  * Logic for performing generic preprocessor method
  *
  * @author Andrew Collins
- *        
  */
 abstract class AbstractPreprocessor
 {

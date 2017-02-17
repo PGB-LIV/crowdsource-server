@@ -63,7 +63,8 @@ class DatabasePreprocessor
     public function __construct(\ADOConnection $conn, FastaReader $databaseParser, $jobId)
     {
         if (! is_int($jobId)) {
-            throw new \InvalidArgumentException('Job ID must be an integer value. Valued passed is of type ' . gettype($jobId));
+            throw new \InvalidArgumentException(
+                'Job ID must be an integer value. Valued passed is of type ' . gettype($jobId));
         }
         
         $this->adodb = $conn;
@@ -86,10 +87,12 @@ class DatabasePreprocessor
         
         $this->filter = new FilterLength($job['peptide_min'], $job['peptide_max']);
         
-        $this->proteinBulk = new BulkQuery($this->adodb, 'INSERT IGNORE INTO `fasta_proteins` (`id`, `job`, `identifier`, `description`, `sequence`) VALUES ');
+        $this->proteinBulk = new BulkQuery($this->adodb, 
+            'INSERT IGNORE INTO `fasta_proteins` (`id`, `job`, `identifier`, `description`, `sequence`) VALUES ');
         $this->peptideBulk = new BulkQuery($this->adodb, 
             'INSERT IGNORE INTO `fasta_peptides` (`id`, `job`, `peptide`, `length`, `missed_cleavage`, `mass`, `mass_modified`, `is_decoy`) VALUES');
-        $this->protein2peptideBulk = new BulkQuery($this->adodb, 'INSERT INTO `fasta_protein2peptide` (`job`, `protein`, `peptide`, `position_start`) VALUES ');
+        $this->protein2peptideBulk = new BulkQuery($this->adodb, 
+            'INSERT INTO `fasta_protein2peptide` (`job`, `protein`, `peptide`, `position_start`) VALUES ');
     }
 
     public function process()
@@ -130,8 +133,9 @@ class DatabasePreprocessor
     private function processProtein(Protein $protein)
     {
         $this->proteinBulk->append(
-            sprintf('(%d, %d, %s, %s, %s)', $this->proteinId, $this->jobId, $this->adodb->quote($protein->getUniqueIdentifier()), 
-                $this->adodb->quote($protein->getDescription()), $this->adodb->quote($protein->getSequence())));
+            sprintf('(%d, %d, %s, %s, %s)', $this->proteinId, $this->jobId, 
+                $this->adodb->quote($protein->getUniqueIdentifier()), $this->adodb->quote($protein->getDescription()), 
+                $this->adodb->quote($protein->getSequence())));
         
         $this->proteinId ++;
     }
@@ -147,8 +151,9 @@ class DatabasePreprocessor
                 $modMass = $this->getModMass($peptide);
                 
                 $this->peptideBulk->append(
-                    sprintf('(%d, %d, %s, %d, %d, %f, %f, 0)', $this->peptideId, $this->jobId, $this->adodb->quote($peptide->getSequence()), 
-                        $peptide->getLength(), $peptide->getMissedCleavageCount(), $peptideMass, $peptideMass + $modMass));
+                    sprintf('(%d, %d, %s, %d, %d, %f, %f, 0)', $this->peptideId, $this->jobId, 
+                        $this->adodb->quote($peptide->getSequence()), $peptide->getLength(), 
+                        $peptide->getMissedCleavageCount(), $peptideMass, $peptideMass + $modMass));
                 
                 $this->peptide2Id[$peptide->getSequence()] = $this->peptideId;
                 
@@ -157,7 +162,8 @@ class DatabasePreprocessor
             
             $peptideId = $this->peptide2Id[$peptide->getSequence()];
             
-            $this->protein2peptideBulk->append(sprintf('(%d, %d, %d, %d)', $this->jobId, $proteinId, $peptideId, $peptide->getPositionStart()));
+            $this->protein2peptideBulk->append(
+                sprintf('(%d, %d, %d, %d)', $this->jobId, $proteinId, $peptideId, $peptide->getPositionStart()));
         }
     }
 
@@ -194,8 +200,9 @@ class DatabasePreprocessor
                 $modMass = $this->getModMass($peptide);
                 
                 $this->peptideBulk->append(
-                    sprintf('(%d, %d, %s, %d, %d, %f, %f, 1)', $this->peptideId, $this->jobId, $this->adodb->quote($peptide->getSequence()), 
-                        $peptide->getLength(), $peptide->getMissedCleavageCount(), $peptideMass, $peptideMass + $modMass));
+                    sprintf('(%d, %d, %s, %d, %d, %f, %f, 1)', $this->peptideId, $this->jobId, 
+                        $this->adodb->quote($peptide->getSequence()), $peptide->getLength(), 
+                        $peptide->getMissedCleavageCount(), $peptideMass, $peptideMass + $modMass));
                 
                 $this->peptide2Id[$peptide->getSequence()] = $this->peptideId;
                 

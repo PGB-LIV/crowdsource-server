@@ -23,7 +23,6 @@ use pgb_liv\php_ms\Reader\MgfReader;
  * Logic for performing all phase 1 preprocessing
  *
  * @author Andrew Collins
- *        
  */
 class Phase1Preprocessor extends AbstractPreprocessor
 {

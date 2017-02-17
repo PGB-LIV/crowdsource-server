@@ -19,8 +19,7 @@ namespace pgb_liv\crowdsource\Preprocessor;
 /**
  * Logic for performing all phase 3 preprocessing
  *
- * @author acollins
- *        
+ * @author Andrew Collins
  */
 class Phase3Preprocessor
 {
@@ -41,7 +40,8 @@ class Phase3Preprocessor
     public function __construct(\ADOConnection $conn, $jobId)
     {
         if (! is_int($jobId)) {
-            throw new \InvalidArgumentException('Job ID must be an integer value. Valued passed is of type ' . gettype($jobId));
+            throw new \InvalidArgumentException(
+                'Job ID must be an integer value. Valued passed is of type ' . gettype($jobId));
         }
         
         $this->adodb = $conn;
@@ -53,7 +53,8 @@ class Phase3Preprocessor
      */
     private function initialise()
     {
-        $this->adodb->Execute('UPDATE `job_queue` SET `state` = \'PREPARING\', `phase` = \'3\' WHERE `id` = ' . $this->jobId);
+        $this->adodb->Execute(
+            'UPDATE `job_queue` SET `state` = \'PREPARING\', `phase` = \'3\' WHERE `id` = ' . $this->jobId);
     }
 
     /**

@@ -149,9 +149,8 @@ abstract class AbstractAllocator implements AllocatorInterface
     /**
      * Injects the MS/MS data into the work unit object
      *
-     * @param Phase1WorkUnit $workUnit
+     * @param WorkUnit $workUnit
      *            Work unit to inject into
-     *            
      */
     protected function injectFragmentIons(WorkUnit $workUnit)
     {

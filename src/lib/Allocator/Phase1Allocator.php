@@ -86,8 +86,8 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
         $rs = $this->adodb->Execute(
             'SELECT `fpeps`.`id`, `fpeps`.`peptide` FROM `fasta_peptides` AS `fpeps`
             LEFT OUTER JOIN `workunit1_peptides` AS `wu_p` ON `wu_p`.`peptide`=`fpeps`.`id`
-            WHERE `wu_p`.`job` = ' . $workUnit->getJobId() . ' && `wu_p`.`ms1`=' .
-                 $workUnit->getPrecursorId());
+            WHERE `wu_p`.`job` = ' . $workUnit->getJobId() .
+                 ' && `wu_p`.`ms1`=' . $workUnit->getPrecursorId());
         
         foreach ($rs as $record) {
             $peptide = new Peptide((int) $record['id']);

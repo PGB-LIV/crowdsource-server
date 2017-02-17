@@ -42,4 +42,3 @@ $adodb->Execute('TRUNCATE `raw_ms2`');
 $adodb->Execute('TRUNCATE `users`');
 $adodb->Execute('TRUNCATE `workunit1`');
 $adodb->Execute('TRUNCATE `workunit1_peptides`');
-?>
