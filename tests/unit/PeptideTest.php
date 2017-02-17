@@ -104,7 +104,7 @@ class PeptideTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @covers pgb_liv\crowdsource\Core\Peptide::__construct
-     * @covers pgb_liv\crowdsource\Core\Peptide::setModification
+     * @covers pgb_liv\crowdsource\Core\Peptide::addModification
      * @covers pgb_liv\crowdsource\Core\Peptide::getModifications
      * @covers pgb_liv\crowdsource\Core\Modification::__construct
      *

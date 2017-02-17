@@ -22,57 +22,27 @@ use pgb_liv\php_ms\Reader\MgfReader;
 /**
  * Logic for performing all phase 1 preprocessing
  *
- * @author acollins
+ * @author Andrew Collins
  *        
  */
-class Phase1Preprocessor
+class Phase1Preprocessor extends AbstractPreprocessor
 {
-    private $adodb;
-
-    private $jobId;
 
     private $databasePath;
 
     private $rawPath;
 
     /**
-     * Creates a new instance of the Phase 1 preprocessor.
-     *
-     * @param \ADOConnection $conn
-     *            A valid and connected ADOdb instance
-     * @param int $jobId
-     *            The job to preprocess
-     * @throws \InvalidArgumentException If job is not an integer
-     */
-    public function __construct(\ADOConnection $conn, $jobId)
-    {
-        if (! is_int($jobId)) {
-            throw new \InvalidArgumentException('Job ID must be an integer value. Valued passed is of type ' . gettype($jobId));
-        }
-        
-        $this->adodb = $conn;
-        $this->jobId = $jobId;
-    }
-
-    /**
      * Marks the preprocessing stage this phase as preparing
      */
-    private function initialise()
+    protected function initialise()
     {
-        $this->adodb->Execute('UPDATE `job_queue` SET `state` = \'PREPARING\', `phase` = \'1\' WHERE `id` = ' . $this->jobId);
+        parent::initialise();
         
         $job = $this->adodb->GetRow('SELECT `database_file`, `raw_file` FROM `job_queue` WHERE `id` = ' . $this->jobId);
         
         $this->databasePath = $job['database_file'];
         $this->rawPath = $job['raw_file'];
-    }
-
-    /**
-     * Marks the preprocessing stage for this phase as done
-     */
-    private function finalise()
-    {
-        $this->adodb->Execute('UPDATE `job_queue` SET  `state` = \'READY\' WHERE `id` = ' . $this->jobId);
     }
 
     /**
