@@ -229,7 +229,6 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectFragmentIons
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::setWorkUnitResults
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::recordPeptideScores
-     * @covers pgb_liv\crowdsource\Core\WorkUnit::addPeptideScore
      *
      * @uses pgb_liv\crowdsource\Allocator\Phase2Allocator
      */
@@ -268,7 +267,6 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectFragmentIons
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::setWorkUnitResults
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::recordPeptideScores
-     * @covers pgb_liv\crowdsource\Core\WorkUnit::addPeptideScore
      *
      * @uses pgb_liv\crowdsource\Allocator\Phase2Allocator
      */
