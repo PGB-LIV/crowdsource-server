@@ -84,6 +84,7 @@ class PeptideTest extends \PHPUnit_Framework_TestCase
     /**
      * @covers pgb_liv\crowdsource\Core\Peptide::__construct
      * @covers pgb_liv\crowdsource\Core\Peptide::setScore
+     * @covers pgb_liv\crowdsource\Core\Peptide::getScore
      * @covers pgb_liv\crowdsource\Core\Peptide::getIonsMatched
      *
      * @uses pgb_liv\crowdsource\Core\Peptide
@@ -104,6 +105,42 @@ class PeptideTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @covers pgb_liv\crowdsource\Core\Peptide::__construct
+     * @covers pgb_liv\crowdsource\Core\Peptide::setScore
+     * @expectedException InvalidArgumentException
+     *
+     * @uses pgb_liv\crowdsource\Core\Peptide
+     */
+    public function testObjectCanGetSetInvalidScore1()
+    {
+        $id = 15;
+        $score = 'fail';
+        $ions = 12;
+        $peptide = new Peptide($id);
+        $this->assertInstanceOf('pgb_liv\crowdsource\Core\Peptide', $peptide);
+        
+        $peptide->setScore($score, $ions);
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Core\Peptide::__construct
+     * @covers pgb_liv\crowdsource\Core\Peptide::setScore
+     * @expectedException InvalidArgumentException
+     *
+     * @uses pgb_liv\crowdsource\Core\Peptide
+     */
+    public function testObjectCanGetSetInvalidScore2()
+    {
+        $id = 15;
+        $score = 151.456;
+        $ions = 'fail';
+        $peptide = new Peptide($id);
+        $this->assertInstanceOf('pgb_liv\crowdsource\Core\Peptide', $peptide);
+        
+        $peptide->setScore($score, $ions);
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Core\Peptide::__construct
      * @covers pgb_liv\crowdsource\Core\Peptide::addModification
      * @covers pgb_liv\crowdsource\Core\Peptide::getModifications
      * @covers pgb_liv\crowdsource\Core\Modification::__construct
@@ -111,7 +148,7 @@ class PeptideTest extends \PHPUnit_Framework_TestCase
      * @uses pgb_liv\crowdsource\Core\Peptide
      * @uses pgb_liv\crowdsource\Core\Modification
      */
-    public function testObjectCanGetSetValid()
+    public function testObjectCanGetSetValidModification()
     {
         $id = 15;
         $peptide = new Peptide($id);
@@ -124,5 +161,42 @@ class PeptideTest extends \PHPUnit_Framework_TestCase
         $peptide->addModification($mods[4]);
         
         $this->assertEquals($mods, $peptide->getModifications());
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Core\Peptide::__construct
+     * @covers pgb_liv\crowdsource\Core\Peptide::IsModified
+     *
+     * @uses pgb_liv\crowdsource\Core\Peptide
+     */
+    public function testObjectCanGetIsModified1()
+    {
+        $id = 15;
+        $peptide = new Peptide($id);
+        $this->assertInstanceOf('pgb_liv\crowdsource\Core\Peptide', $peptide);
+        
+        $this->assertEquals(false, $peptide->isModified());
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Core\Peptide::__construct
+     * @covers pgb_liv\crowdsource\Core\Peptide::IsModified
+     *
+     * @uses pgb_liv\crowdsource\Core\Peptide
+     * @uses pgb_liv\crowdsource\Core\Modification
+     */
+    public function testObjectCanGetIsModified2()
+    {
+        $id = 15;
+        $peptide = new Peptide($id);
+        $this->assertInstanceOf('pgb_liv\crowdsource\Core\Peptide', $peptide);
+        
+        $mods = array();
+        $mods[4] = new Modification(4, 146.14, array(
+            'M'
+        ));
+        $peptide->addModification($mods[4]);
+        
+        $this->assertEquals(true, $peptide->isModified());
     }
 }

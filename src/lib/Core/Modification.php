@@ -86,7 +86,6 @@ class Modification
         sort($residues);
         // Force unique residue positions
         $this->residues = array_combine($residues, $residues);
-        ;
     }
 
     /**

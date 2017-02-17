@@ -39,11 +39,15 @@ class WorkUnit
 
     const JSON_PEPTIDE_MODIFICATIONS = 'mods';
 
-    const JSON_PEPTIDE_MODIFICATION_ID = 'id';
+    const JSON_MODIFICATION_ID = 'id';
 
-    const JSON_PEPTIDE_MODIFICATION_MASS = 'mass';
+    const JSON_MODIFICATION_MASS = 'mass';
 
-    const JSON_PEPTIDE_MODIFICATION_RESIDUES = 'residues';
+    const JSON_MODIFICATION_RESIDUES = 'residues';
+
+    const JSON_TOLERANCE_VALUE = 'fragTol';
+
+    const JSON_TOLERANCE_UNIT = 'fragTolUnit';
 
     private $jobId;
 
@@ -154,7 +158,7 @@ class WorkUnit
         
         // Reformat as we do not want the null score being sent
         $data[WorkUnit::JSON_PEPTIDES] = array();
-        foreach ($this->peptides as $key => $peptide) {
+        foreach ($this->peptides as $peptide) {
             $peptideData = array();
             $peptideData[WorkUnit::JSON_PEPTIDE_ID] = $peptide->getId();
             $peptideData[WorkUnit::JSON_PEPTIDE_SEQUENCE] = $peptide->getSequence();
@@ -167,9 +171,9 @@ class WorkUnit
                 
                 foreach ($peptide->getModifications() as $modification) {
                     $mod = array();
-                    $mod[WorkUnit::JSON_PEPTIDE_MODIFICATION_ID] = $modification->getId();
-                    $mod[WorkUnit::JSON_PEPTIDE_MODIFICATION_MASS] = $modification->getMonoisotopicMass();
-                    $mod[WorkUnit::JSON_PEPTIDE_MODIFICATION_RESIDUES] = implode('', $modification->getResidues());
+                    $mod[WorkUnit::JSON_MODIFICATION_ID] = $modification->getId();
+                    $mod[WorkUnit::JSON_MODIFICATION_MASS] = $modification->getMonoisotopicMass();
+                    $mod[WorkUnit::JSON_MODIFICATION_RESIDUES] = implode('', $modification->getResidues());
                 }
                 
                 $peptideData[WorkUnit::JSON_PEPTIDE_MODIFICATIONS][] = $mod;
@@ -181,14 +185,14 @@ class WorkUnit
         $data[WorkUnit::JSON_FIXED_MODIFICATIONS] = array();
         foreach ($this->fixedModifications as $modification) {
             $data[WorkUnit::JSON_FIXED_MODIFICATIONS][] = array(
-                'id' => $modification->getId(),
-                'mass' => $modification->getMonoisotopicMass(),
-                'residues' => implode('', $modification->getResidues())
+                WorkUnit::JSON_MODIFICATION_ID => $modification->getId(),
+                WorkUnit::JSON_MODIFICATION_MASS => $modification->getMonoisotopicMass(),
+                WorkUnit::JSON_MODIFICATION_RESIDUES => implode('', $modification->getResidues())
             );
         }
         
-        $data['fragTol'] = $this->getFragmentTolerance();
-        $data['fragTolUnit'] = $this->getFragmentToleranceUnit();
+        $data[WorkUnit::JSON_TOLERANCE_VALUE] = $this->getFragmentTolerance();
+        $data[WorkUnit::JSON_TOLERANCE_UNIT] = $this->getFragmentToleranceUnit();
         
         return json_encode($data);
     }
@@ -216,15 +220,18 @@ class WorkUnit
         $workUnit = new WorkUnit($jsonObj[WorkUnit::JSON_JOB], $jsonObj[WorkUnit::JSON_PRECURSOR]);
         
         // Parse fragment tolerance
-        if (isset($jsonObj['fragTol']) && isset($jsonObj['fragTolUnit'])) {
-            $workUnit->setFragmentTolerance(new Tolerance($jsonObj['fragTol'], $jsonObj['fragTolUnit']));
+        if (isset($jsonObj[WorkUnit::JSON_TOLERANCE_VALUE]) && isset($jsonObj[WorkUnit::JSON_TOLERANCE_UNIT])) {
+            $workUnit->setFragmentTolerance(
+                new Tolerance($jsonObj[WorkUnit::JSON_TOLERANCE_VALUE], $jsonObj[WorkUnit::JSON_TOLERANCE_UNIT]));
         }
         
         // Parse fixed modifications
         if (isset($jsonObj[WorkUnit::JSON_FIXED_MODIFICATIONS])) {
             foreach ($jsonObj[WorkUnit::JSON_FIXED_MODIFICATIONS] as $mod) {
-                $residues = str_split($mod['residues']);
-                $workUnit->addFixedModification(new Modification($mod['id'], $mod['mass'], $residues));
+                $residues = str_split($mod[WorkUnit::JSON_MODIFICATION_RESIDUES]);
+                $workUnit->addFixedModification(
+                    new Modification($mod[WorkUnit::JSON_MODIFICATION_ID], $mod[WorkUnit::JSON_MODIFICATION_MASS], 
+                        $residues));
             }
         }
         
@@ -259,6 +266,15 @@ class WorkUnit
             
             if (isset($rawPeptide[WorkUnit::JSON_PEPTIDE_SCORE]) && isset($rawPeptide[WorkUnit::JSON_PEPTIDE_IONS])) {
                 $peptide->setScore($rawPeptide[WorkUnit::JSON_PEPTIDE_SCORE], $rawPeptide[WorkUnit::JSON_PEPTIDE_IONS]);
+            }
+            
+            if (isset($rawPeptide[WorkUnit::JSON_PEPTIDE_MODIFICATIONS])) {
+                foreach ($rawPeptide[WorkUnit::JSON_PEPTIDE_MODIFICATIONS] as $mod) {
+                    $residues = str_split($mod[WorkUnit::JSON_MODIFICATION_RESIDUES]);
+                    $peptide->addModification(
+                        new Modification($mod[WorkUnit::JSON_MODIFICATION_ID], $mod[WorkUnit::JSON_MODIFICATION_MASS], 
+                            $residues));
+                }
             }
             
             $workUnit->addPeptide($peptide);

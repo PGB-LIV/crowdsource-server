@@ -114,7 +114,7 @@ class Phase2Allocator extends AbstractAllocator implements AllocatorInterface
 
     public function setWorkUnitResults(WorkUnit $workUnit)
     {
-        foreach ($workUnit->getPeptides() as $peptideId => $peptide) {
+        foreach ($workUnit->getPeptides() as $peptide) {
             $this->recordPeptideScores($workUnit->getPrecursorId(), $peptide);
         }
         
