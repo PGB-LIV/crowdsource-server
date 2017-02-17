@@ -16,12 +16,12 @@
  */
 namespace pgb_liv\crowdsource\Allocator;
 
-use pgb_liv\crowdsource\Core\WorkUnitInterface;
+use pgb_liv\crowdsource\Core\WorkUnit;
 
 interface AllocatorInterface
 {
 
-    public function setWorkUnitWorker($workerId, WorkUnitInterface $workUnit);
+    public function setWorkUnitWorker($workerId, WorkUnit $workUnit);
 
     /**
      * Gets the next available work unit for the current job.
@@ -36,5 +36,5 @@ interface AllocatorInterface
      * @param Phase1WorkUnit $results
      *            Work unit object containing results data
      */
-    public function setWorkUnitResults(WorkUnitInterface $results);
+    public function setWorkUnitResults(WorkUnit $results);
 }

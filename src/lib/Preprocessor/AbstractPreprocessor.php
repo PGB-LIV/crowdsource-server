@@ -29,6 +29,8 @@ abstract class AbstractPreprocessor
 
     protected $jobId;
 
+    protected $phase;
+
     /**
      * Creates a new instance of a preprocessor.
      *
@@ -52,10 +54,12 @@ abstract class AbstractPreprocessor
     /**
      * Marks the preprocessing stage this phase as preparing
      */
-    protected function initialise()
+    protected function initialise($phase)
     {
+        $this->phase = $phase;
         $this->adodb->Execute(
-            'UPDATE `job_queue` SET `state` = \'PREPARING\', `phase` = \'1\' WHERE `id` = ' . $this->jobId);
+            'UPDATE `job_queue` SET `state` = \'PREPARING\', `phase` = \'' . $this->phase . '\' WHERE `id` = ' .
+                 $this->jobId);
     }
 
     /**

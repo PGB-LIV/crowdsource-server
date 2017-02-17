@@ -68,16 +68,25 @@ class Modification
                 'Argument 2 must be a float value. Valued passed is of type ' . gettype($monoMass));
         }
         
-        foreach ($residues as $residue) {
-            if (strlen($residue) != 1) {
-                throw new \InvalidArgumentException(
-                    'Argument 3 must be an array of single char values. Value passed is of length ' . strlen($residue));
+        if (empty($residues)) {
+            throw new \InvalidArgumentException('Argument 3 must not be empty.');
+        } else {
+            foreach ($residues as $residue) {
+                if (strlen($residue) != 1) {
+                    throw new \InvalidArgumentException(
+                        'Argument 3 must be an array of single char values. Value passed is of length ' .
+                             strlen($residue));
+                }
             }
         }
-        
         $this->id = $id;
         $this->monoMass = $monoMass;
-        $this->residues = $residues;
+        
+        // Force sort order
+        sort($residues);
+        // Force unique residue positions
+        $this->residues = array_combine($residues, $residues);
+        ;
     }
 
     /**
@@ -107,6 +116,6 @@ class Modification
      */
     public function getResidues()
     {
-        return $this->residues;
+        return array_values($this->residues);
     }
 }

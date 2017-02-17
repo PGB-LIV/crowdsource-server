@@ -16,8 +16,12 @@
  */
 namespace pgb_liv\crowdsource\Test\Unit;
 
-use pgb_liv\crowdsource\Core\Phase1WorkUnit;
+use pgb_liv\crowdsource\Core\WorkUnit;
 use pgb_liv\crowdsource\Allocator\WorkUnitAllocator;
+use pgb_liv\crowdsource\Core\Tolerance;
+use pgb_liv\crowdsource\Core\FragmentIon;
+use pgb_liv\crowdsource\Core\Peptide;
+use pgb_liv\crowdsource\Core\PeptideModification;
 
 class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
 {
@@ -143,7 +147,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::getWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::recordResults
-     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::toJson
+     * @covers pgb_liv\crowdsource\Core\WorkUnit::toJson
      *
      * @uses pgb_liv\crowdsource\Allocator\WorkUnitAllocator
      */
@@ -159,9 +163,14 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
         
         $this->assertEquals($testUnit, $workUnit);
         
-        $workUnit->addPeptideScore(0, 120.6);
-        $workUnit->addPeptideScore(1, 46.16);
-        $workUnit->addPeptideScore(0, 25.92);
+        $peptide = $workUnit->getPeptide(0);
+        $peptide->setScore(120.6, 8);
+        
+        $peptide = $workUnit->getPeptide(1);
+        $peptide->setScore(46.16, 5);
+        
+        $peptide = $workUnit->getPeptide(2);
+        $peptide->setScore(25.92, 2);
         
         $isSuccess = $allocator->recordResults($workUnit->toJson(true));
         $this->assertEquals(true, $isSuccess);
@@ -173,7 +182,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::getWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::recordResults
-     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::toJson
+     * @covers pgb_liv\crowdsource\Core\WorkUnit::toJson
      *
      * @uses pgb_liv\crowdsource\Allocator\WorkUnitAllocator
      */
@@ -189,9 +198,14 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
         
         $this->assertEquals($testUnit, $workUnit);
         
-        $workUnit->addPeptideScore(0, 120.6);
-        $workUnit->addPeptideScore(1, 46.16);
-        $workUnit->addPeptideScore(0, 25.92);
+        $peptide = $workUnit->getPeptide(0);
+        $peptide->setScore(120.6, 8);
+        
+        $peptide = $workUnit->getPeptide(1);
+        $peptide->setScore(46.16, 5);
+        
+        $peptide = $workUnit->getPeptide(2);
+        $peptide->setScore(25.92, 2);
         
         $this->cleanUp();
         $isSuccess = $allocator->recordResults($workUnit->toJson(true));
@@ -204,7 +218,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::getWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\WorkUnitAllocator::recordResults
-     * @covers pgb_liv\crowdsource\Core\Phase1WorkUnit::toJson
+     * @covers pgb_liv\crowdsource\Core\WorkUnit::toJson
      *
      * @uses pgb_liv\crowdsource\Allocator\WorkUnitAllocator
      */
@@ -220,9 +234,14 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
         
         $this->assertEquals($testUnit, $workUnit);
         
-        $workUnit->addPeptideScore(0, 120.6);
-        $workUnit->addPeptideScore(1, 46.16);
-        $workUnit->addPeptideScore(0, 25.92);
+        $peptide = $workUnit->getPeptide(0);
+        $peptide->setScore(120.6, 8);
+        
+        $peptide = $workUnit->getPeptide(1);
+        $peptide->setScore(46.16, 5);
+        
+        $peptide = $workUnit->getPeptide(2);
+        $peptide->setScore(25.92, 2);
         
         $this->cleanUp();
         $this->createJob(1, 127);
@@ -299,14 +318,14 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
     {
         global $adodb;
         
-        $workUnit = new Phase1WorkUnit($jobId, $precursorId);
-        $workUnit->setFragmentTolerance(10.0, 'ppm');
+        $workUnit = new WorkUnit($jobId, $precursorId);
+        $workUnit->setFragmentTolerance(new Tolerance(10.0, 'ppm'));
         
         $adodb->Execute('INSERT INTO `workunit1` (`job`, `ms1`) VALUES (' . $jobId . ', ' . $precursorId . ');');
         
         $ms2 = $this->getMs2();
         foreach ($ms2 as $key => $value) {
-            $workUnit->addFragmentIon($value['mz'], $value['intensity']);
+            $workUnit->addFragmentIon(new FragmentIon($value['mz'], $value['intensity']));
             $adodb->Execute(
                 'INSERT INTO `raw_ms2` (`job`, `ms1`, `id`, `mz`, `intensity`) VALUES (' . $jobId . ', ' . $precursorId .
                      ', ' . $key . ', ' . $value['mz'] . ', ' . $value['intensity'] . ');');
@@ -314,7 +333,9 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
         
         $peptides = $this->getPeptides();
         foreach ($peptides as $id => $peptide) {
-            $workUnit->addPeptide($id, $peptide['structure']);
+            $pep = new Peptide($id);
+            $pep->setSequence($peptide['structure']);
+            $workUnit->addPeptide($pep);
             $adodb->Execute(
                 'INSERT INTO `workunit1_peptides` (`job`, `ms1`, `peptide`) VALUES (' . $jobId . ', ' . $precursorId .
                      ', ' . $id . ');');
@@ -325,7 +346,11 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
         
         $modifications = $this->getFixedModifications();
         foreach ($modifications as $modification) {
-            $workUnit->addFixedModification($modification['mass'], $modification['residue']);
+            $mod = new PeptideModification(4, $modification['mass'], 
+                array(
+                    $modification['residue']
+                ));
+            $workUnit->addFixedModification($mod);
             $adodb->Execute(
                 'INSERT INTO `job_fixed_mod` (`job`, `mod_id`, `acid`) VALUES (' . $jobId . ', ' . $modification['id'] .
                      ', ' . $adodb->quote($modification['residue']) . ');');

@@ -39,6 +39,7 @@ switch ($requestType) {
         
         if ($workUnit === false) {
             echo 'parseResult({"type":"nomore"});';
+            break;
         }
         
         echo 'parseResult(' . $workUnit->toJson() . ');';

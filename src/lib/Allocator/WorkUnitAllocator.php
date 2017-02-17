@@ -37,10 +37,10 @@ class WorkUnitAllocator
      */
     public function recordResults($jsonStr)
     {
-        $decoded = json_decode($jsonStr);
-        $jobId = (int) $decoded->job;
+        $workUnit = WorkUnit::fromJson($jsonStr);
         
-        $phase = $this->adodb->GetOne('SELECT `phase` FROM `job_queue` WHERE `id` = ' . $this->adodb->quote($jobId));
+        $phase = $this->adodb->GetOne(
+            'SELECT `phase` FROM `job_queue` WHERE `id` = ' . $this->adodb->quote($workUnit->getJobId()));
         if (is_null($phase)) {
             return false;
         }
@@ -48,7 +48,6 @@ class WorkUnitAllocator
         $allocator = null;
         switch ($phase) {
             case '1':
-                $workUnit = Phase1WorkUnit::fromJson($jsonStr);
                 $allocator = new Phase1Allocator($this->adodb, $workUnit->getJobId());
                 break;
             case '2':

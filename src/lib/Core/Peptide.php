@@ -171,4 +171,14 @@ class Peptide
     {
         return $this->modifications;
     }
+
+    /**
+     * Returns whether this peptide contains modifications or not
+     *
+     * @return boolean True if the object contains modifications
+     */
+    public function isModified()
+    {
+        return count($this->modifications) != 0;
+    }
 }

@@ -44,16 +44,16 @@ class Phase2Preprocessor extends AbstractPreprocessor
      */
     public function process()
     {
-        $this->initialise();
+        $this->initialise(2);
         echo 'Pre-processing work units.' . PHP_EOL;
         $this->indexWorkUnits();
         
         $this->finalise();
     }
 
-    protected function initialise()
+    protected function initialise($phase)
     {
-        parent::initialise();
+        parent::initialise($phase);
         $this->massTolerance = $this->adodb->GetOne(
             'SELECT `mass_tolerance` FROM `job_queue` WHERE `id` = ' . $this->jobId);
         // As ppm
@@ -130,7 +130,7 @@ class Phase2Preprocessor extends AbstractPreprocessor
         // Select best peptides
         $peptides = $this->adodb->Execute(
             'SELECT `f`.`id`, `f`.`peptide`, `f`.`mass_modified`, MAX(`score`) AS `bestscore` FROM `workunit1_peptides` `w` LEFT JOIN `fasta_peptides` `f` ON `f`.`id` = `w`.`peptide` WHERE `w`.`job` = ' .
-                 $this->jobId . ' GROUP BY `w`.`peptide` HAVING `bestscore` >= 10 ORDER BY `f`.`id` ASC');
+                 $this->jobId . ' GROUP BY `w`.`peptide` HAVING `bestscore` >= 5 ORDER BY `f`.`id` ASC');
         
         return $peptides;
     }

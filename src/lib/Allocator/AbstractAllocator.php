@@ -16,7 +16,9 @@
  */
 namespace pgb_liv\crowdsource\Allocator;
 
-use pgb_liv\crowdsource\Core\WorkUnitInterface;
+use pgb_liv\crowdsource\Core\WorkUnit;
+use pgb_liv\crowdsource\Core\FragmentIon;
+use pgb_liv\crowdsource\Core\PeptideModification;
 
 abstract class AbstractAllocator implements AllocatorInterface
 {
@@ -128,7 +130,41 @@ abstract class AbstractAllocator implements AllocatorInterface
                  ' && `state` = \'READY\' && phase = \'' . $this->phase . '\'');
     }
 
+    protected function injectFixedModifications(WorkUnit $workUnit)
+    {
+        $rs = $this->adodb->Execute(
+            'SELECT `job_fixed_mod`.`mod_id`, `unimod_modifications`.`mono_mass`, `job_fixed_mod`.`acid` FROM `job_fixed_mod`
+    INNER JOIN `unimod_modifications` ON `unimod_modifications`.`record_id` = `job_fixed_mod`.`mod_id` WHERE 
+            `job_fixed_mod`.`job` = ' . $workUnit->getJobId());
+        
+        foreach ($rs as $record) {
+            $modification = new PeptideModification((int) $record['mod_id'], (float) $record['mono_mass'], 
+                array(
+                    $record['acid']
+                ));
+            $workUnit->addFixedModification($modification);
+        }
+    }
+
+    /**
+     * Injects the MS/MS data into the work unit object
+     *
+     * @param Phase1WorkUnit $workUnit
+     *            Work unit to inject into
+     *            
+     */
+    protected function injectFragmentIons(WorkUnit $workUnit)
+    {
+        $rs = $this->adodb->Execute(
+            'SELECT `mz`, `intensity` FROM `raw_ms2` WHERE `job` = ' . $workUnit->getJobId() . ' && `ms1` = ' .
+                 $workUnit->getPrecursorId());
+        
+        foreach ($rs as $record) {
+            $workUnit->addFragmentIon(new FragmentIon((float) $record['mz'], (float) $record['intensity']));
+        }
+    }
+
     abstract public function getWorkUnit();
 
-    abstract public function setWorkUnitResults(WorkUnitInterface $workUnit);
+    abstract public function setWorkUnitResults(WorkUnit $workUnit);
 }

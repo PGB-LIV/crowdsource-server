@@ -35,9 +35,9 @@ class Phase1Preprocessor extends AbstractPreprocessor
     /**
      * Marks the preprocessing stage this phase as preparing
      */
-    protected function initialise()
+    protected function initialise($phase)
     {
-        parent::initialise();
+        parent::initialise($phase);
         
         $job = $this->adodb->GetRow('SELECT `database_file`, `raw_file` FROM `job_queue` WHERE `id` = ' . $this->jobId);
         
@@ -50,7 +50,7 @@ class Phase1Preprocessor extends AbstractPreprocessor
      */
     public function process()
     {
-        $this->initialise();
+        $this->initialise(1);
         
         echo 'Pre-processing database: ' . $this->databasePath . PHP_EOL;
         $this->indexDatabase();
