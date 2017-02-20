@@ -102,21 +102,22 @@ class Phase2Preprocessor extends AbstractPreprocessor
         $rs = $this->adodb->Execute(
             'SELECT `m`.`record_id`, `one_letter`, `mono_mass` FROM `unimod_specificity` `s` LEFT JOIN `unimod_modifications` `m` ON `s`.`mod_key` = `m`.`record_id` WHERE `classifications_key` = 2');
         
-        $res2mod = array();
+        $residueToMod = array();
         
         foreach ($rs as $record) {
-            if (! isset($res2mod[$record['one_letter']])) {
-                $res2mod[$record['one_letter']] = array();
+            $residue = $record['one_letter'];
+            if (! isset($residueToMod[$residue])) {
+                $residueToMod[$residue] = array();
             }
             
             $mod = array(
                 'id' => $record['record_id'],
                 'mass' => $record['mono_mass']
             );
-            $res2mod[$record['one_letter']][] = $mod;
+            $residueToMod[$residue][] = $mod;
         }
         
-        return $res2mod;
+        return $residueToMod;
     }
 
     /**
