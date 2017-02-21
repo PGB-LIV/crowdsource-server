@@ -23,7 +23,6 @@ class BulkQueryTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @covers pgb_liv\crowdsource\BulkQuery::__construct
-     * @covers pgb_liv\crowdsource\BulkQuery::setMaxPacketLimit
      *
      * @uses pgb_liv\crowdsource\BulkQuery
      */
@@ -44,7 +43,7 @@ class BulkQueryTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @covers pgb_liv\crowdsource\BulkQuery::__construct
-     * @covers pgb_liv\crowdsource\BulkQuery::setMaxPacketLimit
+     * @covers pgb_liv\crowdsource\BulkQuery::setBufferLength
      * @covers pgb_liv\crowdsource\BulkQuery::append
      * @covers pgb_liv\crowdsource\BulkQuery::execute
      * @covers pgb_liv\crowdsource\BulkQuery::close
@@ -59,9 +58,10 @@ class BulkQueryTest extends \PHPUnit_Framework_TestCase
         
         $prefixQuery = 'INSERT INTO `workunit1` (`job`, `ms1`) VALUES ';
         $bulkQuery = new BulkQuery($adodb, $prefixQuery);
+        $bulkQuery->setBufferLength(1024);
         $this->assertInstanceOf('pgb_liv\crowdsource\BulkQuery', $bulkQuery);
         
-        for ($i = 1; $i < 100000; $i ++) {
+        for ($i = 1; $i < 1000; $i ++) {
             $bulkQuery->append('(1, ' . $i . ')');
         }
         
@@ -76,6 +76,29 @@ class BulkQueryTest extends \PHPUnit_Framework_TestCase
             
             $i ++;
         }
+        
+        $this->cleanUp();
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\BulkQuery::__construct
+     * @covers pgb_liv\crowdsource\BulkQuery::setBufferLength
+     * @covers pgb_liv\crowdsource\BulkQuery::getBufferLength
+     *
+     * @uses pgb_liv\crowdsource\BulkQuery
+     */
+    public function testObjectCanGetSetBufferLength()
+    {
+        global $adodb;
+        
+        $this->cleanUp();
+        
+        $prefixQuery = 'INSERT INTO `workunit1` (`job`, `ms1`) VALUES ';
+        $bulkQuery = new BulkQuery($adodb, $prefixQuery);
+        $this->assertInstanceOf('pgb_liv\crowdsource\BulkQuery', $bulkQuery);
+        
+        $bulkQuery->setBufferLength(1024);
+        $this->assertEquals(1024, $bulkQuery->getBufferLength());
         
         $this->cleanUp();
     }

@@ -23,7 +23,7 @@ namespace pgb_liv\crowdsource;
 class BulkQuery
 {
 
-    private $maxPacketSize = 1024;
+    private $bufferLength = - 1;
 
     private $adodb;
 
@@ -45,16 +45,31 @@ class BulkQuery
     {
         $this->adodb = $conn;
         $this->prefix = $prefix;
-        $this->setMaxPacketLimit();
+        
+        // Auto-detect buffer length
+        $this->bufferLength = $this->adodb->getRow('SHOW VARIABLES LIKE \'max_allowed_packet\';');
+        $this->bufferLength = $this->bufferLength['Value'] - ((int) ($this->bufferLength['Value'] / 10));
     }
 
     /**
-     * Retrieves max packet size from the database for use in bulk process limits
+     * Sets the size of the buffer to store in memory before pushing to the database
+     *
+     * @param int $bufferLength
+     *            The size of the buffer in bytes
      */
-    private function setMaxPacketLimit()
+    public function setBufferLength($bufferLength)
     {
-        $this->maxPacketSize = $this->adodb->getRow('SHOW VARIABLES LIKE \'max_allowed_packet\';');
-        $this->maxPacketSize = $this->maxPacketSize['Value'] - ((int) ($this->maxPacketSize['Value'] / 10));
+        $this->bufferLength = $bufferLength;
+    }
+
+    /**
+     * Gets the current buffer length
+     * 
+     * @return int
+     */
+    public function getBufferLength()
+    {
+        return $this->bufferLength;
     }
 
     private function execute()
@@ -77,7 +92,7 @@ class BulkQuery
         $this->query .= $query;
         $this->appendCount ++;
         
-        if (strlen($this->query) > $this->maxPacketSize) {
+        if (strlen($this->query) > $this->bufferLength) {
             $this->execute();
         }
     }
