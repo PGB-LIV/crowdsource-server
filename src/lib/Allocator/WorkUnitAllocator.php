@@ -39,8 +39,7 @@ class WorkUnitAllocator
     {
         $workUnit = WorkUnit::fromJson($jsonStr);
         
-        $phase = $this->adodb->GetOne(
-            'SELECT `phase` FROM `job_queue` WHERE `id` = ' . $this->adodb->quote($workUnit->getJobId()));
+        $phase = $this->adodb->GetOne('SELECT `phase` FROM `job_queue` WHERE `id` = ' . $this->adodb->quote($workUnit->getJobId()));
         if (is_null($phase)) {
             return false;
         }
@@ -106,5 +105,26 @@ class WorkUnitAllocator
         }
         
         return $workUnit;
+    }
+
+    public function getJsonResponse($requestType)
+    {
+        switch ($requestType) {
+            case 'workunit':
+                $workUnit = $this->getWorkUnit();
+                
+                if ($workUnit === false) {
+                    return 'parseResult({"type":"nomore"});';
+                }
+                
+                return 'parseResult(' . $workUnit->toJson() . ');';
+            
+            case 'result':
+                $workUnitAllocator->recordResults($_GET['result']);
+                return 'parseResult({"type":"confirmation"})';
+            
+            default:
+                return 'parseResult({"response":"none"});';
+        }
     }
 }

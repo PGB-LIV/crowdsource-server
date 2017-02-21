@@ -156,9 +156,14 @@ class RawPreprocessor
             'SELECT `charge_min`, `charge_max`, `mass_tolerance` FROM `job_queue` WHERE `id` = ' . $this->jobId);
         $tolerance = $job['mass_tolerance'] / 1000000;
         
-        // TODO: This will need to factor the smallest/largest PTM
+        $massLimt = $this->adodb->GetRow('SELECT MIN(`mono_mass`) AS `min`, MAX(`mono_mass`) AS `max` FROM `unimod_modifications`;');
+        
         $mass = $this->adodb->GetRow(
             'SELECT MIN(`mass`) AS `min`, MAX(`mass`) AS `max` FROM `fasta_peptides` WHERE `job` = ' . $this->jobId);
+        
+        $mass['min'] -= $massLimt['min'];
+        $mass['max'] -= $massLimt['max'];
+        
         $mass['min'] -= $mass['min'] * $tolerance;
         $mass['max'] += $mass['max'] * $tolerance;
         

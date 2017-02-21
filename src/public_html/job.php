@@ -32,28 +32,4 @@ if (isset($_GET['r'])) {
 }
 
 $workUnitAllocator = new WorkUnitAllocator($adodb);
-
-switch ($requestType) {
-    case 'workunit':
-        $workUnit = $workUnitAllocator->getWorkUnit();
-        
-        if ($workUnit === false) {
-            echo 'parseResult({"type":"nomore"});';
-            break;
-        }
-        
-        echo 'parseResult(' . $workUnit->toJson() . ');';
-        break;
-    
-    case 'terminate':
-        // client has successfully said goodbye.
-        break;
-    
-    case 'result':
-        $workUnitAllocator->recordResults($_GET['result']);
-        echo 'parseResult({"type":"confirmation"})';
-        break;
-    
-    default:
-        echo 'parseResult({"response":"none"});';
-}
+echo $workUnitAllocator->getJsonResponse($requestType);
