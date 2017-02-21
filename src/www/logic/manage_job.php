@@ -14,34 +14,33 @@ if (isset($_SESSION["userId"])) {
     exit();
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    
-    if (isset($_POST['jobchecks'])) {
-        $jobchecks = $_POST['jobchecks'];
-        if (isset($_POST['Pause'])) {
-            for ($i = 0; $i < count($jobchecks); $i ++) {
-                $id = intval($jobchecks[$i]);
-                $query = "SELECT status, old_status FROM job_queue WHERE id='$id'";
-                $rs = $adodb->Execute($query);
-                $status = $rs->fields['status']; // current status
-                $oldstatus = $rs->fields['old_status'];
-                if ($status == 'paused') {
-                    // then unpause it
-                    $query = "UPDATE job_queue SET status= '$oldstatus'WHERE id='$id'";
-                } else {
-                    // pause it
-                    $query = "UPDATE job_queue SET status='paused',old_status='$status' WHERE id='$id'";
-                }
-                $rs = $adodb->Execute($query);
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['jobchecks'])) {
+    $jobchecks = $_POST['jobchecks'];
+    if (isset($_POST['Pause'])) {
+        for ($i = 0; $i < count($jobchecks); $i ++) {
+            $id = intval($jobchecks[$i]);
+            $query = "SELECT status, old_status FROM job_queue WHERE id='$id'";
+            $rs = $adodb->Execute($query);
+            
+            // current status
+            $status = $rs->fields['status'];
+            $oldstatus = $rs->fields['old_status'];
+            if ($status == 'paused') {
+                // then unpause it
+                $query = "UPDATE job_queue SET status= '$oldstatus'WHERE id='$id'";
+            } else {
+                // pause it
+                $query = "UPDATE job_queue SET status='paused',old_status='$status' WHERE id='$id'";
             }
+            $rs = $adodb->Execute($query);
         }
-        
-        if (isset($_POST['Delete'])) {
-            for ($i = 0; $i < count($jobchecks); $i ++) {
-                $id = intval($jobchecks[$i]);
-                $query = "UPDATE job_queue SET status='to_be_deleted' WHERE id='$id'";
-                $rs = $adodb->Execute($query);
-            }
+    }
+    
+    if (isset($_POST['Delete'])) {
+        for ($i = 0; $i < count($jobchecks); $i ++) {
+            $id = intval($jobchecks[$i]);
+            $query = "UPDATE job_queue SET status='to_be_deleted' WHERE id='$id'";
+            $rs = $adodb->Execute($query);
         }
     }
 }
@@ -51,7 +50,9 @@ $visiString = "style='visibility: hidden'";
 $query = "SELECT * FROM job_queue WHERE customer='$userId'";
 $rs = $adodb->Execute($query);
 $i = 0;
-$jobsArray[0]['job_title'] = "xx-nojob-xx"; // in case none are found
+
+// in case none are found
+$jobsArray[0]['job_title'] = "xx-nojob-xx";
 
 while (! $rs->EOF) {
     $jobsArray[$i]['job_id'] = $rs->fields['id'];
@@ -69,34 +70,10 @@ while (! $rs->EOF) {
     $rs->MoveNext();
     $i ++;
 }
-// var_dump($i);
+
 if ($i) {
     $visiString = "";
 }
-// var_dump($jobsArray);
 
 $smarty->assign('jobrecords', $jobsArray);
 $smarty->assign('shown', $visiString);
-    
-    
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-    
-    
-    
-    
-    
-    

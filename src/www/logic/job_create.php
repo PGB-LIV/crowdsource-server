@@ -1,5 +1,3 @@
-
-
 <?php
 
 class JobCreate
@@ -75,9 +73,6 @@ for ($i = 0; $i < count($fastaArray); $i ++) {
 $smarty->assign('fastaArray', $fastaArray);
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    
-    // var_dump($_POST);
-    
     if (empty($_POST["jobname"])) {
         $jobnameErr = "Job Name is required";
         $errorNum ++;
@@ -100,11 +95,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $charge = intval($_POST["charge"]);
     $tolerance = intval($_POST['tolerance']);
     
-    if ($_POST['fastasel'] == 'custom') {
-        if ($_FILES["fastafile"]["name"] == "") {
-            $fastafileErr = "Please specify a database";
-            $errorNum ++;
-        }
+    if ($_POST['fastasel'] == 'custom' && $_FILES["fastafile"]["name"] == '') {
+        $fastafileErr = "Please specify a database";
+        $errorNum ++;
     }
     
     if ($_FILES["rawfile"]["name"] == "") {
@@ -172,13 +165,3 @@ function test_input($data)
     $data = htmlspecialchars($data);
     return $data;
 }
-
-
-	
-
-
-
-
-
-
-

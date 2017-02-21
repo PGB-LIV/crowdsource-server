@@ -46,12 +46,11 @@ class ModificationTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanBeConstructedForInvalidConstructorArguments1()
     {
-        $modification = new Modification('fail', 79.97, 
-            array(
-                'S',
-                'T',
-                'Y'
-            ));
+        $modification = new Modification('fail', 79.97, array(
+            'S',
+            'T',
+            'Y'
+        ));
         $this->assertInstanceOf('pgb_liv\crowdsource\Core\Modification', $modification);
     }
 
@@ -80,6 +79,18 @@ class ModificationTest extends \PHPUnit_Framework_TestCase
         $modification = new Modification(21, 79.97, array(
             '1234'
         ));
+        $this->assertInstanceOf('pgb_liv\crowdsource\Core\Modification', $modification);
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Core\Modification::__construct
+     * @expectedException InvalidArgumentException
+     *
+     * @uses pgb_liv\crowdsource\Core\Modification
+     */
+    public function testObjectCanBeConstructedForInvalidConstructorArguments4()
+    {
+        $modification = new Modification(21, 79.97, array());
         $this->assertInstanceOf('pgb_liv\crowdsource\Core\Modification', $modification);
     }
 

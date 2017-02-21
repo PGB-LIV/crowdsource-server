@@ -129,6 +129,7 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
      * @covers pgb_liv\crowdsource\Core\WorkUnit::addPeptide
      * @covers pgb_liv\crowdsource\Core\WorkUnit::getPeptides
+     * @covers pgb_liv\crowdsource\Core\WorkUnit::getPeptide
      *
      * @uses pgb_liv\crowdsource\Core\WorkUnit
      */
@@ -145,6 +146,23 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
         $workUnit->addPeptide($peptides[0]);
         
         $this->assertEquals($peptides, $workUnit->getPeptides());
+        $this->assertEquals($peptide[0], $workUnit->getPeptide(0));
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
+     * @covers pgb_liv\crowdsource\Core\WorkUnit::getPeptide
+     * @expectedException InvalidArgumentException
+     *
+     * @uses pgb_liv\crowdsource\Core\WorkUnit
+     */
+    public function testObjectCanGetInvalidPeptide()
+    {
+        $jobId = 1;
+        $precursorId = 2;
+        
+        $workUnit = new WorkUnit($jobId, $precursorId);
+        $workUnit->getPeptide('fail');
     }
 
     /**
@@ -212,6 +230,7 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
     /**
      * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
      * @covers pgb_liv\crowdsource\Core\WorkUnit::fromJson
+     * @covers pgb_liv\crowdsource\Core\WorkUnit::fromJsonPeptides
      *
      * @uses pgb_liv\crowdsource\Core\WorkUnit
      */
@@ -257,6 +276,7 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
     /**
      * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
      * @covers pgb_liv\crowdsource\Core\WorkUnit::fromJson
+     * @covers pgb_liv\crowdsource\Core\WorkUnit::fromJsonPeptides
      *
      * @uses pgb_liv\crowdsource\Core\WorkUnit
      */
