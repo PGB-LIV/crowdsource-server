@@ -75,4 +75,28 @@ class FragmentIonTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($mz, $fragment->getMz());
         $this->assertEquals($intensity, $fragment->getIntensity());
     }
+
+    /**
+     * @covers pgb_liv\crowdsource\Core\FragmentIon::__construct
+     * @covers pgb_liv\crowdsource\Core\FragmentIon::toArray
+     * @covers pgb_liv\crowdsource\Core\FragmentIon::fromArray
+     * @covers pgb_liv\crowdsource\Core\FragmentIon::getMz
+     * @covers pgb_liv\crowdsource\Core\FragmentIon::getIntensity
+     *
+     * @uses pgb_liv\crowdsource\Core\FragmentIon
+     */
+    public function testObjectCanConvertToFromArray()
+    {
+        $mz = 2341.3632;
+        $intensity = 1344721.2572;
+        $fragment = new FragmentIon($mz, $intensity);
+        $this->assertInstanceOf('pgb_liv\crowdsource\Core\FragmentIon', $fragment);
+        
+        $fragmentArray = array();
+        $fragmentArray[FragmentIon::ARRAY_MZ] = $fragment->getMz();
+        $fragmentArray[FragmentIon::ARRAY_INTENSITY] = $fragment->getIntensity();
+        
+        $this->assertEquals($fragmentArray, $fragment->toArray());
+        $this->assertEquals($fragment, FragmentIon::fromArray($fragmentArray));
+    }
 }

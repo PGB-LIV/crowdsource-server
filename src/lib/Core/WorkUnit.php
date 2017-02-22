@@ -123,7 +123,7 @@ class WorkUnit
         return $this->fragmentTolerance->getUnit();
     }
 
-    public function toJson($includeScore = false)
+    public function toJson()
     {
         $data = array();
         $data[WorkUnit::JSON_JOB] = $this->jobId;

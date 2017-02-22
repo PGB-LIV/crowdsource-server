@@ -30,6 +30,8 @@ class Modification
 
     const ARRAY_RESIDUES = 'residues';
 
+    const ARRAY_LOCATION = 'position';
+
     /**
      * Modification ID
      *
@@ -50,6 +52,13 @@ class Modification
      * @var array
      */
     private $residues = array();
+
+    /**
+     * Location modification found at
+     *
+     * @var int
+     */
+    private $location;
 
     /**
      * Creates a new instance of this clas with the specified values
@@ -116,6 +125,32 @@ class Modification
     }
 
     /**
+     * Sets the location for this modification
+     *
+     * @param int $location
+     *            The location to set this modification at
+     * @throws \InvalidArgumentException If argument 1 is not of type int
+     */
+    public function setLocation($location)
+    {
+        if (! is_int($location)) {
+            throw new \InvalidArgumentException('Argument 1 must be an int value. Valued passed is of type ' . gettype($location));
+        }
+        
+        $this->location = $location;
+    }
+
+    /**
+     * Gets the location of this modification
+     *
+     * @return int
+     */
+    public function getLocation()
+    {
+        return $this->location;
+    }
+
+    /**
      * Set residues for this modification
      *
      * @param array $residues
@@ -154,21 +189,25 @@ class Modification
     /**
      * Creates a new instance of this class from an array of properties
      *
-     * @param array $modArray
+     * @param array $modificationArray
      *            Array of properties. See ARRAY_... for property names
      * @return \pgb_liv\crowdsource\Core\Modification
      */
-    public static function fromArray(array $modArray)
+    public static function fromArray(array $modificationArray)
     {
-        $modification = new Modification($modArray[Modification::ARRAY_ID]);
+        $modification = new Modification($modificationArray[Modification::ARRAY_ID]);
         
-        if (isset($modArray[Modification::ARRAY_MASS])) {
-            $modification->setMonoisotopicMass($modArray[Modification::ARRAY_MASS]);
+        if (isset($modificationArray[Modification::ARRAY_MASS])) {
+            $modification->setMonoisotopicMass($modificationArray[Modification::ARRAY_MASS]);
         }
         
-        if (isset($modArray[Modification::ARRAY_RESIDUES])) {
-            $residues = str_split($modArray[Modification::ARRAY_RESIDUES]);
+        if (isset($modificationArray[Modification::ARRAY_RESIDUES])) {
+            $residues = str_split($modificationArray[Modification::ARRAY_RESIDUES]);
             $modification->setResidues($residues);
+        }
+        
+        if (isset($modificationArray[Modification::ARRAY_LOCATION])) {
+            $modification->setLocation($modificationArray[Modification::ARRAY_LOCATION]);
         }
         
         return $modification;
@@ -184,6 +223,10 @@ class Modification
         $modification[Modification::ARRAY_ID] = $this->getId();
         $modification[Modification::ARRAY_MASS] = $this->getMonoisotopicMass();
         $modification[Modification::ARRAY_RESIDUES] = implode('', $this->getResidues());
+        
+        if (! is_null($this->getLocation())) {
+            $modification[Modification::ARRAY_LOCATION] = $this->getLocation();
+        }
         
         return $modification;
     }

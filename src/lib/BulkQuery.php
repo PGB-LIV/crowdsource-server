@@ -64,7 +64,7 @@ class BulkQuery
 
     /**
      * Gets the current buffer length
-     * 
+     *
      * @return int
      */
     public function getBufferLength()
