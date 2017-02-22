@@ -24,6 +24,16 @@ namespace pgb_liv\crowdsource\Core;
 class Peptide
 {
 
+    const ARRAY_ID = 'id';
+
+    const ARRAY_SEQUENCE = 'sequence';
+
+    const ARRAY_SCORE = 'score';
+
+    const ARRAY_IONS = 'ionsMatched';
+
+    const ARRAY_MODIFICATIONS = 'mods';
+
     /**
      * Peptide ID
      *
@@ -69,8 +79,7 @@ class Peptide
     public function __construct($id)
     {
         if (! is_int($id)) {
-            throw new \InvalidArgumentException(
-                'Argument 1 must be an int value. Valued passed is of type ' . gettype($id));
+            throw new \InvalidArgumentException('Argument 1 must be an int value. Valued passed is of type ' . gettype($id));
         }
         
         $this->id = $id;
@@ -99,13 +108,11 @@ class Peptide
     public function setScore($score, $ionsMatched)
     {
         if (! is_float($score) && ! is_int($score)) {
-            throw new \InvalidArgumentException(
-                'Argument 1 must be an int or float value. Valued passed is of type ' . gettype($score));
+            throw new \InvalidArgumentException('Argument 1 must be an int or float value. Valued passed is of type ' . gettype($score));
         }
         
         if (! is_int($ionsMatched)) {
-            throw new \InvalidArgumentException(
-                'Argument 2 must be an int value. Valued passed is of type ' . gettype($ionsMatched));
+            throw new \InvalidArgumentException('Argument 2 must be an int value. Valued passed is of type ' . gettype($ionsMatched));
         }
         
         $this->score = $score;
@@ -179,5 +186,50 @@ class Peptide
     public function isModified()
     {
         return count($this->modifications) != 0;
+    }
+
+    public function toArray()
+    {
+        $peptide = array();
+        $peptide[Peptide::ARRAY_ID] = $this->getId();
+        $peptide[Peptide::ARRAY_SEQUENCE] = $this->getSequence();
+        if ($this->getScore() != null) {
+            $peptide[Peptide::ARRAY_SCORE] = $this->getScore();
+        }
+        
+        if ($this->isModified()) {
+            $peptide[Peptide::ARRAY_MODIFICATIONS] = array();
+            
+            foreach ($this->getModifications() as $modification) {
+                $peptide[Peptide::ARRAY_MODIFICATIONS][] = $modification->toArray();
+            }
+        }
+        
+        return $peptide;
+    }
+
+    public static function fromArray(array $peptideArray)
+    {
+        if (! isset($peptideArray[Peptide::ARRAY_ID]) || ! is_int($peptideArray[Peptide::ARRAY_ID])) {
+            throw new \InvalidArgumentException('A peptide "ID" must be an int value. Valued passed is of type ' . gettype($peptideArray[Peptide::ARRAY_ID]));
+        }
+        
+        $peptide = new Peptide($peptideArray[Peptide::ARRAY_ID]);
+        
+        if (isset($peptideArray[Peptide::ARRAY_SEQUENCE])) {
+            $peptide->setSequence($peptideArray[Peptide::ARRAY_SEQUENCE]);
+        }
+        
+        if (isset($peptideArray[Peptide::ARRAY_SCORE]) && isset($peptideArray[Peptide::ARRAY_IONS])) {
+            $peptide->setScore($peptideArray[Peptide::ARRAY_SCORE], $peptideArray[Peptide::ARRAY_IONS]);
+        }
+        
+        if (isset($peptideArray[Peptide::ARRAY_MODIFICATIONS])) {
+            foreach ($peptideArray[Peptide::ARRAY_MODIFICATIONS] as $modArray) {
+                $peptide->addModification(Modification::fromArray($modArray));
+            }
+        }
+        
+        return $peptide;
     }
 }

@@ -111,20 +111,25 @@ class WorkUnitAllocator
     {
         switch ($requestType) {
             case 'workunit':
-                $workUnit = $this->getWorkUnit();
-                
-                if ($workUnit === false) {
-                    return 'parseResult({"type":"nomore"});';
-                }
-                
-                return 'parseResult(' . $workUnit->toJson() . ');';
+                return $this->getJsonResponseWorkUnit();
             
             case 'result':
-                $workUnitAllocator->recordResults($_GET['result']);
+                $this->recordResults($_GET['result']);
                 return 'parseResult({"type":"confirmation"})';
             
             default:
                 return 'parseResult({"response":"none"});';
         }
+    }
+
+    private function getJsonResponseWorkUnit()
+    {
+        $workUnit = $this->getWorkUnit();
+        
+        if ($workUnit === false) {
+            return 'parseResult({"type":"nomore"});';
+        }
+        
+        return 'parseResult(' . $workUnit->toJson() . ');';
     }
 }

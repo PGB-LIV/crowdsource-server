@@ -24,6 +24,10 @@ namespace pgb_liv\crowdsource\Core;
 class FragmentIon
 {
 
+    const ARRAY_MZ = 'mz';
+
+    const ARRAY_INTENSITY = 'intensity';
+
     /**
      * The Mass/Charge value
      *
@@ -50,13 +54,11 @@ class FragmentIon
     public function __construct($mz, $intensity)
     {
         if (! is_float($mz)) {
-            throw new \InvalidArgumentException(
-                'Argument 1 must be a float value. Valued passed is of type ' . gettype($mz));
+            throw new \InvalidArgumentException('Argument 1 must be a float value. Valued passed is of type ' . gettype($mz));
         }
         
         if (! is_float($intensity)) {
-            throw new \InvalidArgumentException(
-                'Argument 2 must be a float value. Valued passed is of type ' . gettype($intensity));
+            throw new \InvalidArgumentException('Argument 2 must be a float value. Valued passed is of type ' . gettype($intensity));
         }
         
         $this->mz = $mz;
@@ -81,5 +83,23 @@ class FragmentIon
     public function getIntensity()
     {
         return $this->intensity;
+    }
+
+    /**
+     * Converts this instance to an array
+     *
+     * @return array
+     */
+    public function toArray()
+    {
+        return array(
+            FragmentIon::ARRAY_MZ => $this->getMz(),
+            FragmentIon::ARRAY_INTENSITY => $this->getIntensity()
+        );
+    }
+
+    public static function fromArray($fragmentArray)
+    {
+        return new FragmentIon($fragmentArray[FragmentIon::ARRAY_MZ], $fragmentArray[FragmentIon::ARRAY_INTENSITY]);
     }
 }

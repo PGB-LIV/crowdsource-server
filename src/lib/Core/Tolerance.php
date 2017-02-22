@@ -44,8 +44,7 @@ class Tolerance
     public function __construct($tolerance, $unit)
     {
         if (! is_float($tolerance) && ! is_int($tolerance)) {
-            throw new \InvalidArgumentException(
-                'Argument 1 must be a float or int value. Valued passed is of type ' . gettype($tolerance));
+            throw new \InvalidArgumentException('Argument 1 must be a float or int value. Valued passed is of type ' . gettype($tolerance));
         }
         
         if ($unit != Tolerance::DA && $unit != Tolerance::PPM) {

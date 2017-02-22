@@ -24,6 +24,12 @@ namespace pgb_liv\crowdsource\Core;
 class Modification
 {
 
+    const ARRAY_ID = 'id';
+
+    const ARRAY_MASS = 'mass';
+
+    const ARRAY_RESIDUES = 'residues';
+
     /**
      * Modification ID
      *
@@ -56,36 +62,21 @@ class Modification
      *            An array of residues this modification occurs on
      * @throws \InvalidArgumentException If any argument does not match the specified data types
      */
-    public function __construct($id, $monoMass, array $residues)
+    public function __construct($id, $monoMass = null, array $residues = null)
     {
         if (! is_int($id)) {
-            throw new \InvalidArgumentException(
-                'Argument 1 must be an int value. Valued passed is of type ' . gettype($id));
+            throw new \InvalidArgumentException('Argument 1 must be an int value. Valued passed is of type ' . gettype($id));
         }
         
-        if (! is_float($monoMass)) {
-            throw new \InvalidArgumentException(
-                'Argument 2 must be a float value. Valued passed is of type ' . gettype($monoMass));
-        }
-        
-        if (empty($residues)) {
-            throw new \InvalidArgumentException('Argument 3 must not be empty.');
-        } else {
-            foreach ($residues as $residue) {
-                if (strlen($residue) != 1) {
-                    throw new \InvalidArgumentException(
-                        'Argument 3 must be an array of single char values. Value passed is of length ' .
-                             strlen($residue));
-                }
-            }
-        }
         $this->id = $id;
-        $this->monoMass = $monoMass;
         
-        // Force sort order
-        sort($residues);
-        // Force unique residue positions
-        $this->residues = array_combine($residues, $residues);
+        if (! is_null($monoMass)) {
+            $this->setMonoisotopicMass($monoMass);
+        }
+        
+        if (! is_null($residues)) {
+            $this->setResidues($residues);
+        }
     }
 
     /**
@@ -99,6 +90,22 @@ class Modification
     }
 
     /**
+     * Sets the monoisotopic mass for this modification
+     *
+     * @param float $monoMass
+     *            The monoisotopic mass to set
+     * @throws \InvalidArgumentException If argument 1 is not of type float
+     */
+    public function setMonoisotopicMass($monoMass)
+    {
+        if (! is_float($monoMass)) {
+            throw new \InvalidArgumentException('Argument 1 must be a float value. Valued passed is of type ' . gettype($monoMass));
+        }
+        
+        $this->monoMass = $monoMass;
+    }
+
+    /**
      * Gets the monoisotopic mass
      *
      * @return float
@@ -109,6 +116,32 @@ class Modification
     }
 
     /**
+     * Set residues for this modification
+     *
+     * @param array $residues
+     *            Array of residues this modification may occur on
+     * @throws \InvalidArgumentException If argument 1 is not of type float
+     */
+    public function setResidues(array $residues)
+    {
+        if (empty($residues)) {
+            throw new \InvalidArgumentException('Argument 1 must not be empty.');
+        } else {
+            foreach ($residues as $residue) {
+                if (strlen($residue) != 1) {
+                    throw new \InvalidArgumentException('Argument 1 must be an array of single char values. Value passed is of length ' . strlen($residue));
+                }
+            }
+        }
+        
+        // Force sort order
+        sort($residues);
+        
+        // Force unique residue positions
+        $this->residues = array_combine($residues, $residues);
+    }
+
+    /**
      * Gets the residues the modification is assosciated with
      *
      * @return array
@@ -116,5 +149,42 @@ class Modification
     public function getResidues()
     {
         return array_values($this->residues);
+    }
+
+    /**
+     * Creates a new instance of this class from an array of properties
+     *
+     * @param array $modArray
+     *            Array of properties. See ARRAY_... for property names
+     * @return \pgb_liv\crowdsource\Core\Modification
+     */
+    public static function fromArray(array $modArray)
+    {
+        $modification = new Modification($modArray[Modification::ARRAY_ID]);
+        
+        if (isset($modArray[Modification::ARRAY_MASS])) {
+            $modification->setMonoisotopicMass($modArray[Modification::ARRAY_MASS]);
+        }
+        
+        if (isset($modArray[Modification::ARRAY_RESIDUES])) {
+            $residues = str_split($modArray[Modification::ARRAY_RESIDUES]);
+            $modification->setResidues($residues);
+        }
+        
+        return $modification;
+    }
+
+    /**
+     * Converts this modification to an array
+     *
+     * @return Array of modification properties
+     */
+    public function toArray()
+    {
+        $modification[Modification::ARRAY_ID] = $this->getId();
+        $modification[Modification::ARRAY_MASS] = $this->getMonoisotopicMass();
+        $modification[Modification::ARRAY_RESIDUES] = implode('', $this->getResidues());
+        
+        return $modification;
     }
 }
