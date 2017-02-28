@@ -206,6 +206,7 @@ class PeptideTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Core\Peptide::setScore
      * @covers pgb_liv\crowdsource\Core\Peptide::addModification
      * @covers pgb_liv\crowdsource\Core\Peptide::toArray
+     * @covers pgb_liv\crowdsource\Core\Peptide::fromArray
      *
      * @uses pgb_liv\crowdsource\Core\Peptide
      * @uses pgb_liv\crowdsource\Core\Modification

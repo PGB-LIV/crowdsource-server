@@ -350,7 +350,7 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanGetInvalidWorkUnitFromJson2()
     {
-        $json = '{"job":"fail","precursor":1,"peptides":[{"id":44982,"score":2,"ionsMatched":2},{"id":1516198,"score":2,"ionsMatched":2},{"id":150121,"score":1,"ionsMatched":1},{"id":712838,"score":1,"ionsMatched":1},{"id":1534399,"score":1,"ionsMatched":1}{"id":1968911,"score":1,"ionsMatched":1},{"id":3177860,"score":1,"ionsMatched":1},{"id":3276166,"score":1,"ionsMatched":1},{"id":3373588,"score":1,"ionsMatched":1},{"id":3560751,"score":1,"ionsMatched":1}]}';
+        $json = '{"job":"fail","precursor":1,"peptides":[{"id":44982,"score":2,"ionsMatched":2},{"id":1516198,"score":2,"ionsMatched":2},{"id":150121,"score":1,"ionsMatched":1},{"id":712838,"score":1,"ionsMatched":1},{"id":1534399,"score":1,"ionsMatched":1},{"id":1968911,"score":1,"ionsMatched":1},{"id":3177860,"score":1,"ionsMatched":1},{"id":3276166,"score":1,"ionsMatched":1},{"id":3373588,"score":1,"ionsMatched":1},{"id":3560751,"score":1,"ionsMatched":1}]}';
         WorkUnit::fromJson($json);
     }
 
@@ -362,7 +362,7 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanGetInvalidWorkUnitFromJson3()
     {
-        $json = '{"job":1,"precursor":"fail","peptides":[{"id":44982,"score":2,"ionsMatched":2},{"id":1516198,"score":2,"ionsMatched":2},{"id":150121,"score":1,"ionsMatched":1},{"id":712838,"score":1,"ionsMatched":1},{"id":1534399,"score":1,"ionsMatched":1}{"id":1968911,"score":1,"ionsMatched":1},{"id":3177860,"score":1,"ionsMatched":1},{"id":3276166,"score":1,"ionsMatched":1},{"id":3373588,"score":1,"ionsMatched":1},{"id":3560751,"score":1,"ionsMatched":1}]}';
+        $json = '{"job":1,"precursor":"fail","peptides":[{"id":44982,"score":2,"ionsMatched":2},{"id":1516198,"score":2,"ionsMatched":2},{"id":150121,"score":1,"ionsMatched":1},{"id":712838,"score":1,"ionsMatched":1},{"id":1534399,"score":1,"ionsMatched":1},{"id":1968911,"score":1,"ionsMatched":1},{"id":3177860,"score":1,"ionsMatched":1},{"id":3276166,"score":1,"ionsMatched":1},{"id":3373588,"score":1,"ionsMatched":1},{"id":3560751,"score":1,"ionsMatched":1}]}';
         WorkUnit::fromJson($json);
     }
 }

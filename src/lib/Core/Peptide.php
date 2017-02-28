@@ -79,7 +79,8 @@ class Peptide
     public function __construct($id)
     {
         if (! is_int($id)) {
-            throw new \InvalidArgumentException('Argument 1 must be an int value. Valued passed is of type ' . gettype($id));
+            throw new \InvalidArgumentException(
+                'Argument 1 must be an int value. Valued passed is of type ' . gettype($id));
         }
         
         $this->id = $id;
@@ -108,11 +109,13 @@ class Peptide
     public function setScore($score, $ionsMatched)
     {
         if (! is_float($score) && ! is_int($score)) {
-            throw new \InvalidArgumentException('Argument 1 must be an int or float value. Valued passed is of type ' . gettype($score));
+            throw new \InvalidArgumentException(
+                'Argument 1 must be an int or float value. Valued passed is of type ' . gettype($score));
         }
         
         if (! is_int($ionsMatched)) {
-            throw new \InvalidArgumentException('Argument 2 must be an int value. Valued passed is of type ' . gettype($ionsMatched));
+            throw new \InvalidArgumentException(
+                'Argument 2 must be an int value. Valued passed is of type ' . gettype($ionsMatched));
         }
         
         $this->score = $score;
@@ -216,7 +219,7 @@ class Peptide
 
     /**
      * Parses an array instance of this object, in the format that is produced by toArray.
-     * 
+     *
      * @param array $peptideArray
      *            The array object to parse
      * @throws \InvalidArgumentException If the array does not match the format
@@ -225,7 +228,9 @@ class Peptide
     public static function fromArray(array $peptideArray)
     {
         if (! isset($peptideArray[Peptide::ARRAY_ID]) || ! is_int($peptideArray[Peptide::ARRAY_ID])) {
-            throw new \InvalidArgumentException('A peptide "ID" must be an int value. Valued passed is of type ' . gettype($peptideArray[Peptide::ARRAY_ID]));
+            throw new \InvalidArgumentException(
+                'A peptide "ID" must be an int value. Valued passed is of type ' .
+                     gettype($peptideArray[Peptide::ARRAY_ID]));
         }
         
         $peptide = new Peptide($peptideArray[Peptide::ARRAY_ID]);
