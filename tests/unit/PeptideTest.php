@@ -199,4 +199,46 @@ class PeptideTest extends \PHPUnit_Framework_TestCase
         
         $this->assertEquals(true, $peptide->isModified());
     }
+
+    /**
+     * @covers pgb_liv\crowdsource\Core\Peptide::__construct
+     * @covers pgb_liv\crowdsource\Core\Peptide::setSequence
+     * @covers pgb_liv\crowdsource\Core\Peptide::setScore
+     * @covers pgb_liv\crowdsource\Core\Peptide::addModification
+     * @covers pgb_liv\crowdsource\Core\Peptide::toArray
+     *
+     * @uses pgb_liv\crowdsource\Core\Peptide
+     * @uses pgb_liv\crowdsource\Core\Modification
+     */
+    public function testObjectCanConvertToFromArray()
+    {
+        $peptideArray = array();
+        $id = 15;
+        $sequence = 'PEPTIDE';
+        $score = 156.1;
+        $ionsMatched = 5;
+        $mod = new Modification(4, 146.14, array(
+            'M'
+        ));
+        
+        $peptide = new Peptide($id);
+        $peptideArray[Peptide::ARRAY_ID] = $id;
+        
+        $this->assertInstanceOf('pgb_liv\crowdsource\Core\Peptide', $peptide);
+        $peptide->setSequence($sequence);
+        $peptideArray[Peptide::ARRAY_SEQUENCE] = $sequence;
+        
+        $this->assertEquals($peptideArray, $peptide->toArray());
+        
+        $peptide->setScore($score, $ionsMatched);
+        $peptideArray[Peptide::ARRAY_SCORE] = $score;
+        $peptideArray[Peptide::ARRAY_IONS] = $ionsMatched;
+        
+        $peptide->addModification($mod);
+        $peptideArray[Peptide::ARRAY_MODIFICATIONS] = array();
+        $peptideArray[Peptide::ARRAY_MODIFICATIONS][] = $mod->toArray();
+        
+        $this->assertEquals($peptideArray, $peptide->toArray());
+        $this->assertEquals($peptide, Peptide::fromArray($peptideArray));
+    }
 }

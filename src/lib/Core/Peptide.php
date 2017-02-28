@@ -188,13 +188,19 @@ class Peptide
         return count($this->modifications) != 0;
     }
 
+    /**
+     * Converts this peptide object into an array
+     *
+     * @return array
+     */
     public function toArray()
     {
         $peptide = array();
         $peptide[Peptide::ARRAY_ID] = $this->getId();
         $peptide[Peptide::ARRAY_SEQUENCE] = $this->getSequence();
-        if ($this->getScore() != null) {
+        if (! is_null($this->getScore()) && ! is_null($this->getIonsMatched())) {
             $peptide[Peptide::ARRAY_SCORE] = $this->getScore();
+            $peptide[Peptide::ARRAY_IONS] = $this->getIonsMatched();
         }
         
         if ($this->isModified()) {
@@ -208,6 +214,14 @@ class Peptide
         return $peptide;
     }
 
+    /**
+     * Parses an array instance of this object, in the format that is produced by toArray.
+     * 
+     * @param array $peptideArray
+     *            The array object to parse
+     * @throws \InvalidArgumentException If the array does not match the format
+     * @return \pgb_liv\crowdsource\Core\Peptide
+     */
     public static function fromArray(array $peptideArray)
     {
         if (! isset($peptideArray[Peptide::ARRAY_ID]) || ! is_int($peptideArray[Peptide::ARRAY_ID])) {
