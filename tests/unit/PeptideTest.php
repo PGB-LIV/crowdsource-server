@@ -211,7 +211,7 @@ class PeptideTest extends \PHPUnit_Framework_TestCase
      * @uses pgb_liv\crowdsource\Core\Peptide
      * @uses pgb_liv\crowdsource\Core\Modification
      */
-    public function testObjectCanConvertToFromArray()
+    public function testObjectCanConvertToFromValidArray()
     {
         $peptideArray = array();
         $id = 15;
@@ -241,5 +241,21 @@ class PeptideTest extends \PHPUnit_Framework_TestCase
         
         $this->assertEquals($peptideArray, $peptide->toArray());
         $this->assertEquals($peptide, Peptide::fromArray($peptideArray));
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Core\Peptide::fromArray
+     * @expectedException InvalidArgumentException
+     *
+     * @uses pgb_liv\crowdsource\Core\Peptide
+     */
+    public function testObjectCanConvertFromInvalidArray()
+    {
+        $peptideArray = array();
+        $id = 'fail';
+        
+        $peptideArray[Peptide::ARRAY_ID] = $id;
+        
+        Peptide::fromArray($peptideArray);
     }
 }
