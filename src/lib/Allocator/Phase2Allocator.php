@@ -88,8 +88,8 @@ class Phase2Allocator extends AbstractAllocator implements AllocatorInterface
             'SELECT `p`.`id`, `p`.`peptide`, `w`.`modification`,`u`.`mono_mass` FROM `fasta_peptides` AS `p`
             LEFT JOIN `workunit2_peptides` AS `w` ON `w`.`peptide`=`p`.`id`
             LEFT JOIN `unimod_modifications` AS `u` ON `u`.`record_id`=`w`.`modification`
-            WHERE `w`.`job` = ' . $workUnit->getJobId() .
-                 ' && `w`.`precursor`=' . $workUnit->getPrecursorId());
+            WHERE `w`.`job` = ' . $workUnit->getJobId() . ' && `w`.`precursor`=' .
+                 $workUnit->getPrecursorId());
         
         foreach ($rs as $record) {
             $peptide = new Peptide((int) $record['id']);
@@ -134,8 +134,9 @@ class Phase2Allocator extends AbstractAllocator implements AllocatorInterface
         $mod = current($peptide->getModifications());
         $this->adodb->Execute(
             'UPDATE `workunit2_peptides` SET `score` = ' . $peptide->getScore() . ', `ions_matched` = ' .
-                 $peptide->getIonsMatched() . ' WHERE `job` = ' . $this->jobId . ' && `precursor` = ' . $precursorId .
-                 ' && `peptide` = ' . $peptide->getId() . ' && `modification` = ' . $mod->getId());
+                 $peptide->getIonsMatched() . ' && `location` = ' . $mod->getLocation() . ' WHERE `job` = ' .
+                 $this->jobId . ' && `precursor` = ' . $precursorId . ' && `peptide` = ' . $peptide->getId() .
+                 ' && `modification` = ' . $mod->getId());
     }
 
     public function setWorkUnitWorker($workerId, WorkUnit $workUnit)

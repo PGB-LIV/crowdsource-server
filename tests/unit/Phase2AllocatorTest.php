@@ -246,9 +246,15 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
         
         $peptide = $workUnit->getPeptide(0);
         $peptide->setScore(250.9, 8);
+        foreach ($peptide->getModifications() as $mod) {
+            $mod->setLocation(5);
+        }
         
         $peptide = $workUnit->getPeptide(1);
         $peptide->setScore(0, 0);
+        foreach ($peptide->getModifications() as $mod) {
+            $mod->setLocation(3);
+        }
         
         $allocator->setWorkUnitResults($workUnit);
         
@@ -284,9 +290,15 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
         
         $peptide = $workUnit->getPeptide(0);
         $peptide->setScore(250.9, 8);
+        foreach ($peptide->getModifications() as $mod) {
+            $mod->setLocation(5);
+        }
         
         $peptide = $workUnit->getPeptide(1);
         $peptide->setScore(0, 0);
+        foreach ($peptide->getModifications() as $mod) {
+            $mod->setLocation(3);
+        }
         
         $allocator->setWorkUnitResults($workUnit);
         
@@ -420,7 +432,10 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
             $pep = new Peptide($id);
             $pep->setSequence($peptide['structure']);
             $workUnit->addPeptide($pep);
-            $mod = new Modification($peptide['mod'], $peptide['mod_mass'], $peptide['mod_residues']);
+            $mod = new Modification($peptide['mod']);
+            $mod->setMonoisotopicMass($peptide['mod_mass']);
+            $mod->setResidues($peptide['mod_residues']);
+            
             $pep->addModification($mod);
             
             $adodb->Execute(
