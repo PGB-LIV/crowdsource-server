@@ -1,20 +1,21 @@
 {
-    "config": {
-       "vendor-dir": "../src/vendor"
-    },
-    "require": {
-        "pgb-liv/php-ms": "dev-master",
-        "adodb/adodb-php": "5.*",
-        "smarty/smarty": "3.*"
-    },
-    "require-dev": {
-        "theseer/phpdox": "0.8.*",
-        "squizlabs/php_codesniffer": "2.*",
-        "pdepend/pdepend": "2.*",
-        "sebastian/phpcpd": "2.*",
-        "phploc/phploc": "2.*",
-        "phpmd/phpmd": "2.*",
-        "phpunit/phpunit": "4.*"
-    },
-    "minimum-stability": "stable"
+	"config" : {
+		"vendor-dir" : "../src/vendor"
+	},
+	"require" : {
+		"pgb-liv/php-ms" : "dev-master",
+		"adodb/adodb-php" : "5.*",
+		"smarty/smarty" : "3.*",
+		"gburtini/distributions" : "dev-master"
+	},
+	"require-dev" : {
+		"theseer/phpdox" : "0.8.*",
+		"squizlabs/php_codesniffer" : "2.*",
+		"pdepend/pdepend" : "2.*",
+		"sebastian/phpcpd" : "2.*",
+		"phploc/phploc" : "2.*",
+		"phpmd/phpmd" : "2.*",
+		"phpunit/phpunit" : "4.*"
+	},
+	"minimum-stability" : "stable"
 }

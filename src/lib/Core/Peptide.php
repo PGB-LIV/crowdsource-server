@@ -134,6 +134,19 @@ class Peptide
     }
 
     /**
+     * Adds the specified modifications to this peptide
+     *
+     * @param array $modifications
+     *            Modifications to apply
+     */
+    public function addModifications(array $modifications)
+    {
+        foreach ($modifications as $modification) {
+            $this->addModification($modification);
+        }
+    }
+
+    /**
      * Gets the ID value
      *
      * @return int
@@ -244,8 +257,14 @@ class Peptide
         }
         
         if (isset($peptideArray[Peptide::ARRAY_MODIFICATIONS])) {
-            foreach ($peptideArray[Peptide::ARRAY_MODIFICATIONS] as $modArray) {
-                $peptide->addModification(Modification::fromArray($modArray));
+            foreach ($peptideArray[Peptide::ARRAY_MODIFICATIONS] as $modificationArray) {
+                $modObject = Modification::fromArray($modificationArray);
+                
+                if (is_array($modObject)) {
+                    $peptide->addModifications($modObject);
+                } else {
+                    $peptide->addModification($modObject);
+                }
             }
         }
         

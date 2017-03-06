@@ -32,6 +32,8 @@ class Modification
 
     const ARRAY_LOCATION = 'position';
 
+    const ARRAY_OCCURRENCES = 'num';
+
     /**
      * Modification ID
      *
@@ -74,7 +76,8 @@ class Modification
     public function __construct($id, $monoMass = null, array $residues = null)
     {
         if (! is_int($id)) {
-            throw new \InvalidArgumentException('Argument 1 must be an int value. Valued passed is of type ' . gettype($id));
+            throw new \InvalidArgumentException(
+                'Argument 1 must be an int value. Valued passed is of type ' . gettype($id));
         }
         
         $this->id = $id;
@@ -108,7 +111,8 @@ class Modification
     public function setMonoisotopicMass($monoMass)
     {
         if (! is_float($monoMass)) {
-            throw new \InvalidArgumentException('Argument 1 must be a float value. Valued passed is of type ' . gettype($monoMass));
+            throw new \InvalidArgumentException(
+                'Argument 1 must be a float value. Valued passed is of type ' . gettype($monoMass));
         }
         
         $this->monoMass = $monoMass;
@@ -134,7 +138,8 @@ class Modification
     public function setLocation($location)
     {
         if (! is_int($location)) {
-            throw new \InvalidArgumentException('Argument 1 must be an int value. Valued passed is of type ' . gettype($location));
+            throw new \InvalidArgumentException(
+                'Argument 1 must be an int value. Valued passed is of type ' . gettype($location));
         }
         
         $this->location = $location;
@@ -164,7 +169,9 @@ class Modification
         } else {
             foreach ($residues as $residue) {
                 if (strlen($residue) != 1) {
-                    throw new \InvalidArgumentException('Argument 1 must be an array of single char values. Value passed is of length ' . strlen($residue));
+                    throw new \InvalidArgumentException(
+                        'Argument 1 must be an array of single char values. Value passed is of length ' .
+                             strlen($residue));
                 }
             }
         }
@@ -187,30 +194,51 @@ class Modification
     }
 
     /**
-     * Creates a new instance of this class from an array of properties
+     * Creates a new instance of this class from an array of properties.
+     * Method will return an array if ARRAY_OCCURRENCES > 1 or ARRAY_LOCATION is an array
      *
      * @param array $modificationArray
      *            Array of properties. See ARRAY_... for property names
-     * @return \pgb_liv\crowdsource\Core\Modification
+     * @return \pgb_liv\crowdsource\Core\Modification | array
      */
     public static function fromArray(array $modificationArray)
     {
-        $modification = new Modification($modificationArray[Modification::ARRAY_ID]);
-        
-        if (isset($modificationArray[Modification::ARRAY_MASS])) {
-            $modification->setMonoisotopicMass($modificationArray[Modification::ARRAY_MASS]);
+        $occurrences = 1;
+        if (isset($modificationArray[Modification::ARRAY_OCCURRENCES])) {
+            $occurrences = $modificationArray[Modification::ARRAY_OCCURRENCES];
+        } elseif (isset($modificationArray[Modification::ARRAY_LOCATION]) &&
+             is_array($modificationArray[Modification::ARRAY_LOCATION])) {
+            $occurrences = count($modificationArray[Modification::ARRAY_LOCATION]);
         }
         
-        if (isset($modificationArray[Modification::ARRAY_RESIDUES])) {
-            $residues = str_split($modificationArray[Modification::ARRAY_RESIDUES]);
-            $modification->setResidues($residues);
+        $modifications = array();
+        for ($i = 0; $i < $occurrences; $i ++) {
+            $modification = new Modification($modificationArray[Modification::ARRAY_ID]);
+            
+            if (isset($modificationArray[Modification::ARRAY_MASS])) {
+                $modification->setMonoisotopicMass($modificationArray[Modification::ARRAY_MASS]);
+            }
+            
+            if (isset($modificationArray[Modification::ARRAY_RESIDUES])) {
+                $residues = str_split($modificationArray[Modification::ARRAY_RESIDUES]);
+                $modification->setResidues($residues);
+            }
+            
+            if (isset($modificationArray[Modification::ARRAY_LOCATION])) {
+                if (is_array($modificationArray[Modification::ARRAY_LOCATION])) {
+                    $modification->setLocation($modificationArray[Modification::ARRAY_LOCATION])[$i];
+                } else {
+                    $modification->setLocation($modificationArray[Modification::ARRAY_LOCATION]);
+                }
+            }
+            
+            if ($occurrences == 1)
+                return $modification;
+            
+            $modifications[] = $modification;
         }
         
-        if (isset($modificationArray[Modification::ARRAY_LOCATION])) {
-            $modification->setLocation($modificationArray[Modification::ARRAY_LOCATION]);
-        }
-        
-        return $modification;
+        return $modifications;
     }
 
     /**
