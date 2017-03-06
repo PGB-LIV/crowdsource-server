@@ -130,7 +130,7 @@ class Peptide
      */
     public function addModification(Modification $modification)
     {
-        $this->modifications[$modification->getId()] = $modification;
+        $this->modifications[] = $modification;
     }
 
     /**

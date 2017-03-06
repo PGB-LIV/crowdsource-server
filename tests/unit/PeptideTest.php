@@ -155,10 +155,38 @@ class PeptideTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf('pgb_liv\crowdsource\Core\Peptide', $peptide);
         
         $mods = array();
-        $mods[4] = new Modification(4, 146.14, array(
+        $mods[] = new Modification(4, 146.14, array(
             'M'
         ));
-        $peptide->addModification($mods[4]);
+        $peptide->addModification($mods[0]);
+        
+        $this->assertEquals($mods, $peptide->getModifications());
+    }
+
+    /**
+     * @covers pgb_liv\crowdsource\Core\Peptide::__construct
+     * @covers pgb_liv\crowdsource\Core\Peptide::addModification
+     * @covers pgb_liv\crowdsource\Core\Peptide::addModifications
+     * @covers pgb_liv\crowdsource\Core\Peptide::getModifications
+     * @covers pgb_liv\crowdsource\Core\Modification::__construct
+     *
+     * @uses pgb_liv\crowdsource\Core\Peptide
+     * @uses pgb_liv\crowdsource\Core\Modification
+     */
+    public function testObjectCanGetSetValidModifications()
+    {
+        $id = 15;
+        $peptide = new Peptide($id);
+        $this->assertInstanceOf('pgb_liv\crowdsource\Core\Peptide', $peptide);
+        
+        $mods = array();
+        $mods[0] = new Modification(4, 146.14, array(
+            'M'
+        ));
+        $mods[1] = new Modification(4, 146.14, array(
+            'M'
+        ));
+        $peptide->addModifications($mods);
         
         $this->assertEquals($mods, $peptide->getModifications());
     }

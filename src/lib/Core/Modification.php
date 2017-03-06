@@ -226,7 +226,7 @@ class Modification
             
             if (isset($modificationArray[Modification::ARRAY_LOCATION])) {
                 if (is_array($modificationArray[Modification::ARRAY_LOCATION])) {
-                    $modification->setLocation($modificationArray[Modification::ARRAY_LOCATION])[$i];
+                    $modification->setLocation($modificationArray[Modification::ARRAY_LOCATION][$i]);
                 } else {
                     $modification->setLocation($modificationArray[Modification::ARRAY_LOCATION]);
                 }
