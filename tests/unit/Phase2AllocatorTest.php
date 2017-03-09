@@ -251,12 +251,34 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
         }
         
         $peptide = $workUnit->getPeptide(1);
-        $peptide->setScore(0, 0);
+        $peptide->setScore(124.152, 3);
         foreach ($peptide->getModifications() as $mod) {
             $mod->setLocation(3);
         }
         
         $allocator->setWorkUnitResults($workUnit);
+        
+        foreach ($workUnit->getPeptides() as $peptide) {
+            if ($peptide->getScore() == 0) {
+                continue;
+            }
+            
+            $precursor = $workUnit->getPrecursorId();
+            $job = $workUnit->getJobId();
+            $pepId = $peptide->getId();
+            
+            foreach ($peptide->getModifications() as $mod) {
+                $modId = $mod->getId();
+                $record = $adodb->GetRow(
+                    'SELECT `ions_matched`, `score`, `location` FROM `workunit2_peptides` WHERE `job` = ' . $job .
+                         ' && `precursor` = ' . $precursor . ' && `peptide` = ' . $pepId . ' && `modification` = ' .
+                         $modId);
+                
+                $this->assertEquals(round($peptide->getScore(), 1), round($record['score'], 1));
+                $this->assertEquals($peptide->getIonsMatched(), $record['ions_matched']);
+                $this->assertEquals($mod->getLocation(), $record['location']);
+            }
+        }
         
         $this->cleanUp();
     }

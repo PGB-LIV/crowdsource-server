@@ -134,9 +134,9 @@ class Phase2Allocator extends AbstractAllocator implements AllocatorInterface
         $mod = current($peptide->getModifications());
         $this->adodb->Execute(
             'UPDATE `workunit2_peptides` SET `score` = ' . $peptide->getScore() . ', `ions_matched` = ' .
-                 $peptide->getIonsMatched() . ' && `location` = ' . $mod->getLocation() . ' WHERE `job` = ' .
-                 $this->jobId . ' && `precursor` = ' . $precursorId . ' && `peptide` = ' . $peptide->getId() .
-                 ' && `modification` = ' . $mod->getId());
+                 $peptide->getIonsMatched() . ', `location` = ' . $mod->getLocation() . ' WHERE `job` = ' . $this->jobId .
+                 ' && `precursor` = ' . $precursorId . ' && `peptide` = ' . $peptide->getId() . ' && `modification` = ' .
+                 $mod->getId());
     }
 
     public function setWorkUnitWorker($workerId, WorkUnit $workUnit)
