@@ -32,11 +32,18 @@ class Phase2Preprocessor extends AbstractPreprocessor
     private $massTolerance;
 
     /**
-     * Map of one-letter residue chars to modifications
+     * Map of one-letter residue chars to mod ids
      *
      * @var array
      */
     private $residueToModifications;
+
+    /**
+     * Map of mod ids to mod masses
+     *
+     * @var array
+     */
+    private $modToMass;
 
     /**
      * Starts the indexing all phase 2 data
@@ -58,7 +65,7 @@ class Phase2Preprocessor extends AbstractPreprocessor
         // As ppm
         $this->massTolerance /= 1000000;
         
-        $this->residueToModifications = $this->indexModifications();
+        $this->indexModifications();
     }
 
     /**
@@ -100,24 +107,20 @@ class Phase2Preprocessor extends AbstractPreprocessor
     private function indexModifications()
     {
         $rs = $this->adodb->Execute(
-            'SELECT `m`.`record_id`, `one_letter`, `mono_mass` FROM `unimod_specificity` `s` LEFT JOIN `unimod_modifications` `m` ON `s`.`mod_key` = `m`.`record_id` WHERE `classifications_key` = 2');
+            'SELECT `m`.`record_id`, `one_letter`, `mono_mass` FROM `unimod_specificity` `s` LEFT JOIN `unimod_modifications` `m` ON `s`.`mod_key` = `m`.`record_id` WHERE `classifications_key` = 2 && `m`.`record_id` = 21');
         
-        $residueToMod = array();
+        $this->residueToModifications = array();
+        $this->modToMass = array();
         
         foreach ($rs as $record) {
             $residue = $record['one_letter'];
-            if (! isset($residueToMod[$residue])) {
-                $residueToMod[$residue] = array();
+            if (! isset($this->residueToModifications[$residue])) {
+                $this->residueToModifications[$residue] = array();
             }
             
-            $mod = array(
-                'id' => $record['record_id'],
-                'mass' => $record['mono_mass']
-            );
-            $residueToMod[$residue][] = $mod;
+            $this->residueToModifications[$residue][] = $record['record_id'];
+            $this->modToMass[$record['record_id']] = $record['mono_mass'];
         }
-        
-        return $residueToMod;
     }
 
     /**
@@ -128,9 +131,13 @@ class Phase2Preprocessor extends AbstractPreprocessor
     private function getPtmCandidates()
     {
         // Select best peptides
-        return $this->adodb->Execute(
-            'SELECT `f`.`id`, `f`.`peptide`, `f`.`mass_modified`, MAX(`score`) AS `bestscore` FROM `workunit1_peptides` `w` LEFT JOIN `fasta_peptides` `f` ON `f`.`id` = `w`.`peptide` WHERE `w`.`job` = ' .
-                 $this->jobId . ' GROUP BY `w`.`peptide` HAVING `bestscore` >= 5 ORDER BY `f`.`id` ASC');
+        return $this->adodb->Execute('SELECT `id`, `peptide`, `mass_modified` FROM `fasta_peptides`');
+        /*
+         * return $this->adodb->Execute(
+         * 'SELECT `f`.`id`, `f`.`peptide`, `f`.`mass_modified`, MAX(`score`) AS `bestscore` FROM `workunit1_peptides` `w` LEFT JOIN `fasta_peptides` `f` ON
+         * `f`.`id` = `w`.`peptide` WHERE `w`.`job` = ' .
+         * $this->jobId . ' GROUP BY `w`.`peptide` HAVING `bestscore` >= 5 ORDER BY `f`.`id` ASC');
+         */
     }
 
     /**
@@ -138,7 +145,7 @@ class Phase2Preprocessor extends AbstractPreprocessor
      *
      * @param string $sequence
      *            The peptide sequence to test against
-     * @return array A 2D array of modId => mod mono mass
+     * @return array A 2D array of modId => mod count
      */
     private function getPossibleModifications($sequence)
     {
@@ -150,8 +157,12 @@ class Phase2Preprocessor extends AbstractPreprocessor
                 continue;
             }
             
-            foreach ($this->residueToModifications[$residue] as $mods) {
-                $possibleMods[$mods['id']] = $mods['mass'];
+            foreach ($this->residueToModifications[$residue] as $modId) {
+                if (! isset($possibleMods[$modId])) {
+                    $possibleMods[$modId] = 0;
+                }
+                
+                $possibleMods[$modId] ++;
             }
         }
         
@@ -171,10 +182,12 @@ class Phase2Preprocessor extends AbstractPreprocessor
     private function findPrecursorMatches($possibleMods, $peptideMass, $peptideId)
     {
         echo 'Searching ' . $peptideId . ' for ' . count($possibleMods) . ' possible mods' . PHP_EOL;
-        foreach ($possibleMods as $modId => $modMass) {
-            $totalMass = $peptideMass + $modMass;
-            
-            $this->findPrecursors($totalMass, $peptideId, $modId);
+        foreach ($possibleMods as $modId => $maxMods) {
+            for ($modCount = 1; $modCount <= $maxMods; $modCount ++) {
+                $totalMass = $peptideMass + ($this->modToMass[$modId] * $modCount);
+                
+                $this->findPrecursors($totalMass, $peptideId, $modId, $modCount);
+            }
         }
     }
 
@@ -187,17 +200,20 @@ class Phase2Preprocessor extends AbstractPreprocessor
      *            ID of the peptide being matched against
      * @param int $modId
      *            ID of the modification being matched against
+     * @param int $modCount
+     *            Number of modifications occuring
      */
-    private function findPrecursors($peptideMass, $peptideId, $modId)
+    private function findPrecursors($peptideMass, $peptideId, $modId, $modCount)
     {
         $tolerance = $this->calculateTolerance($peptideMass);
         $pepMassLow = $peptideMass - $tolerance;
         $pepMassHigh = $peptideMass + $tolerance;
         
         $this->adodb->Execute(
-            'INSERT IGNORE INTO `workunit2_peptides` (`job`, `precursor`, `peptide`, `modification`) SELECT ' .
-                 $this->jobId . ', `id`, ' . $peptideId . ', ' . $modId . ' FROM `raw_ms1` WHERE `job` = ' . $this->jobId .
-                 ' && `mass` BETWEEN ' . $pepMassLow . ' AND ' . $pepMassHigh);
+            'INSERT IGNORE INTO `workunit2_peptides` (`job`, `precursor`, `peptide`, `modification`, `count`) SELECT ' .
+                 $this->jobId . ', `id`, ' . $peptideId . ', ' . $modId . ', ' . $modCount .
+                 ' FROM `raw_ms1` WHERE `job` = ' . $this->jobId . ' && `mass` BETWEEN ' . $pepMassLow . ' AND ' .
+                 $pepMassHigh);
     }
 
     /**

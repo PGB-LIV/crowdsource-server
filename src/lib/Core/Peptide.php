@@ -220,14 +220,39 @@ class Peptide
         }
         
         if ($this->isModified()) {
-            $peptide[Peptide::ARRAY_MODIFICATIONS] = array();
-            
-            foreach ($this->getModifications() as $modification) {
-                $peptide[Peptide::ARRAY_MODIFICATIONS][] = $modification->toArray();
-            }
+            $peptide[Peptide::ARRAY_MODIFICATIONS] = $this->toArrayMods();
         }
         
         return $peptide;
+    }
+
+    /**
+     * Converts the mods object to array.
+     * Performs merge on duplicate mods
+     *
+     * @return array
+     */
+    private function toArrayMods()
+    {
+        $unique = array();
+        foreach ($this->modifications as $modification) {
+            if (! isset($unique[$modification->getId()])) {
+                $unique[$modification->getId()] = array(
+                    'mod' => $modification,
+                    'count' => 0
+                );
+            }
+            
+            $unique[$modification->getId()]['count'] ++;
+        }
+        
+        $modArray = array();
+        foreach ($unique as $mod) {
+            $array = $mod['mod']->toArray();
+            $array[Modification::ARRAY_OCCURRENCES] = $mod['count'];
+            $modArray[] = $array;
+        }
+        return $modArray;
     }
 
     /**

@@ -85,11 +85,11 @@ class Phase2Allocator extends AbstractAllocator implements AllocatorInterface
     private function injectPeptides(WorkUnit $workUnit)
     {
         $rs = $this->adodb->Execute(
-            'SELECT `p`.`id`, `p`.`peptide`, `w`.`modification`,`u`.`mono_mass` FROM `fasta_peptides` AS `p`
+            'SELECT `p`.`id`, `p`.`peptide`, `w`.`modification`,`u`.`mono_mass`, `w`.`count` FROM `fasta_peptides` AS `p`
             LEFT JOIN `workunit2_peptides` AS `w` ON `w`.`peptide`=`p`.`id`
             LEFT JOIN `unimod_modifications` AS `u` ON `u`.`record_id`=`w`.`modification`
-            WHERE `w`.`job` = ' . $workUnit->getJobId() . ' && `w`.`precursor`=' .
-                 $workUnit->getPrecursorId());
+            WHERE `w`.`job` = ' . $workUnit->getJobId() .
+                 ' && `w`.`precursor`=' . $workUnit->getPrecursorId());
         
         foreach ($rs as $record) {
             $peptide = new Peptide((int) $record['id']);
@@ -107,8 +107,13 @@ class Phase2Allocator extends AbstractAllocator implements AllocatorInterface
                 }
             }
             
-            $modification = new Modification((int) $record['modification'], (float) $record['mono_mass'], $residues);
-            $peptide->addModification($modification);
+            for ($modIndex = 0; $modIndex < $record['count']; $modIndex ++) {
+                $modification = new Modification((int) $record['modification']);
+                $modification->setMonoisotopicMass((float) $record['mono_mass']);
+                $modification->setResidues($residues);
+                
+                $peptide->addModification($modification);
+            }
         }
     }
 
@@ -132,11 +137,19 @@ class Phase2Allocator extends AbstractAllocator implements AllocatorInterface
         }
         
         $mod = current($peptide->getModifications());
+        $modCount = count($peptide->getModifications());
         $this->adodb->Execute(
             'UPDATE `workunit2_peptides` SET `score` = ' . $peptide->getScore() . ', `ions_matched` = ' .
-                 $peptide->getIonsMatched() . ', `location` = ' . $mod->getLocation() . ' WHERE `job` = ' . $this->jobId .
-                 ' && `precursor` = ' . $precursorId . ' && `peptide` = ' . $peptide->getId() . ' && `modification` = ' .
-                 $mod->getId());
+                 $peptide->getIonsMatched() . ' WHERE `job` = ' . $this->jobId . ' && `precursor` = ' . $precursorId .
+                 ' && `peptide` = ' . $peptide->getId() . ' && `modification` = ' . $mod->getId() . ' && `count` = ' .
+                 $modCount);
+        
+        foreach ($peptide->getModifications() as $mod) {
+            $this->adodb->Execute(
+                'INSERT INTO `workunit2_peptide_locations` (`job`, `precursor`, `peptide`, `modification`, `count`, `location`) VALUES (' .
+                     $this->jobId . ', ' . $precursorId . ', ' . $peptide->getId() . ',' . $mod->getId() . ', ' .
+                     $modCount . ', ' . $mod->getLocation() . ')');
+        }
     }
 
     public function setWorkUnitWorker($workerId, WorkUnit $workUnit)

@@ -266,6 +266,7 @@ class PeptideTest extends \PHPUnit_Framework_TestCase
         $peptide->addModification($mod);
         $peptideArray[Peptide::ARRAY_MODIFICATIONS] = array();
         $peptideArray[Peptide::ARRAY_MODIFICATIONS][] = $mod->toArray();
+        $peptideArray[Peptide::ARRAY_MODIFICATIONS][0][Modification::ARRAY_OCCURRENCES] = 1;
         
         $this->assertEquals($peptideArray, $peptide->toArray());
         $this->assertEquals($peptide, Peptide::fromArray($peptideArray));
