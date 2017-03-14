@@ -239,17 +239,17 @@ class Peptide
             if (! isset($unique[$modification->getId()])) {
                 $unique[$modification->getId()] = array(
                     'mod' => $modification,
-                    'count' => 0
+                    Modification::ARRAY_OCCURRENCES => 0
                 );
             }
             
-            $unique[$modification->getId()]['count'] ++;
+            $unique[$modification->getId()][Modification::ARRAY_OCCURRENCES] ++;
         }
         
         $modArray = array();
         foreach ($unique as $mod) {
             $array = $mod['mod']->toArray();
-            $array[Modification::ARRAY_OCCURRENCES] = $mod['count'];
+            $array[Modification::ARRAY_OCCURRENCES] = $mod[Modification::ARRAY_OCCURRENCES];
             $modArray[] = $array;
         }
         return $modArray;

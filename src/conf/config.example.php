@@ -30,3 +30,25 @@ define('ADODB_ERROR_LOG_TYPE', 3);
 define('ADODB_ERROR_LOG_DEST', '../log/adodb.log');
 
 define('MS2_PEAK_LIMIT', 50);
+
+/**
+ * Maximum total number of modifications per peptide.
+ *
+ * @var int
+ */
+define('MAX_MOD_TOTAL', 6);
+
+/**
+ * Maximum number of different types of modifications per peptide.
+ * Note MAX_MOD_TYPE * MAX_MOD_PER_TYPE does not override MAX_MOD_TOTAL.
+ *
+ * @var int
+ */
+define('MAX_MOD_TYPES', 2);
+
+/**
+ * Maximum number of occurence of single modification.
+ *
+ * @var int
+ */
+define('MAX_MOD_PER_TYPE', 4);

@@ -232,8 +232,9 @@ class Modification
                 }
             }
             
-            if ($occurrences == 1)
+            if ($occurrences == 1) {
                 return $modification;
+            }
             
             $modifications[] = $modification;
         }

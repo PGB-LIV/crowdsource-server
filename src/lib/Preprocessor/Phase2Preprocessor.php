@@ -181,8 +181,14 @@ class Phase2Preprocessor extends AbstractPreprocessor
      */
     private function findPrecursorMatches($possibleMods, $peptideMass, $peptideId)
     {
-        echo 'Searching ' . $peptideId . ' for ' . count($possibleMods) . ' possible mods' . PHP_EOL;
+        echo 'Searching #' . $peptideId . ' for ' . count($possibleMods) . ' possible mods' . PHP_EOL;
         foreach ($possibleMods as $modId => $maxMods) {
+            
+            if ($maxMods > MAX_MOD_PER_TYPE || $maxMods > MAX_MOD_TOTAL)
+            {
+                $maxMods = min(MAX_MOD_PER_TYPE, MAX_MOD_TOTAL);
+            }
+            
             for ($modCount = 1; $modCount <= $maxMods; $modCount ++) {
                 $totalMass = $peptideMass + ($this->modToMass[$modId] * $modCount);
                 
