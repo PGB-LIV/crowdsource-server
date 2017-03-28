@@ -16,6 +16,8 @@
  */
 namespace pgb_liv\crowdsource\Core;
 
+use pgb_liv\php_ms\Core\Tolerance;
+
 class WorkUnit
 {
 

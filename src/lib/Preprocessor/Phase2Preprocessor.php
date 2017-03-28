@@ -16,6 +16,8 @@
  */
 namespace pgb_liv\crowdsource\Preprocessor;
 
+use pgb_liv\php_ms\Core\Tolerance;
+
 /**
  * Logic for performing all phase 2 preprocessing
  *
@@ -27,7 +29,7 @@ class Phase2Preprocessor extends AbstractPreprocessor
     /**
      * Precursor mass tolerance as ppm value
      *
-     * @var float
+     * @var Tolerance
      */
     private $massTolerance;
 
@@ -60,10 +62,11 @@ class Phase2Preprocessor extends AbstractPreprocessor
     protected function initialise($phase)
     {
         parent::initialise($phase);
-        $this->massTolerance = $this->adodb->GetOne(
+        $toleranceValue = $this->adodb->GetOne(
             'SELECT `mass_tolerance` FROM `job_queue` WHERE `id` = ' . $this->jobId);
+        
         // As ppm
-        $this->massTolerance /= 1000000;
+        $this->massTolerance = new Tolerance($toleranceValue, Tolerance::PPM);
         
         $this->indexModifications();
     }
@@ -85,18 +88,6 @@ class Phase2Preprocessor extends AbstractPreprocessor
         }
         
         $this->addWorkUnitPrecursors();
-    }
-
-    /**
-     * Calculates the ppm tolerance of the specified mass
-     *
-     * @param float $mass
-     *            Mass to calculate tolerance for
-     * @return float Tolerance value
-     */
-    private function calculateTolerance($mass)
-    {
-        return $mass * $this->massTolerance;
     }
 
     /**
@@ -211,7 +202,7 @@ class Phase2Preprocessor extends AbstractPreprocessor
      */
     private function findPrecursors($peptideMass, $peptideId, $modId, $modCount)
     {
-        $tolerance = $this->calculateTolerance($peptideMass);
+        $tolerance = $this->massTolerance->getDaltonDelta($peptideMass);
         $pepMassLow = $peptideMass - $tolerance;
         $pepMassHigh = $peptideMass + $tolerance;
         

@@ -19,7 +19,7 @@ namespace pgb_liv\crowdsource\Test\Unit;
 use pgb_liv\crowdsource\Core\WorkUnit;
 use pgb_liv\crowdsource\Core\Peptide;
 use pgb_liv\crowdsource\Core\FragmentIon;
-use pgb_liv\crowdsource\Core\Tolerance;
+use pgb_liv\php_ms\Core\Tolerance;
 use pgb_liv\crowdsource\Core\Modification;
 
 class WorkUnitTest extends \PHPUnit_Framework_TestCase

@@ -31,6 +31,11 @@ class WorkUnitPreprocessor
 
     private $jobId;
 
+    /**
+     * Precursor mass tolerance as ppm value
+     *
+     * @var Tolerance
+     */
     private $massTolerance;
 
     private $workUnitBulk;
@@ -50,26 +55,14 @@ class WorkUnitPreprocessor
 
     private function initialise()
     {
-        $this->massTolerance = $this->adodb->GetOne(
-            'SELECT `mass_tolerance` FROM `job_queue` WHERE `id` = ' . $this->jobId);
+        $toleranceValue = $this->adodb->GetOne('SELECT `mass_tolerance` FROM `job_queue` WHERE `id` = ' . $this->jobId);
+        
         // As ppm
-        $this->massTolerance /= 1000000;
+        $this->massTolerance = new Tolerance($toleranceValue, Tolerance::PPM);
         
         $this->workUnitBulk = new BulkQuery($this->adodb, 'INSERT INTO `workunit1` (`job`, `ms1`) VALUES ');
         $this->workUnitPeptideBulk = new BulkQuery($this->adodb, 
             'INSERT INTO `workunit1_peptides` (`job`, `ms1`, `peptide`) VALUES ');
-    }
-
-    /**
-     * Calculates the ppm tolerance of the specified mass
-     *
-     * @param float $mass
-     *            Mass to calculate tolerance for
-     * @return float Tolerance value
-     */
-    private function calculateTolerance($mass)
-    {
-        return $mass * $this->massTolerance;
     }
 
     /**
@@ -81,7 +74,7 @@ class WorkUnitPreprocessor
      */
     private function getPeptides($spectraMass)
     {
-        $tolerance = $this->calculateTolerance($spectraMass);
+        $tolerance = $this->massTolerance->getDaltonDelta($spectraMass);
         $pepMassLow = $spectraMass - $tolerance;
         $pepMassHigh = $spectraMass + $tolerance;
         
