@@ -21,14 +21,15 @@ use pgb_liv\crowdsource\Core\WorkUnit;
 interface AllocatorInterface
 {
 
-    public function setWorkUnitWorker($workerId, WorkUnit $workUnit);
-
     /**
      * Gets the next available work unit for the current job.
      *
+     * @param int $workerId
+     *            Worker ID to assign to work unit
+     *            
      * @return pgb_liv\crowdsource\Core\WorkUnitInterface The next available job or null if no jobs available.
      */
-    public function getWorkUnit();
+    public function getWorkUnit($workerId);
 
     /**
      * Records the results for this work unit

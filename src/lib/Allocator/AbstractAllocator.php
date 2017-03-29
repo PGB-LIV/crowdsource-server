@@ -19,6 +19,7 @@ namespace pgb_liv\crowdsource\Allocator;
 use pgb_liv\crowdsource\Core\WorkUnit;
 use pgb_liv\crowdsource\Core\FragmentIon;
 use pgb_liv\crowdsource\Core\Modification;
+use pgb_liv\php_ms\Core\Tolerance;
 
 abstract class AbstractAllocator implements AllocatorInterface
 {
@@ -26,12 +27,6 @@ abstract class AbstractAllocator implements AllocatorInterface
     protected $adodb;
 
     protected $jobId;
-
-    private $tableKeys;
-
-    private $tableKeysWhere;
-
-    private $tableName;
 
     private $phase;
 
@@ -58,53 +53,6 @@ abstract class AbstractAllocator implements AllocatorInterface
     protected function setPhase($phase)
     {
         $this->phase = $phase;
-        $this->tableName = 'workunit' . $phase;
-    }
-
-    protected function setWorkUnitKeys()
-    {
-        $this->tableKeys = func_get_args();
-        $this->tableKeysWhere = '';
-        for ($i = 0; $i < func_num_args(); $i ++) {
-            if ($i > 0) {
-                $this->tableKeysWhere .= ' && ';
-            }
-            
-            $this->tableKeysWhere .= '`' . $this->tableKeys[$i] . '` = %s';
-        }
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \pgb_liv\crowdsource\Allocator\AllocatorInterface::setWorkUnitWorker()
-     */
-    protected function recordWorkUnitWorker($workerId)
-    {
-        if (! is_int($workerId)) {
-            throw new \InvalidArgumentException(
-                'Argument 1 must be an integer value. Valued passed is of type ' . gettype($workerId));
-        }
-        
-        if (func_num_args() - 1 < count($this->tableKeys)) {
-            $missingNum = func_num_args();
-            
-            throw new \BadMethodCallException(
-                'Argument ' . $missingNum . ' must be specified. Expecting value for ' .
-                     $this->tableKeys[$missingNum - 2]);
-        }
-        
-        $keys = array();
-        for ($i = 1; $i < func_num_args(); $i ++) {
-            $keys[] = $this->adodb->Quote(func_get_arg($i));
-        }
-        
-        $where = vsprintf($this->tableKeysWhere, $keys);
-        
-        $this->adodb->Execute(
-            'UPDATE `' . $this->tableName . '` SET `status` = \'ASSIGNED\', `assigned_to` =' . $workerId . ', `assigned_at` = NOW()
-        WHERE `job` = ' . $this->jobId . ' && ' . $where);
     }
 
     /**
@@ -163,7 +111,61 @@ abstract class AbstractAllocator implements AllocatorInterface
         }
     }
 
-    abstract public function getWorkUnit();
+    protected function getTolerance()
+    {
+        $toleranceRaw = $this->adodb->GetRow(
+            'SELECT `fragment_tolerance`, `fragment_tolerance_unit` FROM `job_queue` WHERE `id` = ' . $this->jobId);
+        
+        if (empty($toleranceRaw)) {
+            return false;
+        }
+        
+        return new Tolerance((float) $toleranceRaw['fragment_tolerance'], $toleranceRaw['fragment_tolerance_unit']);
+    }
+
+    protected function getNextWorkUnit($workerId)
+    {
+        if (! is_int($workerId)) {
+            throw new \InvalidArgumentException(
+                'Argument 1 must be an integer value. Valued passed is of type ' . gettype($workerId));
+        }
+        
+        $attempts = 0;
+        do {
+            if ($attempts >= 5) {
+                return false;
+            }
+            
+            // Select any jobs unassigned or assigned but not completed in the past minute
+            $available = $this->adodb->GetRow(
+                'SELECT `precursor`, `allocation_lock` FROM `workunit' . $this->phase . '` WHERE `job` =' . $this->jobId .
+                     ' && (`status` = \'UNASSIGNED\' || ( `completed_at` IS NULL && `assigned_at` < NOW() - INTERVAL 1 MINUTE)) LIMIT 0, 1');
+            
+            if (empty($available)) {
+                // All work units are possibly complete
+                if ($this->isPhaseComplete()) {
+                    $this->setJobDone();
+                }
+                
+                return false;
+            }
+            
+            $lockVal = mt_rand();
+            
+            // Attempt lock
+            $this->adodb->Execute(
+                'UPDATE `workunit' . $this->phase . '` SET `status` = \'ASSIGNED\', `assigned_to` =' . $workerId .
+                     ', `assigned_at` = NOW(), `allocation_lock` = ' . $lockVal . ' WHERE `job` = ' . $this->jobId .
+                     ' && `precursor` = ' . $available['precursor'] . ' && `allocation_lock` = ' .
+                     $available['allocation_lock']);
+            
+            $attempts ++;
+        } while ($this->adodb->affected_rows() !== 1);
+        
+        return new WorkUnit($this->jobId, (int) $available['precursor']);
+    }
+
+    abstract public function getWorkUnit($workerId);
 
     abstract public function setWorkUnitResults(WorkUnit $workUnit);
 }

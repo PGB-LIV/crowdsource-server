@@ -321,7 +321,7 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
         $workUnit = new WorkUnit($jobId, $precursorId);
         $workUnit->setFragmentTolerance(new Tolerance(10.0, 'ppm'));
         
-        $adodb->Execute('INSERT INTO `workunit1` (`job`, `ms1`) VALUES (' . $jobId . ', ' . $precursorId . ');');
+        $adodb->Execute('INSERT INTO `workunit1` (`job`, `precursor`) VALUES (' . $jobId . ', ' . $precursorId . ');');
         
         $ms2 = $this->getMs2();
         foreach ($ms2 as $key => $value) {
@@ -337,8 +337,8 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
             $pep->setSequence($peptide['structure']);
             $workUnit->addPeptide($pep);
             $adodb->Execute(
-                'INSERT INTO `workunit1_peptides` (`job`, `ms1`, `peptide`) VALUES (' . $jobId . ', ' . $precursorId .
-                     ', ' . $id . ');');
+                'INSERT INTO `workunit1_peptides` (`job`, `precursor`, `peptide`) VALUES (' . $jobId . ', ' .
+                     $precursorId . ', ' . $id . ');');
             $adodb->Execute(
                 'INSERT INTO `fasta_peptides` (`job`, `id`, `peptide`) VALUES (' . $jobId . ', ' . $id . ', ' .
                      $adodb->quote($peptide['structure']) . ');');

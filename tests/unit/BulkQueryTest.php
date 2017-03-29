@@ -56,7 +56,7 @@ class BulkQueryTest extends \PHPUnit_Framework_TestCase
         
         $this->cleanUp();
         
-        $prefixQuery = 'INSERT INTO `workunit1` (`job`, `ms1`) VALUES ';
+        $prefixQuery = 'INSERT INTO `workunit1` (`job`, `precursor`) VALUES ';
         $bulkQuery = new BulkQuery($adodb, $prefixQuery);
         $bulkQuery->setBufferLength(1024);
         $this->assertInstanceOf('pgb_liv\crowdsource\BulkQuery', $bulkQuery);
@@ -67,12 +67,12 @@ class BulkQueryTest extends \PHPUnit_Framework_TestCase
         
         $bulkQuery->close();
         
-        $rs = $adodb->Execute('SELECT `job`, `ms1` FROM `workunit1` ORDER BY `job` ASC, `ms1` ASC');
+        $rs = $adodb->Execute('SELECT `job`, `precursor` FROM `workunit1` ORDER BY `job` ASC, `precursor` ASC');
         
         $i = 1;
         foreach ($rs as $record) {
             $this->assertEquals(1, $record['job']);
-            $this->assertEquals($i, $record['ms1']);
+            $this->assertEquals($i, $record['precursor']);
             
             $i ++;
         }
@@ -93,7 +93,7 @@ class BulkQueryTest extends \PHPUnit_Framework_TestCase
         
         $this->cleanUp();
         
-        $prefixQuery = 'INSERT INTO `workunit1` (`job`, `ms1`) VALUES ';
+        $prefixQuery = 'INSERT INTO `workunit1` (`job`, `precursor`) VALUES ';
         $bulkQuery = new BulkQuery($adodb, $prefixQuery);
         $this->assertInstanceOf('pgb_liv\crowdsource\BulkQuery', $bulkQuery);
         

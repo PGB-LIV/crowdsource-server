@@ -77,7 +77,7 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
         $testUnit = $this->createWorkUnit(1, 1);
         
         $allocator = new Phase2Allocator($adodb, 1);
-        $workUnit = $allocator->getWorkUnit();
+        $workUnit = $allocator->getWorkUnit(mt_rand());
         
         $this->assertEquals($testUnit, $workUnit);
         
@@ -102,7 +102,7 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
         $testUnit = $this->createWorkUnit(1, 1);
         
         $allocator = new Phase2Allocator($adodb, 1);
-        $workUnit = $allocator->getWorkUnit();
+        $workUnit = $allocator->getWorkUnit(mt_rand());
         
         $this->assertEquals(false, $workUnit);
         
@@ -132,11 +132,9 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
         $testUnit = $this->createWorkUnit(1, 1);
         
         $allocator = new Phase2Allocator($adodb, 1);
-        $workUnit = $allocator->getWorkUnit();
+        $workUnit = $allocator->getWorkUnit(2130706433);
         
         $this->assertEquals($testUnit, $workUnit);
-        
-        $allocator->setWorkUnitWorker(2130706433, $workUnit);
         
         $record = $adodb->GetRow(
             'SELECT `status`, `assigned_to` FROM `workunit2` WHERE `job` = ' . $workUnit->getJobId() .
@@ -172,11 +170,9 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
         $testUnit = $this->createWorkUnit(1, 1);
         
         $allocator = new Phase2Allocator($adodb, 1);
-        $workUnit = $allocator->getWorkUnit();
+        $workUnit = $allocator->getWorkUnit('fail');
         
         $this->assertEquals($testUnit, $workUnit);
-        
-        $allocator->setWorkUnitWorker('fail', $workUnit);
         
         $this->cleanUp();
     }
@@ -205,13 +201,11 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
         $testUnit = $this->createWorkUnit(1, 1);
         
         $allocator = new Phase2Allocator($adodb, 1);
-        $workUnit = $allocator->getWorkUnit();
+        $workUnit = $allocator->getWorkUnit(mt_rand());
         
         $this->assertEquals($testUnit, $workUnit);
         
-        $allocator->setWorkUnitWorker(0, $workUnit);
-        
-        $workUnit = $allocator->getWorkUnit();
+        $workUnit = $allocator->getWorkUnit(mt_rand());
         
         $this->assertEquals(false, $workUnit);
         
@@ -241,7 +235,7 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
         $testUnit = $this->createWorkUnit(1, 1);
         
         $allocator = new Phase2Allocator($adodb, 1);
-        $workUnit = $allocator->getWorkUnit();
+        $workUnit = $allocator->getWorkUnit(mt_rand());
         $this->assertEquals($testUnit, $workUnit);
         
         $peptide = $workUnit->getPeptide(0);
@@ -313,7 +307,7 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
         $testUnit = $this->createWorkUnit(1, 1);
         
         $allocator = new Phase2Allocator($adodb, 1);
-        $workUnit = $allocator->getWorkUnit();
+        $workUnit = $allocator->getWorkUnit(mt_rand());
         $this->assertEquals($testUnit, $workUnit);
         
         $peptide = $workUnit->getPeptide(0);
@@ -330,7 +324,7 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
         
         $allocator->setWorkUnitResults($workUnit);
         
-        $workUnit = $allocator->getWorkUnit();
+        $workUnit = $allocator->getWorkUnit(mt_rand());
         $this->assertEquals(false, $workUnit);
         
         $this->cleanUp();

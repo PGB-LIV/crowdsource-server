@@ -17,7 +17,6 @@
 namespace pgb_liv\crowdsource\Allocator;
 
 use pgb_liv\crowdsource\Core\WorkUnit;
-use pgb_liv\php_ms\Core\Tolerance;
 use pgb_liv\crowdsource\Core\Peptide;
 
 class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
@@ -37,7 +36,6 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
         parent::__construct($conn, $jobId);
         
         $this->setPhase(1);
-        $this->setWorkUnitKeys('ms1');
     }
 
     /**
@@ -46,34 +44,20 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
      *
      * @see \pgb_liv\crowdsource\Allocator\AllocatorInterface::getWorkUnit()
      */
-    public function getWorkUnit()
+    public function getWorkUnit($workerId)
     {
-        $toleranceRaw = $this->adodb->GetRow(
-            'SELECT `fragment_tolerance`, `fragment_tolerance_unit` FROM `job_queue` WHERE `id` = ' . $this->jobId);
+        $workUnit = $this->getNextWorkUnit($workerId);
         
-        if (empty($toleranceRaw)) {
+        if (! $workUnit) {
             return false;
         }
         
-        $tolerance = new Tolerance((float) $toleranceRaw['fragment_tolerance'], $toleranceRaw['fragment_tolerance_unit']);
-        
-        // Select any jobs unassigned or assigned but not completed in the past minute
-        $precursorId = $this->adodb->GetOne(
-            'SELECT `ms1` FROM `workunit1` WHERE `job` =' . $this->jobId .
-                 ' && (`status` = \'UNASSIGNED\' || ( `completed_at` IS NULL && `assigned_at` < NOW() - INTERVAL 1 MINUTE)) LIMIT 0, 1');
-        
-        if (is_null($precursorId)) {
-            // All work units are possibly complete
-            if ($this->isPhaseComplete()) {
-                $this->setJobDone();
-            }
-            
+        $tolerance = $this->getTolerance();
+        if (! $tolerance) {
             return false;
         }
         
-        $workUnit = new WorkUnit($this->jobId, (int) $precursorId);
         $workUnit->setFragmentTolerance($tolerance);
-        
         $this->injectFragmentIons($workUnit);
         $this->injectPeptides($workUnit);
         $this->injectFixedModifications($workUnit);
@@ -87,7 +71,7 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
             'SELECT `fpeps`.`id`, `fpeps`.`peptide` FROM `fasta_peptides` AS `fpeps`
             LEFT OUTER JOIN `workunit1_peptides` AS `wu_p` ON `wu_p`.`peptide`=`fpeps`.`id`
             WHERE `wu_p`.`job` = ' . $workUnit->getJobId() .
-                 ' && `wu_p`.`ms1`=' . $workUnit->getPrecursorId());
+                 ' && `wu_p`.`precursor`=' . $workUnit->getPrecursorId());
         
         foreach ($rs as $record) {
             $peptide = new Peptide((int) $record['id']);
@@ -104,7 +88,7 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
         
         // Mark work unit as complete
         $this->adodb->Execute(
-            'UPDATE `workunit1` SET `status` = \'COMPLETE\', `completed_at` = NOW() WHERE `ms1` = ' .
+            'UPDATE `workunit1` SET `status` = \'COMPLETE\', `completed_at` = NOW() WHERE `precursor` = ' .
                  $workUnit->getPrecursorId() . ' && `job` =' . $this->jobId);
     }
 
@@ -117,12 +101,7 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
         
         $this->adodb->Execute(
             'UPDATE `workunit1_peptides` SET `score` = ' . $peptide->getScore() . ', `ions_matched` = ' .
-                 $peptide->getIonsMatched() . ' WHERE `job` = ' . $this->jobId . ' && `ms1` = ' . $precursorId .
+                 $peptide->getIonsMatched() . ' WHERE `job` = ' . $this->jobId . ' && `precursor` = ' . $precursorId .
                  ' && `peptide` = ' . $peptide->getId());
-    }
-
-    public function setWorkUnitWorker($workerId, WorkUnit $workUnit)
-    {
-        $this->recordWorkUnitWorker($workerId, $workUnit->getPrecursorId());
     }
 }

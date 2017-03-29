@@ -39,7 +39,8 @@ class WorkUnitAllocator
     {
         $workUnit = WorkUnit::fromJson($jsonStr);
         
-        $phase = $this->adodb->GetOne('SELECT `phase` FROM `job_queue` WHERE `id` = ' . $this->adodb->quote($workUnit->getJobId()));
+        $phase = $this->adodb->GetOne(
+            'SELECT `phase` FROM `job_queue` WHERE `id` = ' . $this->adodb->quote($workUnit->getJobId()));
         if (is_null($phase)) {
             return false;
         }
@@ -90,21 +91,15 @@ class WorkUnitAllocator
                 return false;
         }
         
-        $workUnit = $allocator->getWorkUnit();
-        // If false, no job was available for allocation
-        if ($workUnit !== false) {
-            $workerId = 0;
-            if (isset($_SERVER['REMOTE_ADDR'])) {
-                $workerId = ip2long($_SERVER['REMOTE_ADDR']);
-            } else {
-                // If REMOTE_ADDR is missing then either the server is configured wrong or we are in a unit test
-                $workerId = ip2long('127.0.0.1');
-            }
-            
-            $allocator->setWorkUnitWorker($workerId, $workUnit);
+        $workerId = 0;
+        if (isset($_SERVER['REMOTE_ADDR'])) {
+            $workerId = ip2long($_SERVER['REMOTE_ADDR']);
+        } else {
+            // If REMOTE_ADDR is missing then either the server is configured wrong or we are in a unit test
+            $workerId = ip2long('127.0.0.1');
         }
         
-        return $workUnit;
+        return $allocator->getWorkUnit($workerId);
     }
 
     public function getJsonResponse($requestType)
