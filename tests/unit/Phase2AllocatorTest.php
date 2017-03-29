@@ -115,8 +115,6 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectPeptides
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectFixedModifications
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectFragmentIons
-     * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::setWorkUnitWorker
-     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::recordWorkUnitWorker
      *
      * @uses pgb_liv\crowdsource\Allocator\Phase2Allocator
      */
@@ -151,8 +149,6 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectPeptides
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectFixedModifications
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectFragmentIons
-     * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::setWorkUnitWorker
-     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::recordWorkUnitWorker
      * @expectedException InvalidArgumentException
      *
      * @uses pgb_liv\crowdsource\Allocator\Phase2Allocator
@@ -181,8 +177,6 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectPeptides
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectFixedModifications
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectFragmentIons
-     * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::setWorkUnitWorker
-     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::recordWorkUnitWorker
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::isPhaseComplete
      *
      * @uses pgb_liv\crowdsource\Allocator\Phase2Allocator
