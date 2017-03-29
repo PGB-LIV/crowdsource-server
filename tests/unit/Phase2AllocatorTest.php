@@ -60,6 +60,8 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::getTolerance
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::getNextWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::getWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectPeptides
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectFixedModifications
@@ -87,6 +89,8 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::getTolerance
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::getNextWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::getWorkUnit
      *
      * @uses pgb_liv\crowdsource\Allocator\Phase2Allocator
@@ -111,6 +115,8 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::getTolerance
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::getNextWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::getWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectPeptides
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectFixedModifications
@@ -145,6 +151,8 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::getTolerance
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::getNextWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::getWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectPeptides
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectFixedModifications
@@ -173,6 +181,8 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::getTolerance
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::getNextWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::getWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectPeptides
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectFixedModifications
@@ -205,6 +215,8 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::getTolerance
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::getNextWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::getWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectPeptides
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectFixedModifications
@@ -276,6 +288,8 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::__construct
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setPhase
      * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::setJobDone
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::getTolerance
+     * @covers pgb_liv\crowdsource\Allocator\AbstractAllocator::getNextWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::getWorkUnit
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectPeptides
      * @covers pgb_liv\crowdsource\Allocator\Phase2Allocator::injectFixedModifications
