@@ -16,12 +16,14 @@
  */
 namespace pgb_liv\crowdsource\Core;
 
+use pgb_liv\php_ms\Core\Modification as BaseModification;
+
 /**
  * Modification class to encapsulate modification ID, Monoisotopic mass and and residues found on.
  *
  * @author Andrew Collins
  */
-class Modification
+class Modification extends BaseModification
 {
 
     const ARRAY_ID = 'id';
@@ -40,27 +42,6 @@ class Modification
      * @var int
      */
     private $id;
-
-    /**
-     * Monoisotopic Mass
-     *
-     * @var float
-     */
-    private $monoMass;
-
-    /**
-     * Residues modification found on
-     *
-     * @var array
-     */
-    private $residues = array();
-
-    /**
-     * Location modification found at
-     *
-     * @var int
-     */
-    private $location;
 
     /**
      * Creates a new instance of this clas with the specified values
@@ -99,98 +80,6 @@ class Modification
     public function getId()
     {
         return $this->id;
-    }
-
-    /**
-     * Sets the monoisotopic mass for this modification
-     *
-     * @param float $monoMass
-     *            The monoisotopic mass to set
-     * @throws \InvalidArgumentException If argument 1 is not of type float
-     */
-    public function setMonoisotopicMass($monoMass)
-    {
-        if (! is_float($monoMass)) {
-            throw new \InvalidArgumentException(
-                'Argument 1 must be a float value. Valued passed is of type ' . gettype($monoMass));
-        }
-        
-        $this->monoMass = $monoMass;
-    }
-
-    /**
-     * Gets the monoisotopic mass
-     *
-     * @return float
-     */
-    public function getMonoisotopicMass()
-    {
-        return $this->monoMass;
-    }
-
-    /**
-     * Sets the location for this modification
-     *
-     * @param int $location
-     *            The location to set this modification at
-     * @throws \InvalidArgumentException If argument 1 is not of type int
-     */
-    public function setLocation($location)
-    {
-        if (! is_int($location)) {
-            throw new \InvalidArgumentException(
-                'Argument 1 must be an int value. Valued passed is of type ' . gettype($location));
-        }
-        
-        $this->location = $location;
-    }
-
-    /**
-     * Gets the location of this modification
-     *
-     * @return int
-     */
-    public function getLocation()
-    {
-        return $this->location;
-    }
-
-    /**
-     * Set residues for this modification
-     *
-     * @param array $residues
-     *            Array of residues this modification may occur on
-     * @throws \InvalidArgumentException If argument 1 is not of type float
-     */
-    public function setResidues(array $residues)
-    {
-        if (empty($residues)) {
-            throw new \InvalidArgumentException('Argument 1 must not be empty.');
-        } else {
-            foreach ($residues as $residue) {
-                if (strlen($residue) != 1) {
-                    throw new \InvalidArgumentException(
-                        'Argument 1 must be an array of single char values. Value passed is of length ' .
-                             strlen($residue));
-                }
-            }
-        }
-        
-        // Force sort order
-        sort($residues);
-        
-        // Force unique residue positions
-        $this->residues = array_combine($residues, $residues);
-    }
-
-    /**
-     * Gets the residues the modification is assosciated with
-     *
-     * @return array
-     */
-    public function getResidues()
-    {
-        return array_values($this->residues);
     }
 
     /**

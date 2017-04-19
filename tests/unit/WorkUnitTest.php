@@ -194,7 +194,7 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanGetValidJsonFromWorkUnit()
     {
-        $json = '{"job":1,"precursor":2,"fragments":[{"mz":79.97,"intensity":150.5}],"peptides":[{"id":512,"sequence":"PEPTIDE"},{"id":213,"sequence":"PEPTIDER"},{"id":0,"sequence":"PEPTIDEK"}],"fixedMods":[{"id":4,"mass":79.97,"residues":"C"}],"fragTol":0.05,"fragTolUnit":"da"}';
+        $json = '{"job":1,"precursor":2,"fragments":[{"mz":79.97,"intensity":150.5}],"peptides":[{"id":512,"sequence":"PEPTIDE"},{"id":213,"sequence":"PEPTIDER"},{"id":0,"sequence":"PEPTIDEK"}],"fixedMods":[{"id":4,"mass":79.97,"residues":"C"}],"fragTol":0.05,"fragTolUnit":"Da"}';
         $jobId = 1;
         $precursorId = 2;
         $workUnit = new WorkUnit($jobId, $precursorId);

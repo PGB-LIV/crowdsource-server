@@ -16,12 +16,14 @@
  */
 namespace pgb_liv\crowdsource\Core;
 
+use pgb_liv\php_ms\Core\Peptide as BasePeptide;
+
 /**
  * Class to encapsulate peptide properties
  *
  * @author Andrew Collins
  */
-class Peptide
+class Peptide extends BasePeptide
 {
 
     const ARRAY_ID = 'id';
@@ -42,13 +44,6 @@ class Peptide
     private $id;
 
     /**
-     * Peptide sequence
-     *
-     * @var string
-     */
-    private $sequence;
-
-    /**
      * Number of ions matched from a search result
      *
      * @var int
@@ -61,13 +56,6 @@ class Peptide
      * @var number
      */
     private $score;
-
-    /**
-     * Array of modifications affecting this peptide
-     *
-     * @var array
-     */
-    private $modifications = array();
 
     /**
      * Creates a new instance of this class with the specified peptide ID
@@ -87,17 +75,6 @@ class Peptide
     }
 
     /**
-     * Sets the peptide sequence
-     *
-     * @param string $sequence
-     *            The sequence
-     */
-    public function setSequence($sequence)
-    {
-        $this->sequence = $sequence;
-    }
-
-    /**
      * Sets the peptide score
      *
      * @param number $score
@@ -105,6 +82,7 @@ class Peptide
      * @param int $ionsMatched
      *            The number of ions matched
      * @throws \InvalidArgumentException If the arguments do not match the data types
+     * @deprecated Should use phpMs/Identification
      */
     public function setScore($score, $ionsMatched)
     {
@@ -123,30 +101,6 @@ class Peptide
     }
 
     /**
-     * Adds the specified modification to this peptide
-     *
-     * @param Modification $modification
-     *            Modification object to apply
-     */
-    public function addModification(Modification $modification)
-    {
-        $this->modifications[] = $modification;
-    }
-
-    /**
-     * Adds the specified modifications to this peptide
-     *
-     * @param array $modifications
-     *            Modifications to apply
-     */
-    public function addModifications(array $modifications)
-    {
-        foreach ($modifications as $modification) {
-            $this->addModification($modification);
-        }
-    }
-
-    /**
      * Gets the ID value
      *
      * @return int
@@ -157,19 +111,10 @@ class Peptide
     }
 
     /**
-     * Gets the sequence
-     *
-     * @return string
-     */
-    public function getSequence()
-    {
-        return $this->sequence;
-    }
-
-    /**
      * Gets the peptides score value
      *
      * @return number
+     * @deprecated Should use phpMs/Identification
      */
     public function getScore()
     {
@@ -180,28 +125,11 @@ class Peptide
      * Gets the number of ions matched
      *
      * @return int
+     * @deprecated Should use phpMs/Identification
      */
     public function getIonsMatched()
     {
         return $this->ionsMatched;
-    }
-
-    /**
-     * Gets the modifications
-     */
-    public function getModifications()
-    {
-        return $this->modifications;
-    }
-
-    /**
-     * Returns whether this peptide contains modifications or not
-     *
-     * @return boolean True if the object contains modifications
-     */
-    public function isModified()
-    {
-        return count($this->modifications) != 0;
     }
 
     /**
@@ -235,7 +163,7 @@ class Peptide
     private function toArrayMods()
     {
         $unique = array();
-        foreach ($this->modifications as $modification) {
+        foreach ($this->getModifications() as $modification) {
             if (! isset($unique[$modification->getId()])) {
                 $unique[$modification->getId()] = array(
                     'mod' => $modification,
