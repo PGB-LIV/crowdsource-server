@@ -359,6 +359,35 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
         return $workUnit;
     }
 
+    private function createWorkUnitFromJsonStr($jsonStr, $phase)
+    {
+        global $adodb;
+        
+        $workUnit = Workunit::fromJson($jsonStr);
+        $this->createJob($workUnit->getJobId(), $phase);
+        
+        $adodb->Execute(
+            'INSERT INTO `workunit2` (`job`, `precursor`) VALUES (' . $workUnit->getJobId() . ', ' .
+                 $workUnit->getPrecursorId() . ');');
+        
+        foreach ($workUnit->getPeptides() as $peptide) {
+            $mods = $peptide->getModifications();
+            $modType = $mods[0]->getId();
+            $modCount = count($peptide->getModifications());
+            $adodb->Execute(
+                'INSERT INTO `workunit2_peptides` (`job`, `precursor`, `peptide`, `modification`, `count`) VALUES (' .
+                     $workUnit->getJobId() . ', ' . $workUnit->getPrecursorId() . ', ' . $peptide->getId() . ', ' .
+                     $modType . ', ' . $modCount . ');');
+        }
+        
+        $modifications = $this->getFixedModifications();
+        foreach ($modifications as $modification) {
+            $adodb->Execute(
+                'INSERT INTO `job_fixed_mod` (`job`, `mod_id`, `acid`) VALUES (' . $workUnit->getJobId() . ', ' .
+                     $modification['id'] . ', ' . $adodb->quote($modification['residue']) . ');');
+        }
+    }
+
     private function createJob($jobId, $phase)
     {
         global $adodb;
@@ -376,6 +405,9 @@ class WorkUnitAllocatorTest extends \PHPUnit_Framework_TestCase
         $adodb->Execute('TRUNCATE `raw_ms2`');
         $adodb->Execute('TRUNCATE `workunit1`');
         $adodb->Execute('TRUNCATE `workunit1_peptides`');
+        $adodb->Execute('TRUNCATE `workunit2`');
+        $adodb->Execute('TRUNCATE `workunit2_peptides`');
+        $adodb->Execute('TRUNCATE `workunit2_peptide_locations`');
         $adodb->Execute('TRUNCATE `job_queue`');
         $adodb->Execute('TRUNCATE `job_fixed_mod`');
     }

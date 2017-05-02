@@ -47,6 +47,7 @@ class Peptide extends BasePeptide
      * Number of ions matched from a search result
      *
      * @var int
+     * @deprecated
      */
     private $ionsMatched;
 
@@ -54,6 +55,7 @@ class Peptide extends BasePeptide
      * Peptide score from a search result
      *
      * @var number
+     * @deprecated
      */
     private $score;
 

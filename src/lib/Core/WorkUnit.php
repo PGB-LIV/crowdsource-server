@@ -103,6 +103,11 @@ class WorkUnit
         return $this->peptides[$id];
     }
 
+    /**
+     * Gets the set of peptides stored by this workunit
+     * 
+     * @return Peptide[]
+     */
     public function getPeptides()
     {
         return $this->peptides;

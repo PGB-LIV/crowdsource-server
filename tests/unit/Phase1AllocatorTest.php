@@ -22,7 +22,6 @@ use pgb_liv\php_ms\Core\Tolerance;
 use pgb_liv\crowdsource\Core\FragmentIon;
 use pgb_liv\crowdsource\Core\Peptide;
 use pgb_liv\crowdsource\Core\Modification;
-use pgb_liv\crowdsource\Core\JsonPeptide;
 
 class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
 {

@@ -32,4 +32,11 @@ if (isset($_GET['r'])) {
 }
 
 $workUnitAllocator = new WorkUnitAllocator($adodb);
-echo $workUnitAllocator->getJsonResponse($requestType);
+$response = $workUnitAllocator->getJsonResponse($requestType);
+echo $response;
+
+// logging
+$result = isset($_GET['result']) ? $_GET['result'] : null;
+$adodb->Execute(
+    'INSERT INTO `log` (`type`, `request`, `response`) VALUES (' . $adodb->quote($requestType) . ', ' .
+         $adodb->quote($result) . ', ' . $adodb->quote($response) . ')');
