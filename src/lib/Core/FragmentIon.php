@@ -16,31 +16,19 @@
  */
 namespace pgb_liv\crowdsource\Core;
 
+use pgb_liv\php_ms\Core\Spectra\FragmentIon as BaseFragmentIon;
+
 /**
  * Class that encapsulates a mass/charge and intensity as a single object
  *
  * @author Andrew Collins
  */
-class FragmentIon
+class FragmentIon extends BaseFragmentIon
 {
 
     const ARRAY_MZ = 'mz';
 
     const ARRAY_INTENSITY = 'intensity';
-
-    /**
-     * The Mass/Charge value
-     *
-     * @var float
-     */
-    private $mz;
-
-    /**
-     * The intensity value
-     *
-     * @var float
-     */
-    private $intensity;
 
     /**
      * Creates a new fragmention ion object with the specified mass/charge and intensity value
@@ -53,36 +41,19 @@ class FragmentIon
      */
     public function __construct($mz, $intensity)
     {
-        if (! is_float($mz)) {
-            throw new \InvalidArgumentException('Argument 1 must be a float value. Valued passed is of type ' . gettype($mz));
-        }
-        
-        if (! is_float($intensity)) {
-            throw new \InvalidArgumentException('Argument 2 must be a float value. Valued passed is of type ' . gettype($intensity));
-        }
-        
-        $this->mz = $mz;
-        $this->intensity = $intensity;
+        $this->setMassCharge($mz);
+        $this->setIntensity($intensity);
     }
 
     /**
      * Gets the Mass/Charge value of this fragment ion
      *
      * @return float
+     * @deprecated Use getMassCharge()
      */
     public function getMz()
     {
-        return $this->mz;
-    }
-
-    /**
-     * Gets the intensity value of this fragment ion
-     *
-     * @return float
-     */
-    public function getIntensity()
-    {
-        return $this->intensity;
+        return $this->getMassCharge();
     }
 
     /**
@@ -93,7 +64,7 @@ class FragmentIon
     public function toArray()
     {
         return array(
-            FragmentIon::ARRAY_MZ => $this->getMz(),
+            FragmentIon::ARRAY_MZ => $this->getMassCharge(),
             FragmentIon::ARRAY_INTENSITY => $this->getIntensity()
         );
     }

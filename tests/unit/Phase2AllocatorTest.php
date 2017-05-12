@@ -342,11 +342,7 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
             'mod_residues' => array(
                 'S',
                 'T',
-                'Y',
-                'C',
-                'D',
-                'H',
-                'R'
+                'Y'
             )
         );
         $peptides[] = array(
@@ -355,13 +351,9 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
             'mod' => 35,
             'mod_mass' => 15.994915,
             'mod_residues' => array(
-                'C',
-                'D',
-                'K',
-                'N',
-                'P',
-                'R',
-                'Y'
+                'H',
+                'M',
+                'W'
             )
         );
         $peptides[] = array(
@@ -371,9 +363,7 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
             'mod_mass' => 42.010565,
             'mod_residues' => array(
                 '[',
-                'C',
-                'S',
-                'T'
+                'K'
             )
         );
         
