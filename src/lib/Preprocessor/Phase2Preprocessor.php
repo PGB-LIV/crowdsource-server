@@ -47,6 +47,8 @@ class Phase2Preprocessor extends AbstractPreprocessor
      */
     private $modToMass;
 
+    private $maxMods;
+
     /**
      * Starts the indexing all phase 2 data
      */
@@ -62,11 +64,12 @@ class Phase2Preprocessor extends AbstractPreprocessor
     protected function initialise($phase)
     {
         parent::initialise($phase);
-        $toleranceValue = $this->adodb->GetOne(
-            'SELECT `mass_tolerance` FROM `job_queue` WHERE `id` = ' . $this->jobId);
+        $this->maxMods = min(MAX_MOD_PER_TYPE, MAX_MOD_TOTAL);
+        
+        $toleranceValue = $this->adodb->GetOne('SELECT `mass_tolerance` FROM `job_queue` WHERE `id` = ' . $this->jobId);
         
         // As ppm
-        $this->massTolerance = new Tolerance($toleranceValue, Tolerance::PPM);
+        $this->massTolerance = new Tolerance((float) $toleranceValue, Tolerance::PPM);
         
         $this->indexModifications();
     }
@@ -98,7 +101,7 @@ class Phase2Preprocessor extends AbstractPreprocessor
     private function indexModifications()
     {
         $rs = $this->adodb->Execute(
-            'SELECT `m`.`record_id`, `one_letter`, `mono_mass` FROM `unimod_specificity` `s` LEFT JOIN `unimod_modifications` `m` ON `s`.`mod_key` = `m`.`record_id` WHERE `classifications_key` = 2 && `m`.`record_id` = 21');
+            'SELECT `m`.`record_id`, `one_letter`, `mono_mass` FROM `unimod_specificity` `s` LEFT JOIN `unimod_modifications` `m` ON `s`.`mod_key` = `m`.`record_id` WHERE `s`.`hidden` = 0');
         
         $this->residueToModifications = array();
         $this->modToMass = array();
@@ -110,7 +113,11 @@ class Phase2Preprocessor extends AbstractPreprocessor
             }
             
             $this->residueToModifications[$residue][] = $record['record_id'];
-            $this->modToMass[$record['record_id']] = $record['mono_mass'];
+            $this->modToMass[$record['record_id']] = array();
+            
+            for ($count = 1; $count <= $this->maxMods; $count ++) {
+                $this->modToMass[$record['record_id']][$count] = $record['mono_mass'] * $count;
+            }
         }
     }
 
@@ -121,14 +128,13 @@ class Phase2Preprocessor extends AbstractPreprocessor
      */
     private function getPtmCandidates()
     {
+        $scoreThreshold = 20;
+        
         // Select best peptides
-        return $this->adodb->Execute('SELECT `id`, `peptide`, `mass_modified` FROM `fasta_peptides`');
-        /*
-         * return $this->adodb->Execute(
-         * 'SELECT `f`.`id`, `f`.`peptide`, `f`.`mass_modified`, MAX(`score`) AS `bestscore` FROM `workunit1_peptides` `w` LEFT JOIN `fasta_peptides` `f` ON
-         * `f`.`id` = `w`.`peptide` WHERE `w`.`job` = ' .
-         * $this->jobId . ' GROUP BY `w`.`peptide` HAVING `bestscore` >= 5 ORDER BY `f`.`id` ASC');
-         */
+        return $this->adodb->Execute(
+            'SELECT `f`.`id`, `f`.`peptide`, `f`.`mass_modified` FROM `fasta_protein2peptide` `p2p` LEFT JOIN `fasta_peptides` `f` ON `f`.`id` = `p2p`.`peptide` && `f`.`job` = `p2p`.`job` WHERE `protein` IN (SELECT DISTINCT `protein` FROM `fasta_protein2peptide` WHERE `peptide` IN (SELECT `peptide` FROM `workunit1_peptides` WHERE `job` = ' .
+                 $this->jobId . ' && `score` > ' . $scoreThreshold . ') && `job` =  ' . $this->jobId . ' ) && `p2p`.`job` = ' .
+                 $this->jobId . ' GROUP BY `f`.`id`');
     }
 
     /**
@@ -141,9 +147,10 @@ class Phase2Preprocessor extends AbstractPreprocessor
     private function getPossibleModifications($sequence)
     {
         $possibleMods = array();
-        for ($i = 0; $i < strlen($sequence); $i ++) {
-            $residue = $sequence[$i];
-            
+        $residues = count_chars($sequence, 1);
+        foreach ($residues as $residue => $frequency) {
+            $residue = chr($residue);
+            // No modifications for residue
             if (! isset($this->residueToModifications[$residue])) {
                 continue;
             }
@@ -175,13 +182,12 @@ class Phase2Preprocessor extends AbstractPreprocessor
         echo 'Searching #' . $peptideId . ' for ' . count($possibleMods) . ' possible mods' . PHP_EOL;
         foreach ($possibleMods as $modId => $maxMods) {
             
-            if ($maxMods > MAX_MOD_PER_TYPE || $maxMods > MAX_MOD_TOTAL)
-            {
-                $maxMods = min(MAX_MOD_PER_TYPE, MAX_MOD_TOTAL);
+            if ($maxMods > $this->maxMods) {
+                $maxMods = $this->maxMods;
             }
             
             for ($modCount = 1; $modCount <= $maxMods; $modCount ++) {
-                $totalMass = $peptideMass + ($this->modToMass[$modId] * $modCount);
+                $totalMass = $peptideMass + $this->modToMass[$modId][$modCount];
                 
                 $this->findPrecursors($totalMass, $peptideId, $modId, $modCount);
             }

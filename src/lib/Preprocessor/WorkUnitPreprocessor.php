@@ -17,6 +17,7 @@
 namespace pgb_liv\crowdsource\Preprocessor;
 
 use pgb_liv\crowdsource\BulkQuery;
+use pgb_liv\php_ms\Core\Tolerance;
 
 /**
  * Accepts a Job ID and generates potential identification
@@ -58,11 +59,11 @@ class WorkUnitPreprocessor
         $toleranceValue = $this->adodb->GetOne('SELECT `mass_tolerance` FROM `job_queue` WHERE `id` = ' . $this->jobId);
         
         // As ppm
-        $this->massTolerance = new Tolerance($toleranceValue, Tolerance::PPM);
+        $this->massTolerance = new Tolerance((float) $toleranceValue, Tolerance::PPM);
         
-        $this->workUnitBulk = new BulkQuery($this->adodb, 'INSERT INTO `workunit1` (`job`, `ms1`) VALUES ');
+        $this->workUnitBulk = new BulkQuery($this->adodb, 'INSERT INTO `workunit1` (`job`, `precursor`) VALUES ');
         $this->workUnitPeptideBulk = new BulkQuery($this->adodb, 
-            'INSERT INTO `workunit1_peptides` (`job`, `ms1`, `peptide`) VALUES ');
+            'INSERT INTO `workunit1_peptides` (`job`, `precursor`, `peptide`) VALUES ');
     }
 
     /**
