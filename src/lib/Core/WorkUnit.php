@@ -75,7 +75,7 @@ class WorkUnit
 
     public function addPeptide(Peptide $peptide)
     {
-        $this->peptides[$peptide->getId()] = $peptide;
+        $this->peptides[] = $peptide;
     }
 
     public function setFragmentTolerance(Tolerance $tolerance)
@@ -93,6 +93,13 @@ class WorkUnit
         return $this->precursorId;
     }
 
+    /**
+     *
+     * @deprecated Do not use, not safe
+     * @param int $id            
+     * @throws \InvalidArgumentException
+     * @return Peptide
+     */
     public function getPeptide($id)
     {
         if (! is_int($id)) {
@@ -100,12 +107,18 @@ class WorkUnit
                 'Argument 1 must be an integer value. Valued passed is of type ' . gettype($id));
         }
         
-        return $this->peptides[$id];
+        foreach ($this->getPeptides() as $peptide) {
+            if ($peptide->getId() == $id) {
+                return $peptide;
+            }
+        }
+        
+        return null;
     }
 
     /**
      * Gets the set of peptides stored by this workunit
-     * 
+     *
      * @return Peptide[]
      */
     public function getPeptides()
