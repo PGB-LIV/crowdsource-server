@@ -69,11 +69,11 @@ class Phase2Allocator extends AbstractAllocator implements AllocatorInterface
     private function injectPeptides(WorkUnit $workUnit)
     {
         $rs = $this->adodb->Execute(
-            'SELECT `p`.`id`, `p`.`peptide`, `w`.`modification`,`u`.`mono_mass`, `w`.`count` FROM `fasta_peptides` AS `p`
+            'SELECT `p`.`id`, `p`.`peptide`, `w`.`modification`, `u`.`mono_mass`, `w`.`count` FROM `fasta_peptides` AS `p`
             LEFT JOIN `workunit2_peptides` AS `w` ON `w`.`peptide`=`p`.`id`
             LEFT JOIN `unimod_modifications` AS `u` ON `u`.`record_id`=`w`.`modification`
-            WHERE `w`.`job` = ' . $workUnit->getJobId() . ' && `w`.`precursor`=' .
-                 $workUnit->getPrecursorId());
+            WHERE `w`.`job` = ' . $workUnit->getJobId() .
+                 ' && `w`.`precursor`=' . $workUnit->getPrecursorId());
         
         foreach ($rs as $record) {
             $peptide = new Peptide((int) $record['id']);
@@ -83,6 +83,12 @@ class Phase2Allocator extends AbstractAllocator implements AllocatorInterface
             $residues = $this->adodb->GetCol(
                 'SELECT `one_letter` FROM `unimod_specificity` WHERE `mod_key` = ' . $record['modification'] .
                      ' && `hidden` = 0');
+            
+            if (empty($residues)) {
+                $residues = $this->adodb->GetCol(
+                    'SELECT `one_letter` FROM `unimod_specificity` WHERE `mod_key` = ' . $record['modification']);
+            }
+            
             foreach ($residues as $key => $residue) {
                 if ($residue == 'C-term') {
                     $residues[$key] = ']';

@@ -17,6 +17,7 @@
 namespace pgb_liv\crowdsource\Preprocessor;
 
 use pgb_liv\php_ms\Core\Tolerance;
+use pgb_liv\crowdsource\Core\Modification;
 
 /**
  * Logic for performing all phase 2 preprocessing
@@ -25,6 +26,16 @@ use pgb_liv\php_ms\Core\Tolerance;
  */
 class Phase2Preprocessor extends AbstractPreprocessor
 {
+
+    const POSITION_ANY = 2;
+
+    const POSITION_N_TERM = 3;
+
+    const POSITION_C_TERM = 4;
+
+    const POSITION_PROT_N_TERM = 5;
+
+    const POSITION_PROT_C_TERM = 6;
 
     /**
      * Precursor mass tolerance as ppm value
@@ -66,10 +77,11 @@ class Phase2Preprocessor extends AbstractPreprocessor
         parent::initialise($phase);
         $this->maxMods = min(MAX_MOD_PER_TYPE, MAX_MOD_TOTAL);
         
-        $toleranceValue = $this->adodb->GetOne('SELECT `mass_tolerance` FROM `job_queue` WHERE `id` = ' . $this->jobId);
+        $toleranceRaw = $this->adodb->GetRow(
+            'SELECT `precursor_tolerance`, `precursor_tolerance_unit` FROM `job_queue` WHERE `id` = ' . $this->jobId);
         
-        // As ppm
-        $this->massTolerance = new Tolerance((float) $toleranceValue, Tolerance::PPM);
+        $this->massTolerance = new Tolerance((float) $toleranceRaw['precursor_tolerance'], 
+            $toleranceRaw['precursor_tolerance_unit']);
         
         $this->indexModifications();
     }
@@ -85,7 +97,7 @@ class Phase2Preprocessor extends AbstractPreprocessor
             $sequence = $ptmCandidate['peptide'];
             $peptideMass = $ptmCandidate['mass_modified'];
             
-            $possibleMods = $this->getPossibleModifications($sequence);
+            $possibleMods = $this->getPossibleModifications($sequence, $ptmCandidate['start']);
             
             $this->findPrecursorMatches($possibleMods, $peptideMass, $ptmCandidate['id']);
         }
@@ -100,23 +112,41 @@ class Phase2Preprocessor extends AbstractPreprocessor
      */
     private function indexModifications()
     {
-        $rs = $this->adodb->Execute(
-            'SELECT `m`.`record_id`, `one_letter`, `mono_mass` FROM `unimod_specificity` `s` LEFT JOIN `unimod_modifications` `m` ON `s`.`mod_key` = `m`.`record_id` WHERE `s`.`hidden` = 0');
+        $rs = $this->adodb->Execute('SELECT `record_id`, `mono_mass` FROM `unimod_modifications` WHERE `approved` = 1');
         
         $this->residueToModifications = array();
+        $this->residueToModifications[Phase2Preprocessor::POSITION_ANY] = array();
+        $this->residueToModifications[Phase2Preprocessor::POSITION_N_TERM] = array();
+        $this->residueToModifications[Phase2Preprocessor::POSITION_C_TERM] = array();
+        $this->residueToModifications[Phase2Preprocessor::POSITION_PROT_N_TERM] = array();
+        $this->residueToModifications[Phase2Preprocessor::POSITION_PROT_C_TERM] = array();
         $this->modToMass = array();
         
-        foreach ($rs as $record) {
-            $residue = $record['one_letter'];
-            if (! isset($this->residueToModifications[$residue])) {
-                $this->residueToModifications[$residue] = array();
+        foreach ($rs as $modification) {
+            $residues = $this->adodb->GetAll(
+                'SELECT `one_letter`, `position_key` FROM `unimod_specificity` WHERE `hidden` = 0 && `mod_key` = ' .
+                     $modification['record_id']);
+            
+            if (empty($residues)) {
+                $residues = $this->adodb->GetAll(
+                    'SELECT `one_letter`, `position_key` FROM `unimod_specificity` WHERE `mod_key` = ' .
+                         $modification['record_id']);
             }
             
-            $this->residueToModifications[$residue][] = $record['record_id'];
-            $this->modToMass[$record['record_id']] = array();
-            
-            for ($count = 1; $count <= $this->maxMods; $count ++) {
-                $this->modToMass[$record['record_id']][$count] = $record['mono_mass'] * $count;
+            foreach ($residues as $residue) {
+                $position = $residue['position_key'];
+                $residue = $residue['one_letter'];
+                
+                if (! isset($this->residueToModifications[$position][$residue])) {
+                    $this->residueToModifications[$position][$residue] = array();
+                }
+                
+                $this->residueToModifications[$position][$residue][] = $modification['record_id'];
+                $this->modToMass[$modification['record_id']] = array();
+                
+                for ($count = 1; $count <= $this->maxMods; $count ++) {
+                    $this->modToMass[$modification['record_id']][$count] = $modification['mono_mass'] * $count;
+                }
             }
         }
     }
@@ -128,13 +158,13 @@ class Phase2Preprocessor extends AbstractPreprocessor
      */
     private function getPtmCandidates()
     {
-        $scoreThreshold = 20;
+        $scoreThreshold = 30;
         
         // Select best peptides
         return $this->adodb->Execute(
-            'SELECT `f`.`id`, `f`.`peptide`, `f`.`mass_modified` FROM `fasta_protein2peptide` `p2p` LEFT JOIN `fasta_peptides` `f` ON `f`.`id` = `p2p`.`peptide` && `f`.`job` = `p2p`.`job` WHERE `protein` IN (SELECT DISTINCT `protein` FROM `fasta_protein2peptide` WHERE `peptide` IN (SELECT `peptide` FROM `workunit1_peptides` WHERE `job` = ' .
-                 $this->jobId . ' && `score` > ' . $scoreThreshold . ') && `job` =  ' . $this->jobId . ' ) && `p2p`.`job` = ' .
-                 $this->jobId . ' GROUP BY `f`.`id`');
+            'SELECT `f`.`id`, `f`.`peptide`, `f`.`mass_modified`, MIN(`p2p`.`position_start`) `start` FROM `fasta_protein2peptide` `p2p` LEFT JOIN `fasta_peptides` `f` ON `f`.`id` = `p2p`.`peptide` && `f`.`job` = `p2p`.`job` WHERE `protein` IN (SELECT DISTINCT `protein` FROM `fasta_protein2peptide` WHERE `peptide` IN (SELECT `peptide` FROM `workunit1_peptides` WHERE `job` = ' .
+                 $this->jobId . ' && `score` > ' . $scoreThreshold . ') && `job` =  ' . $this->jobId .
+                 ' ) && `p2p`.`job` = ' . $this->jobId . ' GROUP BY `f`.`id`');
     }
 
     /**
@@ -144,27 +174,56 @@ class Phase2Preprocessor extends AbstractPreprocessor
      *            The peptide sequence to test against
      * @return array A 2D array of modId => mod count
      */
-    private function getPossibleModifications($sequence)
+    private function getPossibleModifications($sequence, $startPosition)
     {
         $possibleMods = array();
-        $residues = count_chars($sequence, 1);
-        foreach ($residues as $residue => $frequency) {
-            $residue = chr($residue);
-            // No modifications for residue
-            if (! isset($this->residueToModifications[$residue])) {
-                continue;
+        foreach ($this->residueToModifications[Phase2Preprocessor::POSITION_N_TERM] as $residue => $mods) {
+            if ($residue == 'N-term' || $residue == $sequence[0]) {
+                $this->addMods($possibleMods, $mods);
             }
-            
-            foreach ($this->residueToModifications[$residue] as $modId) {
-                if (! isset($possibleMods[$modId])) {
-                    $possibleMods[$modId] = 0;
+        }
+        
+        if ($startPosition == 0) {
+            foreach ($this->residueToModifications[Phase2Preprocessor::POSITION_PROT_N_TERM] as $residue => $mods) {
+                if ($residue == 'N-term' || $residue == $sequence[0]) {
+                    $this->addMods($possibleMods, $mods);
                 }
-                
-                $possibleMods[$modId] ++;
+            }
+        }
+        
+        $last = strlen($sequence) - 1;
+        foreach ($this->residueToModifications[Phase2Preprocessor::POSITION_C_TERM] as $residue => $mods) {
+            if ($residue == 'C-term' || $residue == $sequence[$last]) {
+                $this->addMods($possibleMods, $mods);
+            }
+        }
+        
+        // TODO: We don't currently know where the sequence is in a peptide
+        // foreach ($this->residueToModifications[Phase2Preprocessor::POSITION_PROT_C_TERM] as $residue => $mods) {
+        // if ($residue == 'C-term' || $residue == $sequence[0]) {
+        // $this->addMods($possibleMods, $mods);
+        // }
+        // }
+        
+        $residues = count_chars($sequence, 1);
+        foreach ($this->residueToModifications[Phase2Preprocessor::POSITION_ANY] as $residue => $mods) {
+            if ($residue == 'C-term' || $residue == 'N-term' || isset($residues[ord($residue)])) {
+                $this->addMods($possibleMods, $mods);
             }
         }
         
         return $possibleMods;
+    }
+
+    private function addMods(&$possibleMods, $mods)
+    {
+        foreach ($mods as $modId) {
+            if (! isset($possibleMods[$modId])) {
+                $possibleMods[$modId] = 0;
+            }
+            
+            $possibleMods[$modId] ++;
+        }
     }
 
     /**

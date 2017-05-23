@@ -56,10 +56,11 @@ class WorkUnitPreprocessor
 
     private function initialise()
     {
-        $toleranceValue = $this->adodb->GetOne('SELECT `mass_tolerance` FROM `job_queue` WHERE `id` = ' . $this->jobId);
+        $toleranceRaw = $this->adodb->GetRow(
+            'SELECT `precursor_tolerance`, `precursor_tolerance_unit` FROM `job_queue` WHERE `id` = ' . $this->jobId);
         
-        // As ppm
-        $this->massTolerance = new Tolerance((float) $toleranceValue, Tolerance::PPM);
+        $this->massTolerance = new Tolerance((float) $toleranceRaw['precursor_tolerance'], 
+            $toleranceRaw['precursor_tolerance_unit']);
         
         $this->workUnitBulk = new BulkQuery($this->adodb, 'INSERT INTO `workunit1` (`job`, `precursor`) VALUES ');
         $this->workUnitPeptideBulk = new BulkQuery($this->adodb, 
