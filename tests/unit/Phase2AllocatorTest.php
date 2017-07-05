@@ -430,6 +430,9 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
         $workUnit = new WorkUnit($jobId, $precursorId);
         $workUnit->setFragmentTolerance(new Tolerance(10.0, 'ppm'));
         
+        $adodb->Execute(
+            'INSERT INTO `raw_ms1` (`id`, `job`, `mass`) VALUES (1, 1, 799.349);');
+        
         $adodb->Execute('INSERT INTO `workunit2` (`job`, `precursor`) VALUES (' . $jobId . ', ' . $precursorId . ');');
         
         $ms2 = $this->getMs2();
@@ -479,6 +482,7 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
         global $adodb;
         
         $adodb->Execute('TRUNCATE `fasta_peptides`');
+        $adodb->Execute('TRUNCATE `raw_ms1`');
         $adodb->Execute('TRUNCATE `raw_ms2`');
         $adodb->Execute('TRUNCATE `workunit2`');
         $adodb->Execute('TRUNCATE `workunit2_peptides`');

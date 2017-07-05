@@ -378,6 +378,9 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
         $workUnit = new WorkUnit($jobId, $precursorId);
         $workUnit->setFragmentTolerance(new Tolerance(10.0, 'ppm'));
         
+        $adodb->Execute(
+            'INSERT INTO `raw_ms1` (`id`, `job`, `mass`) VALUES (1, 1, 799.349);');
+        
         $adodb->Execute('INSERT INTO `workunit1` (`job`, `precursor`) VALUES (' . $jobId . ', ' . $precursorId . ');');
         
         $ms2 = $this->getMs2();
@@ -397,8 +400,8 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
                 'INSERT INTO `workunit1_peptides` (`job`, `precursor`, `peptide`) VALUES (' . $jobId . ', ' .
                      $precursorId . ', ' . $id . ');');
             $adodb->Execute(
-                'INSERT INTO `fasta_peptides` (`job`, `id`, `peptide`) VALUES (' . $jobId . ', ' . $id . ', ' .
-                     $adodb->quote($peptide['structure']) . ');');
+                'INSERT INTO `fasta_peptides` (`job`, `id`, `peptide`, `mass_modified`) VALUES (' . $jobId . ', ' . $id . ', ' .
+                     $adodb->quote($peptide['structure']) . ', '.$pep->getMass().');');
         }
         
         $modifications = $this->getFixedModifications();
@@ -421,6 +424,7 @@ class Phase1AllocatorTest extends \PHPUnit_Framework_TestCase
         global $adodb;
         
         $adodb->Execute('TRUNCATE `fasta_peptides`');
+        $adodb->Execute('TRUNCATE `raw_ms1`');
         $adodb->Execute('TRUNCATE `raw_ms2`');
         $adodb->Execute('TRUNCATE `workunit1`');
         $adodb->Execute('TRUNCATE `workunit1_peptides`');
