@@ -20,6 +20,7 @@ use pgb_liv\crowdsource\Core\WorkUnit;
 use pgb_liv\crowdsource\Core\FragmentIon;
 use pgb_liv\crowdsource\Core\Modification;
 use pgb_liv\php_ms\Core\Tolerance;
+use pgb_liv\crowdsource\Core\Peptide;
 
 abstract class AbstractAllocator implements AllocatorInterface
 {
@@ -167,5 +168,64 @@ abstract class AbstractAllocator implements AllocatorInterface
 
     abstract public function getWorkUnit($workerId);
 
-    abstract public function setWorkUnitResults(WorkUnit $workUnit);
+    public function setWorkUnitResults(WorkUnit $workUnit)
+    {
+        $this->rescore($workUnit);
+        
+        foreach ($workUnit->getPeptides() as $peptide) {
+            $this->recordPeptideScores($workUnit->getPrecursorId(), $peptide);
+        }
+        
+        // Mark work unit as complete
+        $this->adodb->Execute(
+            'UPDATE `workunit' . $this->phase .
+                 '` SET `status` = \'COMPLETE\', `completed_at` = NOW() WHERE `precursor` = ' .
+                 $workUnit->getPrecursorId() . ' && `job` =' . $this->jobId);
+    }
+
+    abstract protected function recordPeptideScores($precursorId, Peptide $peptide);
+
+    private function rescore(WorkUnit $workUnit)
+    {
+        $precursorMass = $this->adodb->GetOne(
+            'SELECT `mass` FROM `raw_ms1` WHERE `job` = ' . $this->jobId . ' && `id` = ' . $workUnit->getPrecursorId());
+        
+        if (is_null($precursorMass)) {
+            throw new \OutOfBoundsException('Precursor "' . $workUnit->getPrecursorId() . '" not found');
+        }
+        
+        foreach ($workUnit->getPeptides() as $peptide) {
+            if ($peptide->getScore() <= 0) {
+                continue;
+            }
+            
+            $peptideMass = $this->adodb->GetOne(
+                'SELECT `mass_modified` FROM `fasta_peptides` WHERE `job` = ' . $this->jobId . ' && `id` = ' .
+                     $peptide->getId());
+            
+            if (is_null($peptideMass)) {
+                throw new \OutOfBoundsException('Peptide "' . $peptide->getId() . '" not found');
+            }
+            
+            $modificationMass = 0;
+            foreach ($peptide->getModifications() as $modification) {
+                $modificationMass += $modification->getMonoisotopicMass();
+            }
+            
+            $peptideMass += $modificationMass;
+            
+            // Calculate ppm
+            $ppm = abs(($peptideMass - $precursorMass) / $peptideMass * 1000000);
+            if ($ppm <= 10) {
+                if ($ppm < 0.1) {
+                    $ppm = 0.1;
+                }
+                
+                $boostFunc = - 1.5 * log($ppm, 2) + 5.017;
+                $boostRate = 1 + ($boostFunc / 100);
+                
+                $peptide->setScore($peptide->getScore() * $boostRate, $peptide->getIonsMatched());
+            }
+        }
+    }
 }

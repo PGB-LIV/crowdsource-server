@@ -75,7 +75,8 @@ class Phase2Preprocessor extends AbstractPreprocessor
     protected function initialise($phase)
     {
         parent::initialise($phase);
-        $this->maxMods = min(MAX_MOD_PER_TYPE, MAX_MOD_TOTAL);
+        // Force to only one mod for now
+        $this->maxMods = 1; // min(MAX_MOD_PER_TYPE, MAX_MOD_TOTAL);
         
         $toleranceRaw = $this->adodb->GetRow(
             'SELECT `precursor_tolerance`, `precursor_tolerance_unit` FROM `job_queue` WHERE `id` = ' . $this->jobId);
@@ -246,6 +247,14 @@ class Phase2Preprocessor extends AbstractPreprocessor
             }
             
             for ($modCount = 1; $modCount <= $maxMods; $modCount ++) {
+                $ratio = $this->modToMass[$modId][$modCount] / $peptideMass;
+                
+                // Skip huge mods
+                if ($ratio > .15)
+                {
+                    continue;
+                }
+                
                 $totalMass = $peptideMass + $this->modToMass[$modId][$modCount];
                 
                 $this->findPrecursors($totalMass, $peptideId, $modId, $modCount);

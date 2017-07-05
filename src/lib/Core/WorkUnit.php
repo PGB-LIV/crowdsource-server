@@ -43,6 +43,11 @@ class WorkUnit
 
     private $fragmentIons = array();
 
+    /**
+     * List of peptides associated with the precursor in this instance
+     * 
+     * @var Peptide
+     */
     private $peptides = array();
 
     private $fragmentTolerance;
@@ -98,7 +103,7 @@ class WorkUnit
      * @deprecated Do not use, not safe
      * @param int $id            
      * @throws \InvalidArgumentException
-     * @return Peptide
+     * @return \pgb_liv\crowdsource\Core\Peptide[]
      */
     public function getPeptide($id)
     {
@@ -119,7 +124,7 @@ class WorkUnit
     /**
      * Gets the set of peptides stored by this workunit
      *
-     * @return Peptide[]
+     * @return \pgb_liv\crowdsource\Core\Peptide[]
      */
     public function getPeptides()
     {

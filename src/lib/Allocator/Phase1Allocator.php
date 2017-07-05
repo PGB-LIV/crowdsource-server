@@ -70,8 +70,8 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
         $rs = $this->adodb->Execute(
             'SELECT `fpeps`.`id`, `fpeps`.`peptide` FROM `fasta_peptides` AS `fpeps`
             LEFT OUTER JOIN `workunit1_peptides` AS `wu_p` ON `wu_p`.`peptide`=`fpeps`.`id`
-            WHERE `wu_p`.`job` = ' . $workUnit->getJobId() .
-                 ' && `wu_p`.`precursor`=' . $workUnit->getPrecursorId());
+            WHERE `wu_p`.`job` = ' . $workUnit->getJobId() . ' && `wu_p`.`precursor`=' .
+                 $workUnit->getPrecursorId());
         
         foreach ($rs as $record) {
             $peptide = new Peptide((int) $record['id']);
@@ -80,19 +80,7 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
         }
     }
 
-    public function setWorkUnitResults(WorkUnit $workUnit)
-    {
-        foreach ($workUnit->getPeptides() as $peptide) {
-            $this->recordPeptideScores($workUnit->getPrecursorId(), $peptide);
-        }
-        
-        // Mark work unit as complete
-        $this->adodb->Execute(
-            'UPDATE `workunit1` SET `status` = \'COMPLETE\', `completed_at` = NOW() WHERE `precursor` = ' .
-                 $workUnit->getPrecursorId() . ' && `job` =' . $this->jobId);
-    }
-
-    private function recordPeptideScores($precursorId, Peptide $peptide)
+    protected function recordPeptideScores($precursorId, Peptide $peptide)
     {
         // only place the score if > 0
         if (is_null($peptide->getScore()) || $peptide->getScore() <= 0) {
