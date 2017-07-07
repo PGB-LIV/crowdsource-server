@@ -185,14 +185,23 @@ abstract class AbstractAllocator implements AllocatorInterface
 
     abstract protected function recordPeptideScores($precursorId, Peptide $peptide);
 
+    /**
+     * Rescores the received peptides to boost for delta precursor masses
+     * @param WorkUnit $workUnit Work unit to rescore
+     * @throws \OutOfBoundsException If precursor or peptide ID is not found
+     * @return void
+     */
     private function rescore(WorkUnit $workUnit)
     {
+        // TODO: This rescoring could be more efficient if done at a post-processing phase.
         $precursorMass = $this->adodb->GetOne(
             'SELECT `mass` FROM `raw_ms1` WHERE `job` = ' . $this->jobId . ' && `id` = ' . $workUnit->getPrecursorId());
         
         if (is_null($precursorMass)) {
             throw new \OutOfBoundsException('Precursor "' . $workUnit->getPrecursorId() . '" not found');
         }
+                
+        $modToMass = $this->adodb->GetAssoc('SELECT `record_id`, `mono_mass` FROM `unimod_modifications`');
         
         foreach ($workUnit->getPeptides() as $peptide) {
             if ($peptide->getScore() <= 0) {
@@ -209,7 +218,7 @@ abstract class AbstractAllocator implements AllocatorInterface
             
             $modificationMass = 0;
             foreach ($peptide->getModifications() as $modification) {
-                $modificationMass += $modification->getMonoisotopicMass();
+                $modificationMass += $modToMass[$modification->getId()];
             }
             
             $peptideMass += $modificationMass;

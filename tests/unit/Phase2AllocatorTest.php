@@ -137,9 +137,7 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
         
         $this->assertEquals($testUnit, $workUnit);
         
-        $record = $adodb->GetRow(
-            'SELECT `status`, `assigned_to` FROM `workunit2` WHERE `job` = ' . $workUnit->getJobId() .
-                 ' && `precursor` = ' . $workUnit->getPrecursorId());
+        $record = $adodb->GetRow('SELECT `status`, `assigned_to` FROM `workunit2` WHERE `job` = ' . $workUnit->getJobId() . ' && `precursor` = ' . $workUnit->getPrecursorId());
         
         $this->assertEquals('ASSIGNED', $record['status']);
         $this->assertEquals('2130706433', $record['assigned_to']);
@@ -265,14 +263,8 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
             
             foreach ($peptide->getModifications() as $mod) {
                 $modId = $mod->getId();
-                $record = $adodb->GetRow(
-                    'SELECT `ions_matched`, `score` FROM `workunit2_peptides` WHERE `job` = ' . $job .
-                         ' && `precursor` = ' . $precursor . ' && `peptide` = ' . $pepId . ' && `modification` = ' .
-                         $modId . ' && `count` = ' . $modCount);
-                $modLocations = $adodb->GetRow(
-                    'SELECT `location` FROM `workunit2_peptide_locations` WHERE `job` = ' . $job . ' && `precursor` = ' .
-                         $precursor . ' && `peptide` = ' . $pepId . ' && `modification` = ' . $modId . ' && `count` = ' .
-                         $modCount);
+                $record = $adodb->GetRow('SELECT `ions_matched`, `score` FROM `workunit2_peptides` WHERE `job` = ' . $job . ' && `precursor` = ' . $precursor . ' && `peptide` = ' . $pepId . ' && `modification` = ' . $modId . ' && `count` = ' . $modCount);
+                $modLocations = $adodb->GetRow('SELECT `location` FROM `workunit2_peptide_locations` WHERE `job` = ' . $job . ' && `precursor` = ' . $precursor . ' && `peptide` = ' . $pepId . ' && `modification` = ' . $modId . ' && `count` = ' . $modCount);
                 
                 $this->assertEquals(round($peptide->getScore(), 1), round($record['score'], 1));
                 $this->assertEquals($peptide->getIonsMatched(), $record['ions_matched']);
@@ -335,7 +327,7 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
     {
         $peptides = array();
         $peptides[] = array(
-            'structure' => 'PEPTIDE',
+            'structure' => 'ADEGISFR',
             'score' => null,
             'mod' => 21,
             'mod_mass' => 79.966331,
@@ -346,24 +338,25 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
             )
         );
         $peptides[] = array(
-            'structure' => 'PEPTIDER',
+            'structure' => 'DFQDNSK',
             'score' => null,
-            'mod' => 35,
-            'mod_mass' => 15.994915,
+            'mod' => 264,
+            'mod_mass' => 121.035005,
             'mod_residues' => array(
-                'H',
-                'M',
-                'W'
+                'S',
+                'T'
             )
         );
         $peptides[] = array(
-            'structure' => 'PEPTIDEK',
+            'structure' => 'KYTLTDR',
             'score' => null,
-            'mod' => 1,
-            'mod_mass' => 42.010565,
+            'mod' => 340,
+            'mod_mass' => 77.910511,
             'mod_residues' => array(
-                '[',
-                'K'
+                'F',
+                'H',
+                'W',
+                'Y'
             )
         );
         
@@ -418,9 +411,7 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
     {
         global $adodb;
         
-        $adodb->Execute(
-            'INSERT INTO `job_queue` (`id`, `phase`, `state`, `fragment_tolerance`, `fragment_tolerance_unit`) VALUES (' .
-                 $jobId . ', \'' . $phase . '\', \'READY\', 10, \'ppm\');');
+        $adodb->Execute('INSERT INTO `job_queue` (`id`, `phase`, `state`, `fragment_tolerance`, `fragment_tolerance_unit`) VALUES (' . $jobId . ', \'' . $phase . '\', \'READY\', 10, \'ppm\');');
     }
 
     private function createWorkUnit($jobId, $precursorId)
@@ -430,17 +421,14 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
         $workUnit = new WorkUnit($jobId, $precursorId);
         $workUnit->setFragmentTolerance(new Tolerance(10.0, 'ppm'));
         
-        $adodb->Execute(
-            'INSERT INTO `raw_ms1` (`id`, `job`, `mass`) VALUES (1, 1, 799.349);');
+        $adodb->Execute('INSERT INTO `raw_ms1` (`id`, `job`, `mass`) VALUES (1, 1, 973.390686);');
         
         $adodb->Execute('INSERT INTO `workunit2` (`job`, `precursor`) VALUES (' . $jobId . ', ' . $precursorId . ');');
         
         $ms2 = $this->getMs2();
         foreach ($ms2 as $key => $value) {
             $workUnit->addFragmentIon(new FragmentIon($value['mz'], $value['intensity']));
-            $adodb->Execute(
-                'INSERT INTO `raw_ms2` (`job`, `ms1`, `id`, `mz`, `intensity`) VALUES (' . $jobId . ', ' . $precursorId .
-                     ', ' . $key . ', ' . $value['mz'] . ', ' . $value['intensity'] . ');');
+            $adodb->Execute('INSERT INTO `raw_ms2` (`job`, `ms1`, `id`, `mz`, `intensity`) VALUES (' . $jobId . ', ' . $precursorId . ', ' . $key . ', ' . $value['mz'] . ', ' . $value['intensity'] . ');');
         }
         
         $peptides = $this->getPeptides();
@@ -454,24 +442,17 @@ class Phase2AllocatorTest extends \PHPUnit_Framework_TestCase
             
             $pep->addModification($mod);
             
-            $adodb->Execute(
-                'INSERT INTO `workunit2_peptides` (`job`, `precursor`, `peptide`, `modification`, `count`) VALUES (' .
-                     $jobId . ', ' . $precursorId . ', ' . $id . ', ' . $mod->getId() . ', 1);');
-            $adodb->Execute(
-                'INSERT INTO `fasta_peptides` (`job`, `id`, `peptide`) VALUES (' . $jobId . ', ' . $id . ', ' .
-                     $adodb->quote($peptide['structure']) . ');');
+            $adodb->Execute('INSERT INTO `workunit2_peptides` (`job`, `precursor`, `peptide`, `modification`, `count`) VALUES (' . $jobId . ', ' . $precursorId . ', ' . $id . ', ' . $mod->getId() . ', 1);');
+            $adodb->Execute('INSERT INTO `fasta_peptides` (`job`, `id`, `peptide`, `mass_modified`) VALUES (' . $jobId . ', ' . $id . ', ' . $adodb->quote($peptide['structure']) . ', ' . $pep->getMass() . ');');
         }
         
         $modifications = $this->getFixedModifications();
         foreach ($modifications as $key => $modification) {
-            $mod = new Modification($modification['id'], $modification['mass'], 
-                array(
-                    $modification['residue']
-                ));
+            $mod = new Modification($modification['id'], $modification['mass'], array(
+                $modification['residue']
+            ));
             $workUnit->addFixedModification($mod);
-            $adodb->Execute(
-                'INSERT INTO `job_fixed_mod` (`job`, `mod_id`, `acid`) VALUES (' . $jobId . ', ' . $modification['id'] .
-                     ', ' . $adodb->quote($modification['residue']) . ');');
+            $adodb->Execute('INSERT INTO `job_fixed_mod` (`job`, `mod_id`, `acid`) VALUES (' . $jobId . ', ' . $modification['id'] . ', ' . $adodb->quote($modification['residue']) . ');');
         }
         
         return $workUnit;
