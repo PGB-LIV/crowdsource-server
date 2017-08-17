@@ -18,9 +18,9 @@ namespace pgb_liv\crowdsource\Preprocessor;
 
 use pgb_liv\crowdsource\BulkQuery;
 use pgb_liv\php_ms\Reader\MgfReader;
-use pgb_liv\php_ms\Core\Spectra\SpectraEntry;
 use pgb_liv\php_ms\Utility\Filter\FilterCharge;
 use pgb_liv\php_ms\Utility\Filter\FilterMass;
+use pgb_liv\php_ms\Core\Spectra\PrecursorIon;
 
 /**
  *
@@ -74,11 +74,11 @@ class RawPreprocessor
         $this->maxPeaks = $maxPeaks;
     }
 
-    private function processMs1($id, SpectraEntry $ms1)
+    private function processMs1($id, PrecursorIon $ms1)
     {
         $this->ms1Bulk->append(
             sprintf('(%d, %d, %s, %f, %f, %d, %d, %f)', $id, $this->jobId, $this->adodb->quote($ms1->getTitle()), 
-                $ms1->getMassCharge(), $ms1->getMass(), $ms1->getCharge(), $ms1->getScans(), $ms1->getRetentionTime()));
+                $ms1->getMassCharge(), $ms1->getMass(), $ms1->getCharge(), $ms1->getScan(), $ms1->getRetentionTime()));
     }
 
     private function filterMs2(array $ms2)
@@ -107,12 +107,12 @@ class RawPreprocessor
         return $filteredMs2;
     }
 
-    private function processMs2($ms1, SpectraEntry $ms2)
+    private function processMs2($ms1, PrecursorIon $ms2)
     {
         if ($this->maxPeaks != - 1) {
-            $ms2Ions = $this->filterMs2($ms2->getIons());
+            $ms2Ions = $this->filterMs2($ms2->getFragmentIons());
         } else {
-            $ms2Ions = $ms2->getIons();
+            $ms2Ions = $ms2->getFragmentIons();
         }
         
         $ms2Id = 1;
@@ -152,9 +152,10 @@ class RawPreprocessor
 
     private function initialise()
     {
+        // TODO: Tolerance needs to factor in it could be Da
         $job = $this->adodb->GetRow(
-            'SELECT `charge_min`, `charge_max`, `mass_tolerance` FROM `job_queue` WHERE `id` = ' . $this->jobId);
-        $tolerance = $job['mass_tolerance'] / 1000000;
+            'SELECT `charge_min`, `charge_max`, `precursor_tolerance` FROM `job_queue` WHERE `id` = ' . $this->jobId);
+        $tolerance = $job['precursor_tolerance'] / 1000000;
         
         $massLimt = $this->adodb->GetRow('SELECT MIN(`mono_mass`) AS `min`, MAX(`mono_mass`) AS `max` FROM `unimod_modifications`;');
         

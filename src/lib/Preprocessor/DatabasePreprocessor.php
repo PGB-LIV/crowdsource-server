@@ -147,7 +147,7 @@ class DatabasePreprocessor
         
         foreach ($peptides as $peptide) {
             if (! isset($this->peptide2Id[$peptide->getSequence()])) {
-                $peptideMass = $peptide->calculateMass();
+                $peptideMass = $peptide->getMass();
                 $modMass = $this->getModMass($peptide);
                 
                 $this->peptideBulk->append(
@@ -196,7 +196,7 @@ class DatabasePreprocessor
         
         foreach ($peptides as $peptide) {
             if (! isset($this->peptide2Id[$peptide->getSequence()])) {
-                $peptideMass = $peptide->calculateMass();
+                $peptideMass = $peptide->getMass();
                 $modMass = $this->getModMass($peptide);
                 
                 $this->peptideBulk->append(
