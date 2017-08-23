@@ -202,39 +202,70 @@ abstract class AbstractAllocator implements AllocatorInterface
         }
                 
         $modToMass = $this->adodb->GetAssoc('SELECT `record_id`, `mono_mass` FROM `unimod_modifications`');
+        $labelledMods = $this->adodb->GetCol('SELECT `mod_key`, SUM(IF(`classifications_key` = 11, 1, 0)) AS `label_sites`, COUNT(`mod_key`) AS `sites` FROM `unimod_specificity` GROUP BY `mod_key` HAVING `label_sites` = `sites`');
         
         foreach ($workUnit->getPeptides() as $peptide) {
             if ($peptide->getScore() <= 0) {
                 continue;
             }
             
-            $peptideMass = $this->adodb->GetOne(
-                'SELECT `mass_modified` FROM `fasta_peptides` WHERE `job` = ' . $this->jobId . ' && `id` = ' .
-                     $peptide->getId());
-            
-            if (is_null($peptideMass)) {
-                throw new \OutOfBoundsException('Peptide "' . $peptide->getId() . '" not found');
+            if ($peptide->isModified())
+            {
+                $this->rescoreModifications($peptide, $labelledMods);
             }
             
-            $modificationMass = 0;
-            foreach ($peptide->getModifications() as $modification) {
-                $modificationMass += $modToMass[$modification->getId()];
-            }
-            
-            $peptideMass += $modificationMass;
-            
-            // Calculate ppm
-            $ppm = abs(($peptideMass - $precursorMass) / $peptideMass * 1000000);
-            if ($ppm <= 10) {
-                if ($ppm < 0.1) {
-                    $ppm = 0.1;
-                }
-                
-                $boostFunc = - 1.5 * log($ppm, 2) + 5.017;
-                $boostRate = 1 + ($boostFunc / 100);
-                
+            $this->rescoreMass($peptide, $precursorMass, $modToMass);
+        }
+    }
+    
+    /**
+     * Down ranks labels
+     * @param Peptide $peptide
+     * @param unknown $labelledMods
+     */
+    private function rescoreModifications(Peptide $peptide, $labelledMods)
+    {
+        $boostRate = 0.7;
+        
+        foreach ($peptide->getModifications() as $modification) {
+            if (in_array($modification->getId(), $labelledMods))
+            {
                 $peptide->setScore($peptide->getScore() * $boostRate, $peptide->getIonsMatched());
             }
         }
+        
+    }
+    
+    private function rescoreMass(Peptide $peptide, $precursorMass, $modToMass)
+    {        
+        
+        $peptideMass = $this->adodb->GetOne(
+            'SELECT `mass_modified` FROM `fasta_peptides` WHERE `job` = ' . $this->jobId . ' && `id` = ' .
+            $peptide->getId());
+        
+        if (is_null($peptideMass)) {
+            throw new \OutOfBoundsException('Peptide "' . $peptide->getId() . '" not found');
+        }
+        
+        $modificationMass = 0;
+        foreach ($peptide->getModifications() as $modification) {
+            $modificationMass += $modToMass[$modification->getId()];
+        }
+        
+        $peptideMass += $modificationMass;
+        
+        // Calculate ppm
+        $ppm = abs(($peptideMass - $precursorMass) / $peptideMass * 1000000);
+        if ($ppm <= 10) {
+            if ($ppm < 0.1) {
+                $ppm = 0.1;
+            }
+            
+            $boostFunc = - 1.5 * log($ppm, 2) + 5.017;
+            $boostRate = 1 + ($boostFunc / 100);
+            
+            $peptide->setScore($peptide->getScore() * $boostRate, $peptide->getIonsMatched());
+        }
+    
     }
 }
