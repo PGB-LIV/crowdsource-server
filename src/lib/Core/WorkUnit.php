@@ -45,7 +45,7 @@ class WorkUnit
 
     /**
      * List of peptides associated with the precursor in this instance
-     * 
+     *
      * @var Peptide
      */
     private $peptides = array();
@@ -55,13 +55,11 @@ class WorkUnit
     public function __construct($jobId, $precursorId)
     {
         if (! is_int($jobId)) {
-            throw new \InvalidArgumentException(
-                'Argument 1 must be an integer value. Valued passed is of type ' . gettype($jobId));
+            throw new \InvalidArgumentException('Argument 1 must be an integer value. Valued passed is of type ' . gettype($jobId));
         }
         
         if (! is_int($precursorId)) {
-            throw new \InvalidArgumentException(
-                'Argument 2 must be an integer value. Valued passed is of type ' . gettype($precursorId));
+            throw new \InvalidArgumentException('Argument 2 must be an integer value. Valued passed is of type ' . gettype($precursorId));
         }
         
         $this->jobId = $jobId;
@@ -101,15 +99,14 @@ class WorkUnit
     /**
      *
      * @deprecated Do not use, not safe
-     * @param int $id            
+     * @param int $id
      * @throws \InvalidArgumentException
      * @return \pgb_liv\crowdsource\Core\Peptide[]
      */
     public function getPeptide($id)
     {
         if (! is_int($id)) {
-            throw new \InvalidArgumentException(
-                'Argument 1 must be an integer value. Valued passed is of type ' . gettype($id));
+            throw new \InvalidArgumentException('Argument 1 must be an integer value. Valued passed is of type ' . gettype($id));
         }
         
         foreach ($this->getPeptides() as $peptide) {
@@ -187,14 +184,11 @@ class WorkUnit
         }
         
         if (! isset($jsonObj[WorkUnit::JSON_JOB]) || ! is_int($jsonObj[WorkUnit::JSON_JOB])) {
-            throw new \InvalidArgumentException(
-                '"job" must be an int value. Valued passed is of type ' . gettype($jsonObj[WorkUnit::JSON_JOB]));
+            throw new \InvalidArgumentException('"job" must be an int value. Valued passed is of type ' . gettype($jsonObj[WorkUnit::JSON_JOB]));
         }
         
         if (! isset($jsonObj[WorkUnit::JSON_PRECURSOR]) || ! is_int($jsonObj[WorkUnit::JSON_PRECURSOR])) {
-            throw new \InvalidArgumentException(
-                '"precursor" must be an int value. Valued passed is of type ' .
-                     gettype($jsonObj[WorkUnit::JSON_PRECURSOR]));
+            throw new \InvalidArgumentException('"precursor" must be an int value. Valued passed is of type ' . gettype($jsonObj[WorkUnit::JSON_PRECURSOR]));
         }
         
         // Initialise object
@@ -202,8 +196,7 @@ class WorkUnit
         
         // Parse fragment tolerance
         if (isset($jsonObj[WorkUnit::JSON_TOLERANCE_VALUE]) && isset($jsonObj[WorkUnit::JSON_TOLERANCE_UNIT])) {
-            $workUnit->setFragmentTolerance(
-                new Tolerance($jsonObj[WorkUnit::JSON_TOLERANCE_VALUE], $jsonObj[WorkUnit::JSON_TOLERANCE_UNIT]));
+            $workUnit->setFragmentTolerance(new Tolerance($jsonObj[WorkUnit::JSON_TOLERANCE_VALUE], $jsonObj[WorkUnit::JSON_TOLERANCE_UNIT]));
         }
         
         // Parse fixed modifications

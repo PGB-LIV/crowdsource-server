@@ -30,9 +30,9 @@ class Peptide extends BasePeptide
 
     const ARRAY_SEQUENCE = 'sequence';
 
-    const ARRAY_SCORE = 'score';
+    const ARRAY_SCORE = 'S';
 
-    const ARRAY_IONS = 'ionsMatched';
+    const ARRAY_IONS = 'IM';
 
     const ARRAY_MODIFICATIONS = 'mods';
 
@@ -69,10 +69,9 @@ class Peptide extends BasePeptide
     public function __construct($id)
     {
         if (! is_int($id)) {
-            throw new \InvalidArgumentException(
-                'Argument 1 must be an int value. Valued passed is of type ' . gettype($id));
+            throw new \InvalidArgumentException('Argument 1 must be an int value. Valued passed is of type ' . gettype($id));
         }
-
+        
         $this->id = $id;
     }
 
@@ -89,15 +88,13 @@ class Peptide extends BasePeptide
     public function setScore($score, $ionsMatched)
     {
         if (! is_float($score) && ! is_int($score)) {
-            throw new \InvalidArgumentException(
-                'Argument 1 must be an int or float value. Valued passed is of type ' . gettype($score));
+            throw new \InvalidArgumentException('Argument 1 must be an int or float value. Valued passed is of type ' . gettype($score));
         }
-
+        
         if (! is_int($ionsMatched)) {
-            throw new \InvalidArgumentException(
-                'Argument 2 must be an int value. Valued passed is of type ' . gettype($ionsMatched));
+            throw new \InvalidArgumentException('Argument 2 must be an int value. Valued passed is of type ' . gettype($ionsMatched));
         }
-
+        
         $this->score = $score;
         $this->ionsMatched = $ionsMatched;
     }
@@ -148,13 +145,13 @@ class Peptide extends BasePeptide
             $peptide[Peptide::ARRAY_SCORE] = $this->getScore();
             $peptide[Peptide::ARRAY_IONS] = $this->getIonsMatched();
         }
-
+        
         if ($this->isModified()) {
             $peptide[Peptide::ARRAY_MODIFICATIONS] = $this->toArrayMods();
         } else {
             $peptide[Peptide::ARRAY_MODIFICATIONS] = array();
         }
-
+        
         return $peptide;
     }
 
@@ -174,10 +171,10 @@ class Peptide extends BasePeptide
                     Modification::ARRAY_OCCURRENCES => 0
                 );
             }
-
+            
             $unique[$modification->getId()][Modification::ARRAY_OCCURRENCES] ++;
         }
-
+        
         $modArray = array();
         foreach ($unique as $mod) {
             $array = $mod['mod']->toArray();
@@ -198,25 +195,23 @@ class Peptide extends BasePeptide
     public static function fromArray(array $peptideArray)
     {
         if (! isset($peptideArray[Peptide::ARRAY_ID]) || ! is_int($peptideArray[Peptide::ARRAY_ID])) {
-            throw new \InvalidArgumentException(
-                'A peptide "ID" must be an int value. Valued passed is of type ' .
-                gettype($peptideArray[Peptide::ARRAY_ID]));
+            throw new \InvalidArgumentException('A peptide "ID" must be an int value. Valued passed is of type ' . gettype($peptideArray[Peptide::ARRAY_ID]));
         }
-
+        
         $peptide = new Peptide($peptideArray[Peptide::ARRAY_ID]);
-
+        
         if (isset($peptideArray[Peptide::ARRAY_SEQUENCE])) {
             $peptide->setSequence($peptideArray[Peptide::ARRAY_SEQUENCE]);
         }
-
+        
         if (isset($peptideArray[Peptide::ARRAY_SCORE]) && isset($peptideArray[Peptide::ARRAY_IONS])) {
             $peptide->setScore($peptideArray[Peptide::ARRAY_SCORE], $peptideArray[Peptide::ARRAY_IONS]);
         }
-
+        
         if (isset($peptideArray[Peptide::ARRAY_MODIFICATIONS])) {
             foreach ($peptideArray[Peptide::ARRAY_MODIFICATIONS] as $modificationArray) {
                 $modObject = Modification::fromArray($modificationArray);
-
+                
                 if (is_array($modObject)) {
                     $peptide->addModifications($modObject);
                 } else {
@@ -224,7 +219,7 @@ class Peptide extends BasePeptide
                 }
             }
         }
-
+        
         return $peptide;
     }
 }

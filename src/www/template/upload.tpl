@@ -5,10 +5,9 @@
     </fieldset>
     <fieldset>
         <label for="fasta">FASTA File</label> <select name="fasta"
-            id="fasta">
-            {foreach from=$fastaFiles item=$fastaFile}
-                <option>{$fastaFile}</option>
-            {/foreach}
+            id="fasta"> {foreach from=$fastaFiles
+            item=$fastaFile}
+            <option>{$fastaFile}</option> {/foreach}
         </select>
     </fieldset>
     <fieldset>
