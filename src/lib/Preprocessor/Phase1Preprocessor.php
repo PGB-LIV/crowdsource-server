@@ -18,6 +18,7 @@ namespace pgb_liv\crowdsource\Preprocessor;
 
 use pgb_liv\php_ms\Reader\FastaReader;
 use pgb_liv\php_ms\Reader\MgfReader;
+use pgb_liv\php_ms\Utility\Digest\DigestFactory;
 
 /**
  * Logic for performing all phase 1 preprocessing
@@ -26,6 +27,8 @@ use pgb_liv\php_ms\Reader\MgfReader;
  */
 class Phase1Preprocessor extends AbstractPreprocessor
 {
+
+    const hash_algo = 'sha256';
 
     private $databasePath;
 
@@ -37,9 +40,9 @@ class Phase1Preprocessor extends AbstractPreprocessor
     protected function initialise($phase)
     {
         parent::initialise($phase);
-        
+
         $job = $this->adodb->GetRow('SELECT `database_file`, `raw_file` FROM `job_queue` WHERE `id` = ' . $this->jobId);
-        
+
         $this->databasePath = $job['database_file'];
         $this->rawPath = $job['raw_file'];
     }
@@ -50,16 +53,16 @@ class Phase1Preprocessor extends AbstractPreprocessor
     public function process()
     {
         $this->initialise(1);
-        
+
         echo 'Pre-processing database: ' . $this->databasePath . PHP_EOL;
         $this->indexDatabase();
-        
+
         echo 'Pre-processing raw data: ' . $this->rawPath . PHP_EOL;
         $this->indexRaw();
-        
+
         echo 'Pre-processing work units.' . PHP_EOL;
         $this->indexWorkUnits();
-        
+
         $this->finalise();
     }
 
@@ -68,10 +71,47 @@ class Phase1Preprocessor extends AbstractPreprocessor
      */
     private function indexDatabase()
     {
-        $fastaParser = new FastaReader($this->databasePath);
-        
-        $databaseProcessor = new DatabasePreprocessor($this->adodb, $fastaParser, $this->jobId);
-        $databaseProcessor->process();
+        $hash = hash_file(static::hash_algo, $this->databasePath, true);
+        $fastaId = $this->adodb->GetOne('SELECT `id` FROM `fasta` WHERE `hash` = "' . $hash . '"');
+
+        // TODO: Should verify indexing complete?
+        if (is_null($fastaId)) {
+            // Index FASTA
+            $enzymeId = 1; // TODO
+            $this->adodb->Execute('INSERT INTO `fasta` (`enzyme`, `hash`) VALUES (' . $enzymeId . ', "' . $hash . '")');
+            $fastaId = $this->adodb->insert_Id();
+
+            $fastaParser = new FastaReader($this->databasePath);
+
+            $cleaver = DigestFactory::getDigest('Trypsin'); // $job['enzyme']);
+
+            $databaseProcessor = new DatabasePreprocessor($this->adodb, $fastaParser, $fastaId, $cleaver);
+            $databaseProcessor->process();
+        }
+
+        $this->adodb->Execute('UPDATE `job_queue` SET `database_hash` = "' . $hash . '" WHERE `id` = ' . $this->jobId);
+
+        // TODO: Generate fixed mod table
+        $modifications = $this->adodb->GetAssoc(
+            'SELECT `j`.`acid`, `mono_mass` FROM `job_fixed_mod` `j` LEFT JOIN `unimod_modifications` ON `j`.`mod_id` = `record_id` WHERE `j`.`job` = ' .
+            $this->jobId);
+
+        // Remove any data from a previous run
+        $this->adodb->Execute('DELETE FROM `fasta_peptide_fixed` WHERE `job` = ' . $this->jobId);
+
+        // TODO: fill fixed mod with peptides that meet requirements
+        $this->adodb->Execute(
+            'INSERT INTO `fasta_peptide_fixed` SELECT ' . $this->jobId .
+            ', `id`, `mass` FROM `fasta_peptides` WHERE `fasta` = "' . $fastaId . '"');
+
+        // For each fixed mod add mass to peptides
+        foreach ($modifications as $acid => $mass) {
+            $this->adodb->Execute(
+                'UPDATE `fasta_peptide_fixed` `f` LEFT JOIN `fasta_peptides` `p` ON `f`.`peptide` = `p`.`id` && `fasta` = ' .
+                $fastaId . '
+SET `fixed_mass`=`fixed_mass` + ((`length` - LENGTH(REPLACE(`p`.`peptide`, "' . $acid . '", ""))) * ' . $mass .
+                ') WHERE `length` - LENGTH(REPLACE(`p`.`peptide`, "' . $acid . '", "")) > 0 && `job` = ' . $this->jobId);
+        }
     }
 
     /**
@@ -80,9 +120,9 @@ class Phase1Preprocessor extends AbstractPreprocessor
     private function indexRaw()
     {
         $mgfParser = new MgfReader($this->rawPath);
-        
+
         $rawProcessor = new RawPreprocessor($this->adodb, $mgfParser, $this->jobId);
-        $rawProcessor->setMs2PeakCount(MS2_PEAK_LIMIT);
+        $rawProcessor->setMs2PeakCount(MS2_PEAK_LIMIT, MS2_PEAK_WINDOW);
         $rawProcessor->process();
     }
 

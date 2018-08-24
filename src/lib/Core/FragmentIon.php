@@ -41,19 +41,9 @@ class FragmentIon extends BaseFragmentIon
      */
     public function __construct($mz, $intensity)
     {
-        $this->setMassCharge($mz);
+        // TODO: Correct charge required
+        $this->setMonoisotopicMassCharge($mz, 1);
         $this->setIntensity($intensity);
-    }
-
-    /**
-     * Gets the Mass/Charge value of this fragment ion
-     *
-     * @return float
-     * @deprecated Use getMassCharge()
-     */
-    public function getMz()
-    {
-        return $this->getMassCharge();
     }
 
     /**
@@ -64,7 +54,7 @@ class FragmentIon extends BaseFragmentIon
     public function toArray()
     {
         return array(
-            FragmentIon::ARRAY_MZ => $this->getMassCharge(),
+            FragmentIon::ARRAY_MZ => $this->getMonoisotopicMassCharge(),
             FragmentIon::ARRAY_INTENSITY => $this->getIntensity()
         );
     }

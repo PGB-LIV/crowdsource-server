@@ -15,49 +15,62 @@
  * limitations under the License.
  */
 use pgb_liv\crowdsource\Preprocessor\Phase1Preprocessor;
-use pgb_liv\crowdsource\Preprocessor\Phase2Preprocessor;
-use pgb_liv\crowdsource\Preprocessor\Phase3Preprocessor;
 
 error_reporting(E_ALL);
 ini_set('display_errors', true);
+
+chdir(__DIR__);
 
 require_once '../conf/config.php';
 require_once '../conf/autoload.php';
 require_once '../conf/adodb.php';
 require_once '../vendor/pgb-liv/php-ms/src/autoload.php';
 
-echo 'Starting: ' . date('r') . PHP_EOL;
-$jobId = $adodb->GetOne('SELECT `id` FROM `job_queue` WHERE `state` = \'PREPARING\'');
+$lockDir = DATA_PATH . '/.lock';
+$lockFile = $lockDir . '/.PreprocessorLock';
 
-if ($jobId !== null) {
-    die('Exiting. Job running: ' . $jobId . PHP_EOL);
+if (! file_exists($lockFile)) {
+    if (! is_dir($lockDir)) {
+        mkdir($lockDir);
+    }
+
+    touch($lockFile);
 }
+
+$lock = fopen($lockFile, 'r+');
+
+if (! flock($lock, LOCK_EX | LOCK_NB)) {
+    die('Terminating. Process Running.');
+}
+
+echo '[' . date('r') . '] Starting preprocessor.' . PHP_EOL;
 
 $job = $adodb->GetRow('SELECT `id`, `phase` FROM `job_queue` WHERE `state` = \'DONE\' ORDER BY `job_time` ASC');
 
 if (empty($job)) {
-    die('Exiting. No jobs awaiting processing' . PHP_EOL);
+    die('[' . date('r') . '] Terminating. No jobs awaiting processing.' . PHP_EOL);
 }
 
 $phase = (int) $job['phase'];
 $jobId = (int) $job['id'];
 
 if (empty($job)) {
-    die('Exit. Nothing to do.');
+    die('[' . date('r') . '] Terminating. Nothing to do.' . PHP_EOL);
 }
 
-echo 'Pre-processing job: ' . $job['id'] . ' Phase: ' . $phase . PHP_EOL;
-echo 'Started: ' . date('r') . PHP_EOL;
+echo '[' . date('r') . '] Found job: ' . $job['id'] . ' - Phase: ' . $phase . '.' . PHP_EOL;
 
 if ($phase == 0) {
     $phase1 = new Phase1Preprocessor($adodb, $jobId);
     $phase1->process();
 } elseif ($phase == 1) {
-    $phase2 = new Phase2Preprocessor($adodb, $jobId);
-    $phase2->process();
-} elseif ($phase == 2) {
-    $phase3 = new Phase3Preprocessor($adodb, $jobId);
-    $phase3->process();
+    echo '[' . date('r') . '] Purging temporary data.' . PHP_EOL;
+
+    $adodb->Execute('DELETE FROM `fasta_peptide_fixed` WHERE `job` = ' . $jobId);
+    $adodb->Execute('DELETE FROM `raw_ms2` WHERE `job` = ' . $jobId);
+
+    echo '[' . date('r') . '] Marking job complete.' . PHP_EOL;
+    $adodb->Execute('UPDATE `job_queue` SET `state` = "COMPLETE" WHERE `id` = ' . $jobId);
 }
 
-echo 'Finished: ' . date('r') . PHP_EOL;
+echo '[' . date('r') . '] Done.' . PHP_EOL;

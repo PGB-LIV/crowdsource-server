@@ -31,12 +31,53 @@ if (isset($_GET['r'])) {
     $requestType = $_GET['r'];
 }
 
+$callback = 'parseResult';
+if (isset($_GET['callback'])) {
+    $callback = $_GET['callback'];
+}
+
 $workUnitAllocator = new WorkUnitAllocator($adodb);
 $response = $workUnitAllocator->getJsonResponse($requestType);
-echo $response;
+echo $callback . '(' . $response . ');';
+
+$ip = 0;
+if (isset($_SERVER['REMOTE_ADDR'])) {
+    $ip = ip2long($_SERVER['REMOTE_ADDR']);
+} else {
+    // If REMOTE_ADDR is missing then either the server is configured wrong or we are in a unit test
+    $ip = ip2long('127.0.0.1');
+}
+
+$column = 'requests';
+if ($requestType == 'result') {
+    $column = 'results';
+}
+
+$agent = '""';
+if (isset($_SERVER['HTTP_USER_AGENT'])) {
+    $agent = $adodb->quote($_SERVER['HTTP_USER_AGENT']);
+}
+
+$host = '""';
+if (isset($_SERVER['HTTP_REFERER'])) {
+    $components = parse_url($_SERVER['HTTP_REFERER']);
+    $host = $adodb->quote($components['host']);
+}
+
+// Analytics
+$jobId = $workUnitAllocator->getJob();
+$date = date('Y-m-d');
+
+$adodb->Execute(
+    'INSERT INTO `analytic_host` (`job`, `date`, `host`, `' . $column . '`) VALUES (' . $jobId . ', "' . $date . '", ' .
+    $host . ', 1) ON DUPLICATE KEY UPDATE `' . $column . '`=`' . $column . '`+1');
+$adodb->Execute(
+    'INSERT INTO `analytic_agent` (`job`, `date`, `agent`, `' . $column . '`) VALUES (' . $jobId . ', "' . $date . '",' .
+    $agent . ', 1) ON DUPLICATE KEY UPDATE `' . $column . '`=`' . $column . '`+1');
+$adodb->Execute(
+    'INSERT INTO `analytic_ip` (`job`, `date`, `ip`, `' . $column . '`) VALUES (' . $jobId . ', "' . $date . '",' . $ip .
+    ', 1) ON DUPLICATE KEY UPDATE `' . $column . '`=`' . $column . '`+1');
 
 // logging
-$result = isset($_GET['result']) ? $_GET['result'] : null;
-$adodb->Execute(
-    'INSERT INTO `log` (`type`, `request`, `response`) VALUES (' . $adodb->quote($requestType) . ', ' .
-         $adodb->quote($result) . ', ' . $adodb->quote($response) . ')');
+//$result = isset($_GET['result']) ? $_GET['result'] : null;
+//$adodb->Execute(    'INSERT INTO `log` (`type`, `request`, `response`) VALUES (' . $adodb->quote($requestType) . ', ' .    $adodb->quote($result) . ', ' . $adodb->quote($response) . ')');

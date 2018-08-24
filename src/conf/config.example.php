@@ -24,12 +24,15 @@ define('UNIMOD_PREFIX', 'unimod_');
 define('SCHEMA_URL', 'http://www.unimod.org/xmlns/schema/unimod_tables_1/unimod_tables_1.xsd');
 define('DATA_URL', 'http://www.unimod.org/xml/unimod_tables.xml');
 
-define('DATA_PATH_PREFIX', '/mnt/nas/crowdsourcing/');
+define('DATA_PATH', '/mnt/nas/crowdsourcing/');
 
 define('ADODB_ERROR_LOG_TYPE', 3);
 define('ADODB_ERROR_LOG_DEST', '../log/adodb.log');
 
-define('MS2_PEAK_LIMIT', 50);
+define('MS2_PEAK_LIMIT', 100);
+define('MS2_PEAK_WINDOW', 100);
+
+define ('MESSAGE_QUEUE', ftok(__FILE__, 'CrowdSourcing'));
 
 /**
  * Maximum total number of modifications per peptide.

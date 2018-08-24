@@ -138,6 +138,7 @@ class Modification extends BaseModification
      */
     public function toArray()
     {
+        $modification = array();
         $modification[Modification::ARRAY_ID] = $this->getId();
         $modification[Modification::ARRAY_MASS] = $this->getMonoisotopicMass();
         $modification[Modification::ARRAY_RESIDUES] = implode('', $this->getResidues());

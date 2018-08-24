@@ -17,12 +17,13 @@
 namespace pgb_liv\crowdsource\Allocator;
 
 use pgb_liv\crowdsource\Core\WorkUnit;
-use pgb_liv\crowdsource\Core\Phase1WorkUnit;
 
 class WorkUnitAllocator
 {
 
     private $adodb;
+
+    private $job = 0;
 
     public function __construct(\ADOConnection $conn)
     {
@@ -38,28 +39,23 @@ class WorkUnitAllocator
     public function recordResults($jsonStr)
     {
         $workUnit = WorkUnit::fromJson($jsonStr);
-        
-        $phase = $this->adodb->GetOne(
-            'SELECT `phase` FROM `job_queue` WHERE `id` = ' . $this->adodb->quote($workUnit->getJobId()));
+
+        $this->job = (int) $workUnit->getJobId();
+
+        $phase = $this->adodb->GetOne('SELECT `phase` FROM `job_queue` WHERE `id` = ' . $this->job);
         if (is_null($phase)) {
             return false;
         }
-        
+
         $allocator = null;
         switch ($phase) {
             case '1':
-                $allocator = new Phase1Allocator($this->adodb, $workUnit->getJobId());
-                break;
-            case '2':
-                $allocator = new Phase2Allocator($this->adodb, $workUnit->getJobId());
-                break;
-            case '3':
-                $allocator = new Phase3Allocator($this->adodb, $workUnit->getJobId());
+                $allocator = new Phase1Allocator($this->adodb, $this->job);
                 break;
             default:
                 return false;
         }
-        
+
         $allocator->setWorkUnitResults($workUnit);
         return true;
     }
@@ -67,7 +63,7 @@ class WorkUnitAllocator
     /**
      * Gets the next available work unit for the requester.
      *
-     * @return boolean|\pgb_liv\crowdsource\Core\Phase1WorkUnit The next available job or false if none are available.
+     * @return boolean|\pgb_liv\crowdsource\Core\WorkUnit The next available job or false if none are available.
      */
     public function getWorkUnit()
     {
@@ -75,22 +71,18 @@ class WorkUnitAllocator
         if (empty($job)) {
             return false;
         }
-        
+
+        $this->job = (int) $job['id'];
+
         $allocator = null;
         switch ($job['phase']) {
             case '1':
-                $allocator = new Phase1Allocator($this->adodb, (int) $job['id']);
-                break;
-            case '2':
-                $allocator = new Phase2Allocator($this->adodb, (int) $job['id']);
-                break;
-            case '3':
-                $allocator = new Phase3Allocator($this->adodb, (int) $job['id']);
+                $allocator = new Phase1Allocator($this->adodb, $this->job);
                 break;
             default:
                 return false;
         }
-        
+
         $workerId = 0;
         if (isset($_SERVER['REMOTE_ADDR'])) {
             $workerId = ip2long($_SERVER['REMOTE_ADDR']);
@@ -98,7 +90,7 @@ class WorkUnitAllocator
             // If REMOTE_ADDR is missing then either the server is configured wrong or we are in a unit test
             $workerId = ip2long('127.0.0.1');
         }
-        
+
         return $allocator->getWorkUnit($workerId);
     }
 
@@ -107,24 +99,32 @@ class WorkUnitAllocator
         switch ($requestType) {
             case 'workunit':
                 return $this->getJsonResponseWorkUnit();
-            
+
             case 'result':
                 $this->recordResults($_GET['result']);
-                return 'parseResult({"type":"confirmation"})';
-            
+                return '{"type":"confirmation"}';
+
             default:
-                return 'parseResult({"response":"none"});';
+                return '{"response":"none"}';
         }
     }
 
     private function getJsonResponseWorkUnit()
     {
         $workUnit = $this->getWorkUnit();
-        
+
         if ($workUnit === false) {
-            return 'parseResult({"type":"nomore"});';
-        }
-        
-        return 'parseResult(' . $workUnit->toJson() . ');';
+            return '{"type":"nomore"}';
+        } else 
+            if ($workUnit === true) {
+                return '{"type":"retry"}';
+            }
+
+        return $workUnit->toJson();
+    }
+
+    public function getJob()
+    {
+        return $this->job;
     }
 }

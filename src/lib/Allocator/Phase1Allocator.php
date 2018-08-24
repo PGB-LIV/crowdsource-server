@@ -18,9 +18,14 @@ namespace pgb_liv\crowdsource\Allocator;
 
 use pgb_liv\crowdsource\Core\WorkUnit;
 use pgb_liv\crowdsource\Core\Peptide;
+use pgb_liv\crowdsource\Core\Modification;
 
 class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
 {
+
+    private $modMass = array();
+
+    private $modRes = array();
 
     /**
      * Creates a new instance of the Phase 1 allocator.
@@ -34,8 +39,17 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
     public function __construct(\ADOConnection $conn, $jobId)
     {
         parent::__construct($conn, $jobId);
-        
+
         $this->setPhase(1);
+
+        $this->modMass = $this->adodb->GetAssoc(
+            'SELECT DISTINCT `mod_id`, `mono_mass` FROM `job_variable_mod` LEFT JOIN `unimod_modifications` ON `mod_id` = `record_id`  WHERE `job` = ' .
+            $jobId);
+
+        foreach (array_keys($this->modMass) as $key) {
+            $this->modRes[$key] = $this->adodb->GetCol(
+                'SELECT `acid` FROM `job_variable_mod` WHERE `job` = ' . $jobId . ' && `mod_id` = ' . $key);
+        }
     }
 
     /**
@@ -46,35 +60,69 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
      */
     public function getWorkUnit($workerId)
     {
-        $workUnit = $this->getNextWorkUnit($workerId);
-        
-        if (! $workUnit) {
-            return false;
+        $lockVal = mt_rand();
+        // TODO: Reset failed allocations before running
+
+        $queue = msg_get_queue(MESSAGE_QUEUE);
+        // Pull
+        $type = '';
+        $precursorId = '';
+        $errorCode = '';
+        $hasMessage = msg_receive($queue, 0, $type, 4096, $precursorId, true, MSG_IPC_NOWAIT, $errorCode);
+
+        if (! $hasMessage || $type != $this->jobId) {
+            // Queue is empty
+            return true;
         }
-        
+
+        $this->adodb->Execute(
+            'UPDATE `workunit1` SET `status` = \'ASSIGNED\', `assigned_to` =' . $workerId .
+            ', `assigned_at` = NOW(), `allocation_lock` = ' . $lockVal . ' 
+             WHERE `job` = ' . $this->jobId .
+            ' && `precursor` = ' . $precursorId . ' && `status` != \'COMPLETE\' ORDER BY `id` LIMIT 50');
+
+        // $workUnit = $this->getNextWorkUnit($workerId);
+        $workUnit = new WorkUnit($this->jobId, (int) $precursorId);
+
+        // if (! $workUnit) {
+        // return false;
+        // }
+        // SELECT DATE_FORMAT(`completed_at`, '%H%i') `time`, COUNT(DISTINCT `assigned_to`) `users`, COUNT(*) `processed` FROM `workunit1` WHERE `status` =
+        // 'COMPLETE' GROUP BY DATE_FORMAT(`completed_at`, '%H%i') ORDER BY `time` DESC
+
         $tolerance = $this->getTolerance();
         if (! $tolerance) {
             return false;
         }
-        
+
         $workUnit->setFragmentTolerance($tolerance);
         $this->injectFragmentIons($workUnit);
-        $this->injectPeptides($workUnit);
+        $this->injectPeptides($workUnit, $lockVal);
         $this->injectFixedModifications($workUnit);
-        
+
         return $workUnit;
     }
 
-    private function injectPeptides(WorkUnit $workUnit)
+    private function injectPeptides(WorkUnit $workUnit, $lockVal)
     {
         $rs = $this->adodb->Execute(
-            'SELECT `fpeps`.`id`, `fpeps`.`peptide` FROM `fasta_peptides` AS `fpeps`
-            LEFT OUTER JOIN `workunit1_peptides` AS `wu_p` ON `wu_p`.`peptide`=`fpeps`.`id`
-            WHERE `wu_p`.`job` = ' . $workUnit->getJobId() . ' && `wu_p`.`precursor`=' .
-                 $workUnit->getPrecursorId());
-        
+            'SELECT `w`.`id`, `p`.`peptide`, `modifications` FROM `workunit1` `w` LEFT JOIN `fasta_peptides` `p` ON `p`.`id` = `w`.`peptide` && `p`.`fasta` = ' .
+            $this->fastaId . ' WHERE `job` = ' . $this->jobId . ' && `precursor`=' . $workUnit->getPrecursorId() .
+            ' && `allocation_lock` = ' . $lockVal);
+
         foreach ($rs as $record) {
             $peptide = new Peptide((int) $record['id']);
+
+            if (! is_null($record['modifications'])) {
+                $mods = explode(':', $record['modifications']);
+                foreach ($mods as $modId) {
+                    $modification = new Modification((int) $modId);
+                    $modification->setMonoisotopicMass((float) $this->modMass[$modId]);
+                    $modification->setResidues($this->modRes[$modId]);
+
+                    $peptide->addModification($modification);
+                }
+            }
             $peptide->setSequence($record['peptide']);
             $workUnit->addPeptide($peptide);
         }
@@ -82,14 +130,24 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
 
     protected function recordPeptideScores($precursorId, Peptide $peptide)
     {
-        // only place the score if > 0
-        if (is_null($peptide->getScore()) || $peptide->getScore() <= 0) {
-            return;
-        }
-        
         $this->adodb->Execute(
-            'UPDATE `workunit1_peptides` SET `score` = ' . $peptide->getScore() . ', `ions_matched` = ' .
-                 $peptide->getIonsMatched() . ' WHERE `job` = ' . $this->jobId . ' && `precursor` = ' . $precursorId .
-                 ' && `peptide` = ' . $peptide->getId());
+            'UPDATE `workunit1` SET `status` = \'COMPLETE\', `completed_at` = NOW(), `score` = ' . $peptide->getScore() .
+            ', `ions_matched` = ' . $peptide->getIonsMatched() . ' WHERE `job` = ' . $this->jobId . ' && `id` = ' .
+            $peptide->getId());
+
+        // TODO issue here?
+        foreach ($peptide->getModifications() as $modification) {
+            $this->adodb->Execute(
+                'INSERT INTO `workunit1_locations` (`job`, `id`, `location`, `modification`) VALUES (' . $this->jobId .
+                ',' . $peptide->getId() . ',' . $modification->getLocation() . ', ' . $modification->getId() . ')');
+        }
+    }
+
+    public function setWorkUnitResults(WorkUnit $workUnit)
+    {
+        // $this->rescore($workUnit);
+        foreach ($workUnit->getPeptides() as $peptide) {
+            $this->recordPeptideScores($workUnit->getPrecursorId(), $peptide);
+        }
     }
 }

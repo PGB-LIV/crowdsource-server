@@ -27,14 +27,14 @@ interface AllocatorInterface
      * @param int $workerId
      *            Worker ID to assign to work unit
      *            
-     * @return pgb_liv\crowdsource\Core\WorkUnitInterface The next available job or null if no jobs available.
+     * @return WorkUnit The next available job or null if no jobs available.
      */
     public function getWorkUnit($workerId);
 
     /**
      * Records the results for this work unit
      *
-     * @param Phase1WorkUnit $results
+     * @param WorkUnit $results
      *            Work unit object containing results data
      */
     public function setWorkUnitResults(WorkUnit $results);
