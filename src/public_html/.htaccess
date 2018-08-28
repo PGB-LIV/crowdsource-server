@@ -1,0 +1,6 @@
+RewriteEngine On
+RewriteBase "/~andrew/crowdsource-server/src/public_html/"
+RewriteRule "^results/([0-9]+)/locations.csv$"  "index.php?page=results_map&job=$1" [NC]
+RewriteRule "^results/([0-9]+)/agents.csv$"  "index.php?page=analytic_agents&job=$1" [NC]
+RewriteRule "^results/([0-9]+)/hosts.csv$"  "index.php?page=analytic_hosts&job=$1" [NC]
+RewriteRule "^results/([0-9]+)/psm.csv$"  "index.php?page=results&job=$1" [NC]
