@@ -158,11 +158,11 @@ class DatabasePreprocessor
                 $this->peptideId ++;
             }
 
-            $peptideId = $this->peptide2Id[$peptide->getSequence()];
+            $id = $this->peptide2Id[$peptide->getSequence()];
 
             foreach ($peptide->getProteins() as $proteinEntry) {
                 $this->protein2peptideBulk->append(
-                    sprintf('(%d, %d, %d, %d)', $this->fastaId, $proteinId, $peptideId, $proteinEntry->getStart()));
+                    sprintf('(%d, %d, %d, %d)', $this->fastaId, $proteinId, $id, $proteinEntry->getStart()));
             }
         }
     }

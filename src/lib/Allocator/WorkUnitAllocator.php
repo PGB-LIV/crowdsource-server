@@ -67,15 +67,15 @@ class WorkUnitAllocator
      */
     public function getWorkUnit()
     {
-        $job = $this->adodb->GetRow('SELECT `id`, `phase` FROM `job_queue` WHERE `state` = \'READY\' LIMIT 0,1');
-        if (empty($job)) {
+        $jobRecord = $this->adodb->GetRow('SELECT `id`, `phase` FROM `job_queue` WHERE `state` = \'READY\' LIMIT 0,1');
+        if (empty($jobRecord)) {
             return false;
         }
 
-        $this->job = (int) $job['id'];
+        $this->job = (int) $jobRecord['id'];
 
         $allocator = null;
-        switch ($job['phase']) {
+        switch ($jobRecord['phase']) {
             case '1':
                 $allocator = new Phase1Allocator($this->adodb, $this->job);
                 break;

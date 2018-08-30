@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 use pgb_liv\crowdsource\Preprocessor\Phase1Preprocessor;
+use pgb_liv\crowdsource\Postprocessor\Phase1Postprocessor;
 
 error_reporting(E_ALL);
 ini_set('display_errors', true);
@@ -64,13 +65,15 @@ if ($phase == 0) {
     $phase1 = new Phase1Preprocessor($adodb, $jobId);
     $phase1->process();
 } elseif ($phase == 1) {
+    $phase1  = new Phase1Postprocessor($adodb, $jobId);    
+    echo '[' . date('r') . '] Generating results.' . PHP_EOL;
+    $phase1->generateResults();
+    
     echo '[' . date('r') . '] Purging temporary data.' . PHP_EOL;
-
-    $adodb->Execute('DELETE FROM `fasta_peptide_fixed` WHERE `job` = ' . $jobId);
-    $adodb->Execute('DELETE FROM `raw_ms2` WHERE `job` = ' . $jobId);
+    $phase1->clean();
 
     echo '[' . date('r') . '] Marking job complete.' . PHP_EOL;
-    $adodb->Execute('UPDATE `job_queue` SET `state` = "COMPLETE" WHERE `id` = ' . $jobId);
+    $phase1->finalise();
 }
 
 echo '[' . date('r') . '] Done.' . PHP_EOL;

@@ -95,7 +95,8 @@ class WorkUnitPreprocessor
 
         // Get variable mods
         $modifications = $this->adodb->Execute(
-            'SELECT `j`.`mod_id`, `acid`, `mono_mass` FROM `job_variable_mod` `j` LEFT JOIN `unimod_modifications` ON `j`.`mod_id` = `record_id` WHERE `j`.`job` = ' . $this->jobId);
+            'SELECT `j`.`mod_id`, `acid`, `mono_mass` FROM `job_variable_mod` `j` LEFT JOIN `unimod_modifications` ON `j`.`mod_id` = `record_id` WHERE `j`.`job` = ' .
+            $this->jobId);
 
         // Indexed
         $modGroup = array();
@@ -112,16 +113,18 @@ class WorkUnitPreprocessor
 
         $set = array();
         foreach ($modGroup as $modId => $modification) {
-            $set[] = $modId;
-            $set[] = $modId;
+            for ($i = 0; $i < MAX_MOD_PER_TYPE; $i ++) {
+                $set[] = $modId;
+            }
         }
 
         // Generate set of possible mods
         $powerSet = $this->powerSet($set);
         $searchSet = array();
-        // Remove empty set, set larger than 2 and duplicates
+
+        // Remove empty set, set larger than MAX_MOD_TOTAL and duplicates
         foreach ($powerSet as $set) {
-            if (count($set) > 2 || count($set) == 0) {
+            if (count($set) > MAX_MOD_TOTAL || count($set) == 0) {
                 continue;
             }
 

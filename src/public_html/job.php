@@ -27,12 +27,13 @@ require_once '../vendor/pgb-liv/php-ms/src/autoload.php';
 function fatal_handler()
 {
     $error = error_get_last();
-    
+
     if ($error === NULL) {
         return;
     }
-    
-    file_put_contents('/home/andrew/public_html/crowdsource-server/src/php_fatal.log', implode('::::', $error), FILE_APPEND);
+
+    file_put_contents('/home/andrew/public_html/crowdsource-server/src/php_fatal.log', implode('::::', $error),
+        FILE_APPEND);
 }
 
 register_shutdown_function("fatal_handler");
@@ -52,15 +53,18 @@ if (isset($_GET['callback'])) {
 $readable = print_r($_GET, true);
 
 $rand = mt_rand();
-file_put_contents('/home/andrew/public_html/crowdsource-server/src/log/session-' . $rand . '.log', $readable . PHP_EOL . PHP_EOL);
+file_put_contents('/home/andrew/public_html/crowdsource-server/src/log/session-' . $rand . '.log',
+    $readable . PHP_EOL . PHP_EOL);
 try {
-    
+
     $workUnitAllocator = new WorkUnitAllocator($adodb);
     $response = $workUnitAllocator->getJsonResponse($requestType);
     echo $callback . '(' . $response . ');';
-    file_put_contents('/home/andrew/public_html/crowdsource-server/src/log/session-' . $rand . '.log', $callback . '(' . $response . ')' . PHP_EOL . PHP_EOL, FILE_APPEND);
+    file_put_contents('/home/andrew/public_html/crowdsource-server/src/log/session-' . $rand . '.log',
+        $callback . '(' . $response . ')' . PHP_EOL . PHP_EOL, FILE_APPEND);
 } catch (Exception $e) {
-    file_put_contents('/home/andrew/public_html/crowdsource-server/src/php_exception.log', $e->getMessage() . PHP_EOL, FILE_APPEND);
+    file_put_contents('/home/andrew/public_html/crowdsource-server/src/php_exception.log', $e->getMessage() . PHP_EOL,
+        FILE_APPEND);
 }
 
 $ip = 0;
@@ -91,10 +95,16 @@ if (isset($_SERVER['HTTP_REFERER'])) {
 $jobId = $workUnitAllocator->getJob();
 $date = date('Y-m-d');
 
-$adodb->Execute('INSERT INTO `analytic_host` (`job`, `date`, `host`, `' . $column . '`) VALUES (' . $jobId . ', "' . $date . '", ' . $host . ', 1) ON DUPLICATE KEY UPDATE `' . $column . '`=`' . $column . '`+1');
-$adodb->Execute('INSERT INTO `analytic_agent` (`job`, `date`, `agent`, `' . $column . '`) VALUES (' . $jobId . ', "' . $date . '",' . $agent . ', 1) ON DUPLICATE KEY UPDATE `' . $column . '`=`' . $column . '`+1');
-$adodb->Execute('INSERT INTO `analytic_ip` (`job`, `date`, `ip`, `' . $column . '`) VALUES (' . $jobId . ', "' . $date . '",' . $ip . ', 1) ON DUPLICATE KEY UPDATE `' . $column . '`=`' . $column . '`+1');
+$adodb->Execute(
+    'INSERT INTO `analytic_host` (`job`, `date`, `host`, `' . $column . '`) VALUES (' . $jobId . ', "' . $date . '", ' .
+    $host . ', 1) ON DUPLICATE KEY UPDATE `' . $column . '`=`' . $column . '`+1');
+$adodb->Execute(
+    'INSERT INTO `analytic_agent` (`job`, `date`, `agent`, `' . $column . '`) VALUES (' . $jobId . ', "' . $date . '",' .
+    $agent . ', 1) ON DUPLICATE KEY UPDATE `' . $column . '`=`' . $column . '`+1');
+$adodb->Execute(
+    'INSERT INTO `analytic_ip` (`job`, `date`, `ip`, `' . $column . '`) VALUES (' . $jobId . ', "' . $date . '",' . $ip .
+    ', 1) ON DUPLICATE KEY UPDATE `' . $column . '`=`' . $column . '`+1');
 
 // logging
-//$result = isset($_GET['result']) ? $_GET['result'] : null;
-//$adodb->Execute(    'INSERT INTO `log` (`type`, `request`, `response`) VALUES (' . $adodb->quote($requestType) . ', ' .    $adodb->quote($result) . ', ' . $adodb->quote($response) . ')');
+// $result = isset($_GET['result']) ? $_GET['result'] : null;
+// $adodb->Execute(    'INSERT INTO `log` (`type`, `request`, `response`) VALUES (' . $adodb->quote($requestType) . ', ' .    $adodb->quote($result) . ', ' . $adodb->quote($response) . ')');
