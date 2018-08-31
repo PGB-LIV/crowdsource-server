@@ -17,6 +17,11 @@ foreach ($results as $result) {
 
     $key = $mapping['latitude'] . ',' . $mapping['longitude'];
 
+    if ($mapping['city'] == '')
+    {
+        continue;
+    }
+    
     if (! isset($country[$key])) {
         $country[$key] = array(
             'city' => $mapping['city'],

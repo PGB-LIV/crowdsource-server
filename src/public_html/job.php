@@ -2,7 +2,7 @@
 use pgb_liv\crowdsource\Allocator\WorkUnitAllocator;
 
 /**
- * Copyright 2016 University of Liverpool
+ * Copyright 2018 University of Liverpool
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ function fatal_handler()
 
 register_shutdown_function("fatal_handler");
 
-// header('Content-Type: application/json');
+header('Content-Type: application/json');
 
 $requestType = 'unknown';
 if (isset($_GET['r'])) {
@@ -50,18 +50,11 @@ if (isset($_GET['callback'])) {
     $callback = $_GET['callback'];
 }
 
-$readable = print_r($_GET, true);
-
-$rand = mt_rand();
-file_put_contents('/home/andrew/public_html/crowdsource-server/src/log/session-' . $rand . '.log',
-    $readable . PHP_EOL . PHP_EOL);
 try {
 
     $workUnitAllocator = new WorkUnitAllocator($adodb);
     $response = $workUnitAllocator->getJsonResponse($requestType);
     echo $callback . '(' . $response . ');';
-    file_put_contents('/home/andrew/public_html/crowdsource-server/src/log/session-' . $rand . '.log',
-        $callback . '(' . $response . ')' . PHP_EOL . PHP_EOL, FILE_APPEND);
 } catch (Exception $e) {
     file_put_contents('/home/andrew/public_html/crowdsource-server/src/php_exception.log', $e->getMessage() . PHP_EOL,
         FILE_APPEND);
@@ -106,5 +99,5 @@ $adodb->Execute(
     ', 1) ON DUPLICATE KEY UPDATE `' . $column . '`=`' . $column . '`+1');
 
 // logging
-// $result = isset($_GET['result']) ? $_GET['result'] : null;
-// $adodb->Execute(    'INSERT INTO `log` (`type`, `request`, `response`) VALUES (' . $adodb->quote($requestType) . ', ' .    $adodb->quote($result) . ', ' . $adodb->quote($response) . ')');
+//$result = isset($_GET['result']) ? $_GET['result'] : null;
+//$adodb->Execute(    'INSERT INTO `log` (`type`, `request`, `response`) VALUES (' . $adodb->quote($requestType) . ', ' .    $adodb->quote($result) . ', ' . $adodb->quote($response) . ')');

@@ -33,7 +33,7 @@ if ($state['phase'] == 1 && $state['state'] == 'READY') {
         echo '<p>Your job is now queued for processing. You are position ' . $queuePosition . ' in queue.</p>';
     } else {
         echo '<p>Your job has started! It may take a few minutes before any progress is shown.</p>';
-        $progress = $adodb->GetAssoc('SELECT `status`, COUNT(`precursor`) FROM `workunit1` WHERE `job` = ' . $jobId . ' GROUP BY `status`');
+        $progress = $adodb->GetAssoc('SELECT `status`, COUNT(`status`) FROM `workunit1` WHERE `job` = ' . $jobId . ' GROUP BY `status`');
         
         echo 'Total work: ' . number_format(array_sum($progress)) . '<br />';
         echo 'Completed: ' . number_format($progress['COMPLETE']) . ' (' . number_format($progress['COMPLETE'] / array_sum($progress) * 100, 2) . '%)<br />';
@@ -72,7 +72,7 @@ if ($state['phase'] == 1 && $state['state'] == 'COMPLETE') {
     $seconds = ($stat['finish'] - $stat['start']) - ($minutes * 60);
     echo '<p>Search completed in ' . number_format($minutes) . ' minutes, ' . $seconds . ' seconds.</p>';
     
-    echo '<p>Analyse results <a href="http://pgb.liv.ac.uk/shiny/ash/?data=http://pgb.liv.ac.uk/~andrew/crowdsource-server/src/public_html/?page=results&job=' . $jobId . '">here</a></p>';
+    echo '<p>Analyse results <a href="http://pgb.liv.ac.uk/shiny/ash/?id=' . $jobId . '">here</a></p>';
 }
 
 exit();

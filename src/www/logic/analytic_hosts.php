@@ -9,7 +9,7 @@ if (isset($_GET['job'])) {
 }
 
 $results = $adodb->Execute(
-    'SELECT `host`, SUM(`requests`) AS `requests`, SUM(`results`) AS `results` FROM `analytic_host` WHERE `job` = ' .
+    'SELECT `host`, `requests`, `results` FROM `analytic_host` WHERE `job` = ' .
     $jobId);
 
 echo 'Host,Requests,Results' . PHP_EOL;

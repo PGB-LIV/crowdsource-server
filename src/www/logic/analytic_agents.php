@@ -9,7 +9,7 @@ if (isset($_GET['job'])) {
 }
 
 $results = $adodb->Execute(
-    'SELECT `agent`, SUM(`requests`) AS `requests`, SUM(`results`) AS `results` FROM `analytic_agent` WHERE `job` = ' .
+    'SELECT `agent`, `requests`, `results` FROM `analytic_agent` WHERE `job` = ' .
     $jobId);
 
 echo 'UserAgent,Requests,Results' . PHP_EOL;
