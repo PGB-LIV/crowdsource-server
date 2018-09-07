@@ -24,9 +24,12 @@ use pgb_liv\php_ms\Utility\Digest\DigestInterface;
 
 class DatabasePreprocessor
 {
-    const maxMissedCleaves = 2;
+
+    const MAX_MISS_CLEAVE = 3;
 
     private $peptide2Id = array();
+
+    private $proteinPeptides = array();
 
     private $adodb;
 
@@ -74,7 +77,7 @@ class DatabasePreprocessor
     private function initialise()
     {
         $this->filter = new FilterLength(5, 60);
-        $this->cleaver->setMaxMissedCleavage(static::maxMissedCleaves);
+        $this->cleaver->setMaxMissedCleavage(static::MAX_MISS_CLEAVE);
 
         $this->proteinBulk = new BulkQuery($this->adodb,
             'INSERT IGNORE INTO `fasta_proteins` (`fasta`, `id`, `identifier`, `description`, `sequence`) VALUES ');
@@ -103,28 +106,19 @@ class DatabasePreprocessor
             $this->processPeptides($record['id'], $protein);
         }
 
+        $this->peptideBulk->close();
         $this->protein2peptideBulk->close();
 
-        // Third pass. Insert decoys into database.
-        $rs = $this->adodb->Execute('SELECT `id`, `sequence` FROM `fasta_proteins` WHERE `fasta` = ' . $this->fastaId);
-        foreach ($rs as $record) {
-            $protein = new Protein();
-            $protein->setSequence($record['sequence']);
-            $this->processDecoys($protein);
-        }
-
-        $this->peptideBulk->close();
-        
         // Fourth Pass. Index residues
         $alphabet = range('A', 'Z');
         foreach ($alphabet as $letter) {
             $this->adodb->Execute(
                 'UPDATE `fasta_peptides` SET `' . strtolower($letter) . '_count`= `length` - LENGTH(REPLACE(`peptide`, "' .
-                $letter . '", "")) WHERE `fasta` = '. $this->fastaId);
+                $letter . '", "")) WHERE `fasta` = ' . $this->fastaId);
         }
-        
-        $this->adodb->Execute('UPDATE `fasta` SET `is_indexed` = 1 WHERE `id` = '. $this->fastaId);
-        
+
+        $this->adodb->Execute('UPDATE `fasta` SET `is_indexed` = 1 WHERE `id` = ' . $this->fastaId);
+
         // Clear memory
         $this->peptide2Id = array();
     }
@@ -160,14 +154,24 @@ class DatabasePreprocessor
 
             $id = $this->peptide2Id[$peptide->getSequence()];
 
-            foreach ($peptide->getProteins() as $proteinEntry) {
+            if (isset($this->proteinPeptides[$id])) {
+                continue;
+            }
+
+            $this->proteinPeptides[$id] = true;
+            
+            foreach ($peptide->getProteins() as $proteinEntry) {                
                 $this->protein2peptideBulk->append(
                     sprintf('(%d, %d, %d, %d)', $this->fastaId, $proteinId, $id, $proteinEntry->getStart()));
             }
         }
+        
+        $this->processDecoys($proteinId, $protein);
+        $this->proteinPeptides = array();
+        
     }
 
-    private function processDecoys($protein)
+    private function processDecoys($proteinId, $protein)
     {
         // Generate decoy protein
         $protein->reverseSequence();
@@ -188,6 +192,19 @@ class DatabasePreprocessor
                 $this->peptide2Id[$peptide->getSequence()] = $this->peptideId;
 
                 $this->peptideId ++;
+            }
+
+            $id = $this->peptide2Id[$peptide->getSequence()];
+
+            if (isset($this->proteinPeptides[$id])) {
+                continue;
+            }
+
+            $this->proteinPeptides[$id] = true;
+
+            foreach ($peptide->getProteins() as $proteinEntry) {
+                $this->protein2peptideBulk->append(
+                    sprintf('(%d, %d, %d, %d)', $this->fastaId, $proteinId, $id, $proteinEntry->getStart()));
             }
         }
     }

@@ -34,6 +34,8 @@ class Phase1Preprocessor extends AbstractPreprocessor
 
     private $rawPath;
 
+    private $maxMissedCleavage;
+
     /**
      * Marks the preprocessing stage this phase as preparing
      */
@@ -41,9 +43,11 @@ class Phase1Preprocessor extends AbstractPreprocessor
     {
         parent::initialise($phase);
 
-        $job = $this->adodb->GetRow('SELECT `database_file`, `raw_file` FROM `job_queue` WHERE `id` = ' . $this->jobId);
+        $job = $this->adodb->GetRow(
+            'SELECT `database_file`, `raw_file`, `miss_cleave_max` FROM `job_queue` WHERE `id` = ' . $this->jobId);
 
         $this->databasePath = $job['database_file'];
+        $this->maxMissedCleavage = $job['miss_cleave_max'];
         $this->rawPath = $job['raw_file'];
     }
 
@@ -102,7 +106,8 @@ class Phase1Preprocessor extends AbstractPreprocessor
         // TODO: fill fixed mod with peptides that meet requirements
         $this->adodb->Execute(
             'INSERT INTO `fasta_peptide_fixed` SELECT ' . $this->jobId .
-            ', `id`, `mass` FROM `fasta_peptides` WHERE `fasta` = "' . $fastaId . '"');
+            ', `id`, `mass` FROM `fasta_peptides` WHERE `fasta` = "' . $fastaId . '" && `missed_cleavage` <= ' .
+            $this->maxMissedCleavage);
 
         // For each fixed mod add mass to peptides
         foreach ($modifications as $acid => $mass) {

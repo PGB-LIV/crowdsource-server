@@ -25,7 +25,7 @@ chdir(__DIR__);
 require_once '../conf/config.php';
 require_once '../conf/autoload.php';
 require_once '../conf/adodb.php';
-require_once '../vendor/pgb-liv/php-ms/src/autoload.php';
+require_once '../vendor/autoload.php';
 
 $lockDir = DATA_PATH . '/.lock';
 $lockFile = $lockDir . '/.PreprocessorLock';

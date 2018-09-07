@@ -6,7 +6,8 @@
 		"pgb-liv/php-ms" : "dev-master",
 		"adodb/adodb-php" : "5.*",
 		"smarty/smarty" : "3.*",
-		"gburtini/distributions" : "dev-master"
+		"gburtini/distributions" : "dev-master",
+		"phpobo/phpobo" : "dev-master"
 	},
 	"require-dev" : {
 		"theseer/phpdox" : "0.8.*",
