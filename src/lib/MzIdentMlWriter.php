@@ -9,6 +9,7 @@ use pgb_liv\php_ms\Core\Identification;
 use pgb_liv\php_ms\Core\Tolerance;
 use PhpObo\LineReader;
 use PhpObo\Parser;
+use pgb_liv\php_ms\Core\ProteinEntry\ProteinEntry;
 
 class MzIdentMlWriter
 {
@@ -169,19 +170,23 @@ class MzIdentMlWriter
         $this->spectraData[] = $path;
     }
 
-    public function addSearchData($path)
+    public function addSearchData($path, $sequenceCount = null, $releaseDate = null)
     {
         $this->searchData[] = array(
             'path' => $path,
-            'isDecoy' => false
+            'isDecoy' => false,
+            'sequenceCount' => $sequenceCount,
+            'releaseDate' => $releaseDate
         );
     }
 
-    public function addDecoyData($path)
+    public function addDecoyData($path, $sequenceCount = null, $releaseDate = null)
     {
         $this->searchData[] = array(
             'path' => $path,
-            'isDecoy' => true
+            'isDecoy' => true,
+            'sequenceCount' => $sequenceCount,
+            'releaseDate' => $releaseDate
         );
     }
 
@@ -286,6 +291,10 @@ class MzIdentMlWriter
         $this->stream->endElement();
     }
 
+    /**
+     *
+     * @param PrecursorIon[] $precursors
+     */
     private function writeSpectrumIdentificationList(array $precursors)
     {
         $this->stream->startElement('SpectrumIdentificationList');
@@ -308,7 +317,7 @@ class MzIdentMlWriter
 
         // Currently only support one dataset
         $this->stream->writeAttribute('spectraData_ref', self::SPECTRA_DATA_PREFIX . '0');
-        $this->stream->writeAttribute('spectrumID', $sirId);
+        $this->stream->writeAttribute('spectrumID', 'index=' . $precursor->getIdentifier());
 
         $siiId = 0;
         foreach ($precursor->getIdentifications() as $identification) {
@@ -332,6 +341,10 @@ class MzIdentMlWriter
         $this->stream->writeAttribute('passThreshold', 'true');
         $this->stream->writeAttribute('peptide_ref', $this->getId($identification->getSequence()));
         $this->stream->writeAttribute('rank', $identification->getRank());
+
+        $this->stream->writeAttribute('calculatedMassToCharge',
+            $identification->getSequence()
+                ->getMonoisotopicMassCharge($precursor->getCharge()));
 
         foreach ($identification->getSequence()->getProteins() as $proteinEntry) {
             $ref = $this->getId($identification->getSequence()) . '_' .
@@ -398,6 +411,14 @@ class MzIdentMlWriter
 
         $this->stream->writeAttribute('id', self::SEARCH_DATABASE_PREFIX . $id);
         $this->stream->writeAttribute('location', $this->searchData[$id]['path']);
+
+        if (! is_null($this->searchData[$id]['sequenceCount'])) {
+            $this->stream->writeAttribute('numDatabaseSequences', $this->searchData[$id]['sequenceCount']);
+        }
+
+        if (! is_null($this->searchData[$id]['releaseDate'])) {
+            $this->stream->writeAttribute('releaseDate', date('Y-m-d\TH:i:sP', $this->searchData[$id]['releaseDate']));
+        }
 
         $this->writeFileFormat($this->searchData[$id]['path']);
         $this->writeDatabaseName($id);
@@ -784,7 +805,7 @@ class MzIdentMlWriter
                         continue;
                     }
 
-                    $this->writePeptideEvidence($peptide, $protein);
+                    $this->writePeptideEvidence($peptide, $proteinEntry);
 
                     $objectsWritten[$id] = true;
                 }
@@ -866,13 +887,17 @@ class MzIdentMlWriter
         $this->stream->endElement();
     }
 
-    private function writePeptideEvidence(Peptide $peptide, Protein $protein)
+    private function writePeptideEvidence(Peptide $peptide, ProteinEntry $proteinEntry)
     {
+        $protein = $proteinEntry->getProtein();
         $this->stream->startElement('PeptideEvidence');
 
         $this->stream->writeAttribute('id', $this->getId($peptide) . '_' . $protein->getUniqueIdentifier());
         $this->stream->writeAttribute('dBSequence_ref', $protein->getUniqueIdentifier());
         $this->stream->writeAttribute('peptide_ref', $this->getId($peptide));
+
+        $this->writeAttributeNotNull('start', $proteinEntry->getStart());
+        $this->writeAttributeNotNull('end', $proteinEntry->getEnd());
 
         if ($peptide->isDecoy()) {
             $this->stream->writeAttribute('isDecoy', 'true');
@@ -884,5 +909,20 @@ class MzIdentMlWriter
     private function getOboName($ref, $id)
     {
         return $this->oboRef[$ref][$id];
+    }
+
+    /**
+     * Writes the attribute for as long as the value is not null
+     *
+     * @param string $attribute
+     * @param mixed $value
+     */
+    private function writeAttributeNotNull($attribute, $value)
+    {
+        if (is_null($value)) {
+            return;
+        }
+
+        $this->stream->writeAttribute($attribute, $value);
     }
 }

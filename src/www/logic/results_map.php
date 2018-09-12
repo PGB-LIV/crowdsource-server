@@ -1,7 +1,5 @@
 <?php
 header('Content-Type: text/plain');
-error_reporting(E_ALL);
-ini_set('display_errors', true);
 
 $jobId = 1;
 if (isset($_GET['job'])) {
@@ -17,11 +15,10 @@ foreach ($results as $result) {
 
     $key = $mapping['latitude'] . ',' . $mapping['longitude'];
 
-    if ($mapping['city'] == '')
-    {
+    if ($mapping['city'] == '') {
         continue;
     }
-    
+
     if (! isset($country[$key])) {
         $country[$key] = array(
             'city' => $mapping['city'],
@@ -31,7 +28,7 @@ foreach ($results as $result) {
             'users' => 0
         );
     }
-    
+
     $country[$key]['requests'] += $result['requests'];
     $country[$key]['results'] += $result['results'];
     $country[$key]['users'] ++;

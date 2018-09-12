@@ -158,8 +158,7 @@ class RawPreprocessor
 
     private function processRawFile()
     {
-        $ms1Id = 1;
-
+        $ms1Id = 0;
         foreach ($this->rawParser as $spectra) {
             if (! $this->filterCharge->isValidSpectra($spectra)) {
                 continue;
@@ -208,9 +207,9 @@ class RawPreprocessor
             'INSERT IGNORE INTO `raw_ms1` (`id`, `job`, `title`, `mass_charge`, `mass`, `charge`, `scans`, `rtinseconds`) VALUES');
         $this->ms2Bulk = new BulkQuery($this->adodb,
             'INSERT IGNORE INTO `raw_ms2` (`id`, `ms1`, `job`, `mz`, `intensity`) VALUES');
-        
+
         // Ensure tables are clean
-        $this->adodb->Execute('DELETE FROM `raw_ms1` WHERE `job` = '. $this->jobId);
-        $this->adodb->Execute('DELETE FROM `raw_ms2` WHERE `job` = '. $this->jobId);
+        $this->adodb->Execute('DELETE FROM `raw_ms1` WHERE `job` = ' . $this->jobId);
+        $this->adodb->Execute('DELETE FROM `raw_ms2` WHERE `job` = ' . $this->jobId);
     }
 }

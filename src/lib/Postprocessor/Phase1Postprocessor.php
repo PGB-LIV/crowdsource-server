@@ -23,6 +23,8 @@ use pgb_liv\php_ms\Core\Spectra\PrecursorIon;
 use pgb_liv\php_ms\Core\Tolerance;
 use pgb_liv\crowdsource\MzIdentMlWriter;
 use pgb_liv\php_ms\Core\Protein;
+use pgb_liv\php_ms\Writer\MgfWriter;
+use pgb_liv\crowdsource\Core\FragmentIon;
 
 /**
  * Logic for performing result generation and database clean up after a job is complete
@@ -31,6 +33,8 @@ use pgb_liv\php_ms\Core\Protein;
  */
 class Phase1Postprocessor
 {
+
+    const RESULTS_URL = 'http://pgb.liv.ac.uk/~andrew/crowdsource-server/src/public_html/results';
 
     const PSM_LIMIT = 5;
 
@@ -65,14 +69,19 @@ class Phase1Postprocessor
      */
     public function generateResults()
     {
+        $path = DATA_PATH . '/' . $this->jobId . '/results';
+
+        if (! is_dir($path)) {
+            mkdir($path);
+        }
+
         $this->writeCsv();
         $this->writeMzIdentMl();
+        $this->writeMgf();
     }
 
     public function clean()
     {
-        return;
-
         $this->adodb->Execute('DELETE FROM `fasta_peptide_fixed` WHERE `job` = ' . $this->jobId);
         $this->adodb->Execute('DELETE FROM `raw_ms1` WHERE `job` = ' . $this->jobId);
         $this->adodb->Execute('DELETE FROM `raw_ms2` WHERE `job` = ' . $this->jobId);
@@ -82,7 +91,7 @@ class Phase1Postprocessor
 
     public function finalise()
     {
-        // $this->adodb->Execute('UPDATE `job_queue` SET `state` = "COMPLETE" WHERE `id` = ' . $this->jobId);
+        $this->adodb->Execute('UPDATE `job_queue` SET `state` = "COMPLETE" WHERE `id` = ' . $this->jobId);
     }
 
     private function writeMzIdentMl()
@@ -91,21 +100,26 @@ class Phase1Postprocessor
             'SELECT `f`.`id`, `raw_file`, `database_file`, `precursor_tolerance`, `precursor_tolerance_unit`, `fragment_tolerance`, `fragment_tolerance_unit`, `f`.`enzyme`, `miss_cleave_max` FROM `job_queue` `jq` LEFT JOIN `fasta` `f` ON `database_hash` = `hash` && `jq`.`enzyme` = `f`.`enzyme` WHERE `jq`.`id` = ' .
             $this->jobId);
 
-        $path = DATA_PATH . '/' . $this->jobId . '/results.mzid';
+        $targetSequenceCount = $this->adodb->GetOne(
+            'SELECT COUNT(*) FROM `fasta_proteins` WHERE `fasta` = ' . $jobRecord['id']);
+        $creationDate = filemtime($jobRecord['database_file']);
+
+        $path = DATA_PATH . '/' . $this->jobId . '/results/results.mzid';
 
         $mzIdentMl = new MzIdentMlWriter($path);
         $mzIdentMl->addCv('UNIMOD Modifications ontology', null, 'http://www.unimod.org/obo/unimod.obo', 'UNIMOD');
 
         $mzIdentMl->addSoftware('CS', 'CrowdSourcing', '1.0');
-        $mzIdentMl->addDecoyData(basename($jobRecord['database_file']));
-        $mzIdentMl->addSearchData(basename($jobRecord['database_file']));
+        $mzIdentMl->addSearchData(basename($jobRecord['database_file']), $targetSequenceCount, $creationDate,
+            $creationDate);
+        $mzIdentMl->addDecoyData('DECOY_' . basename($jobRecord['database_file']));
         $mzIdentMl->addFragmentTolerance(
             new Tolerance((float) $jobRecord['fragment_tolerance'], $jobRecord['precursor_tolerance_unit']));
         $mzIdentMl->addParentTolerance(
             new Tolerance((float) $jobRecord['precursor_tolerance'], $jobRecord['precursor_tolerance_unit']));
 
-        $mzIdentMl->addScore('MS:1001870', '-10lgP');
-        $mzIdentMl->addSpectraData(basename($jobRecord['raw_file']));
+        $mzIdentMl->addScore('MS:1002352', '-10lgP');
+        $mzIdentMl->addSpectraData(self::RESULTS_URL . $this->jobId . '/processed.mgf');
 
         $fixedMods = $this->adodb->GetAll('SELECT `mod_id`, `acid` FROM `job_fixed_mod` WHERE `job` = ' . $this->jobId);
         $varMods = $this->adodb->GetAll('SELECT `mod_id`, `acid` FROM `job_variable_mod` WHERE `job` = ' . $this->jobId);
@@ -118,6 +132,7 @@ class Phase1Postprocessor
                 $mod['acid']
             ));
             $modification->setMonoisotopicMass((float) $modId2Mod[$mod['mod_id']]['mono_mass']);
+            $modification->setType(Modification::TYPE_FIXED);
             $mzIdentMl->addModification($modification);
         }
 
@@ -141,6 +156,7 @@ class Phase1Postprocessor
         $precursorIons = array();
         foreach ($precursorRecords as $precursorRecord) {
             $precursorIon = new PrecursorIon();
+            $precursorIon->setIdentifier($precursorRecord['id']);
             $precursorIon->setMonoisotopicMassCharge((float) $precursorRecord['mass_charge'],
                 (int) $precursorRecord['charge']);
             $precursorIon->setRetentionTime((float) $precursorRecord['rtinseconds']);
@@ -165,17 +181,17 @@ class Phase1Postprocessor
                 $peptide->setIsDecoy($peptideRecord['is_decoy'] == '1' ? true : false);
 
                 $proteinRecords = $this->adodb->GetAll(
-                    'SELECT DISTINCT `identifier`, `description`, `sequence` FROM `fasta_protein2peptide` `p2p` LEFT JOIN `fasta_proteins` `p` ON `p2p`.`protein` = `p`.`id` && `p2p`.`fasta` = `p`.`fasta` WHERE `p2p`.`fasta` = ' .
+                    'SELECT DISTINCT `identifier`, `description`, `sequence`, `position_start` FROM `fasta_protein2peptide` `p2p` LEFT JOIN `fasta_proteins` `p` ON `p2p`.`protein` = `p`.`id` && `p2p`.`fasta` = `p`.`fasta` WHERE `p2p`.`fasta` = ' .
                     $fastaId . ' AND `peptide` = ' . $psmRecord['peptide']);
 
                 foreach ($proteinRecords as $proteinRecord) {
                     // TODO: Memory can be reduced here if needed
                     $protein = new Protein();
                     $uid = '';
-                    
+
                     $protein->setDescription($proteinRecord['description']);
                     $protein->setSequence($proteinRecord['sequence']);
-                    
+
                     if ($peptide->isDecoy()) {
                         $uid = 'DECOY_';
                         $protein->reverseSequence();
@@ -185,7 +201,8 @@ class Phase1Postprocessor
                     $protein->setUniqueIdentifier($uid);
                     $protein->setAccession($uid);
 
-                    $peptide->addProtein($protein);
+                    $peptide->addProtein($protein, $proteinRecord['position_start'] + 1,
+                        $proteinRecord['position_start'] + $peptide->getLength() + 1);
                 }
 
                 $ptmRecords = $this->adodb->GetAll(
@@ -203,6 +220,23 @@ class Phase1Postprocessor
                     $peptide->addModification($modification);
                 }
 
+                foreach ($fixedMods as $fixedMod) {
+                    $matches = array();
+                    if (preg_match_all('/' . $fixedMod['acid'] . '/', $peptide->getSequence(), $matches,
+                        PREG_OFFSET_CAPTURE)) {
+                        foreach ($matches[0] as $match) {
+                            $modId = $fixedMod['mod_id'];
+
+                            $modification = new Modification();
+                            $modification->setMonoisotopicMass((float) $modId2Mod[$modId]['mono_mass']);
+                            $modification->setLocation((int) $match[1] + 1);
+                            $modification->setAccession('UNIMOD:' . $modId);
+
+                            $peptide->addModification($modification);
+                        }
+                    }
+                }
+
                 $identification->setSequence($peptide);
                 $precursorIon->addIdentification($identification);
 
@@ -217,118 +251,6 @@ class Phase1Postprocessor
         }
 
         $mzIdentMl->addIdentifiedPrecursors($precursorIons);
-
-        $mzIdentMl->close();
-
-        exit();
-
-        $records = $this->adodb->Execute(
-            'SELECT * FROM `workunit1` WHERE `job` = ' . $this->jobId .
-            ' && `score` IS NOT NULL && `score` > 0 ORDER BY `precursor` ASC, `score` DESC');
-        $scores = array();
-
-        foreach ($records as $record) {
-            if (isset($scores[$record['precursor']]) && count($scores[$record['precursor']] >= 10)) {
-                continue;
-            }
-
-            $score = array();
-            $score['score'] = $record['score'];
-            $score['peptide'] = $record['peptide'];
-            $score['id'] = $record['id'];
-            $scores[$record['precursor']] = $score;
-        }
-
-        $fileHandle = fopen(DATA_PATH . '/' . $this->jobId . '/results.csv', 'w');
-        fwrite($fileHandle,
-            'Peptide,-10lgP,Mass,Length,ppm,m/z,RT,Intensity,Fraction,Scan,Source File,Accession,PTM,AScore' . PHP_EOL);
-
-        $precursors = array();
-        foreach ($scores as $id => $score) {
-            $peptideRecord = $this->adodb->GetRow(
-                'SELECT `peptide`, `is_decoy` FROM `fasta_peptides` WHERE `fasta` = ' . $fastaId . ' && `id` = ' .
-                $score['peptide']);
-
-            $precursorRecord = $this->adodb->GetRow(
-                'SELECT * FROM `raw_ms1` WHERE `job` = ' . $this->jobId . ' && `id` = ' . $id);
-
-            $proteinRecords = $this->adodb->GetCol(
-                'SELECT DISTINCT `identifier` FROM `fasta_protein2peptide` `p2p` LEFT JOIN `fasta_proteins` `p` ON `p2p`.`protein` = `p`.`id` && `p2p`.`fasta` = `p`.`fasta` WHERE `p2p`.`fasta` = ' .
-                $fastaId . ' AND `peptide` = ' . $score['peptide']);
-
-            $ptmRecords = $this->adodb->GetAll(
-                'SELECT `location`, `modification` FROM `workunit1_locations` WHERE `job` = ' . $this->jobId .
-                ' && `id` = ' . $score['id']);
-
-            $accession = 'DECOY';
-            if (! empty($proteinRecords)) {
-                $accession = implode(':', $proteinRecords);
-            }
-
-            $intensity = 0;
-            $matches = array();
-            if (preg_match('/intensity=([0-9.]+)/', $precursorRecord['title'], $matches)) {
-                $intensity = $matches[1];
-            }
-
-            $peptide = new Peptide();
-            $peptide->setSequence($peptideRecord['peptide']);
-
-            $protein = new Protein();
-            $protein->setUniqueIdentifier('MY_BIG_PROTEIN');
-            $protein->setAccession('BIG_PROT');
-            $protein->setSequence('PEPTIDER');
-            $protein->setDescription('Huge protein');
-            $peptide->addProtein($protein, 0, 10);
-
-            $matches = null;
-            foreach ($fixedMods as $fixedMod) {
-                if (preg_match_all('/' . $fixedMod['acid'] . '/', $peptide->getSequence(), $matches, PREG_OFFSET_CAPTURE)) {
-                    foreach ($matches[0] as $match) {
-                        $modId = $fixedMod['mod_id'];
-
-                        $modification = new Modification();
-                        $modification->setMonoisotopicMass((float) $modId2Mod[$modId]['mono_mass']);
-                        $modification->setName($modId2Mod[$modId]['code_name']);
-                        $modification->setLocation((int) $match[1] + 1);
-                        $modification->setAccession('UNIMOD:' . $modId);
-
-                        $peptide->addModification($modification);
-                    }
-                }
-            }
-
-            foreach ($ptmRecords as $ptm) {
-                $modId = $ptm['modification'];
-
-                $modification = new Modification();
-                $modification->setMonoisotopicMass((float) $modId2Mod[$modId]['mono_mass']);
-                $modification->setName($modId2Mod[$modId]['code_name']);
-                $modification->setLocation((int) $ptm['location']);
-                $modification->setAccession('UNIMOD:' . $modId);
-
-                $peptide->addModification($modification);
-            }
-
-            $identification = new Identification();
-            $identification->setSequence($peptide);
-            $identification->setScore('-10lgP', $score['score']);
-            $identification->setRank(1); // TODO:
-
-            $precursor = new PrecursorIon();
-            $precursor->setMonoisotopicMassCharge((float) $precursorRecord['mass_charge'],
-                (int) $precursorRecord['charge']);
-            $precursor->setRetentionTime((float) $precursorRecord['rtinseconds']);
-            $precursor->setIntensity((float) $intensity);
-            $precursor->setScan((int) $precursorRecord['scans']);
-            $precursor->setTitle($precursorRecord['title']);
-
-            $precursor->addIdentification($identification);
-
-            $precursors[] = $precursor;
-        }
-
-        $mzIdentMl->addIdentifiedPrecursors($precursors);
 
         $mzIdentMl->close();
     }
@@ -360,7 +282,7 @@ class Phase1Postprocessor
         $fixedMods = $this->adodb->GetAll('SELECT `mod_id`, `acid` FROM `job_fixed_mod` WHERE `job` = ' . $this->jobId);
         $modId2Mod = $this->adodb->GetAssoc('SELECT `record_id`, `code_name`, `mono_mass` FROM `unimod_modifications`');
 
-        $fileHandle = fopen(DATA_PATH . '/' . $this->jobId . '/results.csv', 'w');
+        $fileHandle = fopen(DATA_PATH . '/' . $this->jobId . '/results/results.csv', 'w');
         fwrite($fileHandle,
             'Peptide,-10lgP,Mass,Length,ppm,m/z,RT,Intensity,Fraction,Scan,Source File,Accession,PTM,AScore' . PHP_EOL);
 
@@ -457,5 +379,35 @@ class Phase1Postprocessor
             fwrite($fileHandle, 0);
             fwrite($fileHandle, PHP_EOL);
         }
+    }
+
+    private function writeMgf()
+    {
+        $mgfWriter = new MgfWriter(DATA_PATH . '/' . $this->jobId . '/results/processed.mgf');
+
+        $precursorRecords = $this->adodb->Execute('SELECT * FROM `raw_ms1` WHERE `job` = ' . $this->jobId);
+
+        foreach ($precursorRecords as $precursorRecord) {
+            $precursorIon = new PrecursorIon();
+            $precursorIon->setMonoisotopicMassCharge((float) $precursorRecord['mass_charge'],
+                (int) $precursorRecord['charge']);
+            $precursorIon->setScan((int) $precursorRecord['scans']);
+            $precursorIon->setTitle($precursorRecord['title']);
+            $precursorIon->setRetentionTime((float) $precursorRecord['rtinseconds']);
+
+            $fragmentRecords = $this->adodb->Execute(
+                'SELECT * FROM `raw_ms2` WHERE `job` = ' . $this->jobId . ' && `ms1` = ' . $precursorRecord['id'] .
+                ' ORDER BY `mz` ASC');
+
+            foreach ($fragmentRecords as $fragmentRecord) {
+                $fragmentIon = new FragmentIon((float) $fragmentRecord['mz'], (float) $fragmentRecord['intensity']);
+
+                $precursorIon->addFragmentIon($fragmentIon);
+            }
+
+            $mgfWriter->write($precursorIon);
+        }
+
+        $mgfWriter->close();
     }
 }

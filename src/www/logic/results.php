@@ -12,12 +12,13 @@ if (isset($_GET['format']) && $_GET['format'] == 'mzid') {
     $mime = 'application/xml';
 }
 
-header('Content-Type: ' . $mime);
-
-$resultsPath = DATA_PATH . '/' . $jobId . '/results.' . $format;
+$resultsPath = DATA_PATH . '/' . $jobId . '/results/results.' . $format;
 
 if (! file_exists($resultsPath)) {
+    http_response_code(404);
     die('No results');
 }
+
+header('Content-Type: ' . $mime);
 echo file_get_contents($resultsPath);
 exit();

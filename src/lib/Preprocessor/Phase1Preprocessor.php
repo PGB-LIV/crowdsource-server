@@ -28,7 +28,7 @@ use pgb_liv\php_ms\Utility\Digest\DigestFactory;
 class Phase1Preprocessor extends AbstractPreprocessor
 {
 
-    const hash_algo = 'sha256';
+    const HASH_ALGO = 'sha256';
 
     private $databasePath;
 
@@ -75,16 +75,17 @@ class Phase1Preprocessor extends AbstractPreprocessor
      */
     private function indexDatabase()
     {
-        $hash = hash_file(static::hash_algo, $this->databasePath, true);
-        $fastaId = $this->adodb->GetOne('SELECT `id` FROM `fasta` WHERE `hash` = "' . $hash . '"');
+        $hash = hash_file(static::HASH_ALGO, $this->databasePath);
+        $fastaId = $this->adodb->GetOne('SELECT `id` FROM `fasta` WHERE `hash` = UNHEX("' . $hash . '")');
 
         // TODO: Should verify indexing complete?
         if (is_null($fastaId)) {
             // Index FASTA
             $enzymeId = 1; // TODO
-            $this->adodb->Execute('INSERT INTO `fasta` (`enzyme`, `hash`) VALUES (' . $enzymeId . ', "' . $hash . '")');
+            $this->adodb->Execute(
+                'INSERT INTO `fasta` (`enzyme`, `hash`) VALUES (' . $enzymeId . ', UNHEX("' . $hash . '"))');
             $fastaId = $this->adodb->insert_Id();
-
+            exit();
             $fastaParser = new FastaReader($this->databasePath);
 
             $cleaver = DigestFactory::getDigest('Trypsin'); // $job['enzyme']);
@@ -93,7 +94,8 @@ class Phase1Preprocessor extends AbstractPreprocessor
             $databaseProcessor->process();
         }
 
-        $this->adodb->Execute('UPDATE `job_queue` SET `database_hash` = "' . $hash . '" WHERE `id` = ' . $this->jobId);
+        $this->adodb->Execute(
+            'UPDATE `job_queue` SET `database_hash` = UNHEX("' . $hash . '") WHERE `id` = ' . $this->jobId);
 
         // TODO: Generate fixed mod table
         $modifications = $this->adodb->GetAssoc(

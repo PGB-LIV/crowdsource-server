@@ -41,15 +41,26 @@
         </select>
     </fieldset>
     <fieldset>
+        <label for="enzyme">Missed Cleavages</label> <select
+            name="missed_cleavages" id="missed_cleavages">
+            <option value="0">None</option>
+            <option value="1" selected="selected">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+        </select>
+    </fieldset>
+    <fieldset>
         <label for="fixed">Fixed Carbamidomethyl</label> <input
             name="fixed" id="fixed" type="checkbox" value="Yes"
             checked="checked" /><span>Yes</span>
     </fieldset>
     <fieldset>
         <label for="variable">Variable Modification</label> <select
-            name="variable" id="variable">
-            <option value="none" selected="selected">None</option>
+            name="variable[]" id="variable" multiple="multiple">
             <option value="phospho">Phospho (STY)</option>
+            <option value="oxidation">Oxidation (M)</option>
+            <option value="acetylation">Acetylation ([)</option>
+            <option value="methylation">Methylation (])</option>
         </select>
     </fieldset>
     <fieldset>
