@@ -32,7 +32,7 @@ class Modification extends BaseModification
 
     const ARRAY_RESIDUES = 'residues';
 
-    const ARRAY_LOCATION = 'position';
+    const ARRAY_LOCATION = 'P';
 
     const ARRAY_OCCURRENCES = 'num';
 
