@@ -276,6 +276,7 @@ class Phase1Postprocessor
             $score['score'] = $record['score'];
             $score['peptide'] = $record['peptide'];
             $score['id'] = $record['id'];
+            $score['ions_matched'] = $record['ions_matched'];
             $scores[$record['precursor']] = $score;
         }
 
@@ -284,7 +285,7 @@ class Phase1Postprocessor
 
         $fileHandle = fopen(DATA_PATH . '/' . $this->jobId . '/results/results.csv', 'w');
         fwrite($fileHandle,
-            'Peptide,-10lgP,Mass,Length,ppm,m/z,RT,Intensity,Fraction,Scan,Source File,Accession,PTM,AScore' . PHP_EOL);
+            'Peptide,-10lgP,Mass,Length,ppm,m/z,RT,Intensity,Fraction,Scan,Source File,Accession,PTM,AScore,IonMatches' . PHP_EOL);
 
         foreach ($scores as $id => $score) {
             $peptideRecord = $this->adodb->GetRow(
@@ -351,6 +352,7 @@ class Phase1Postprocessor
             $identification = new Identification();
             $identification->setSequence($peptide);
             $identification->setScore('-10lgP', $score['score']);
+            $identification->setIonsMatched((int) $score['ions_matched']);
 
             $precursor = new PrecursorIon();
             $precursor->setMonoisotopicMassCharge((float) $precursorRecord['mass_charge'],
@@ -376,7 +378,8 @@ class Phase1Postprocessor
             fwrite($fileHandle, basename($jobRecord['raw_file']) . ',');
             fwrite($fileHandle, $accession . ',');
             fwrite($fileHandle, $ptms . ',');
-            fwrite($fileHandle, 0);
+            fwrite($fileHandle, 0 . ',');
+            fwrite($fileHandle, $identification->getIonsMatched());
             fwrite($fileHandle, PHP_EOL);
         }
     }
