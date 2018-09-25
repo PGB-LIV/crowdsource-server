@@ -674,7 +674,7 @@ class MzIdentMlWriter
         
         $this->stream->writeAttribute('residues', $residues);
         
-        $this->writeSpecifityRules($modification);
+        $this->writeSpecificityRules($modification);
         
         // TODO: Do not hardcode to unimod
         $this->writeCvParam($modification->getAccession(), 'UNIMOD');
@@ -682,13 +682,13 @@ class MzIdentMlWriter
         $this->stream->endElement();
     }
 
-    private function writeSpecifityRules(Modification $modification)
+    private function writeSpecificityRules(Modification $modification)
     {
         if ($modification->getPosition() == Modification::POSITION_ANY) {
             return;
         }
         
-        $this->stream->startElement('SpecifityRules');
+        $this->stream->startElement('SpecificityRules');
         
         switch ($modification->getPosition()) {
             case Modification::POSITION_NTERM:

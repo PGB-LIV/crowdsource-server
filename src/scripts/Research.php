@@ -90,11 +90,6 @@ copy($modFile, $benchmarkPath . '/msgf_mods.txt');
 
 foreach ($modifications as $modification) {
     $msgfConf->addModification($modification);
-    if ($modification->getResidues()[0] == '[')
-    {
-        $modification->setPosition(Modification::POSITION_NTERM);
-    }
-    $modification->setPosition($position)
 }
 
 $msGf = new MsgfPlusSearch('/mnt/nas/_CLUSTER_SOFTWARE/ms-gf+/current/MSGFPlus.jar');
@@ -117,8 +112,23 @@ foreach ($modifications as $modification) {
         $settingsData .= ' fix="true"';
     }
     
-    $settingsData .= '>' . $modification->getName() . '(' . implode(',', $modification->getResidues()) . ')</modification>' . PHP_EOL;
+    if ($modification->getPosition() == Modification::POSITION_CTERM) {
+        $settingsData .= ' cterm="true"';
+    }
+    
+    if ($modification->getPosition() == Modification::POSITION_NTERM) {
+        $settingsData .= ' nterm="true"';
+    }
+    
+    $settingsData .= '>' . $modification->getName();
+    
+    if (count($modification->getResidues()) > 0) {
+        $settingsData .= '(' . implode(',', $modification->getResidues()) . ')';
+    }
+    
+    $settingsData .= '</modification>' . PHP_EOL;
 }
+
 $settingsData .= '</modifications>
 <instrument>b, y</instrument>
 <ms1_tol unit="' . $precursorTolerance->getUnit() . '">' . $precursorTolerance->getTolerance() . '</ms1_tol>
