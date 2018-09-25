@@ -128,9 +128,17 @@ class Phase1Postprocessor
         foreach ($fixedMods as $mod) {
             $modification = new Modification();
             $modification->setAccession('UNIMOD:' . $mod['mod_id']);
-            $modification->setResidues(array(
-                $mod['acid']
-            ));
+            
+            if ($mod['acid'] == '[') {
+                $modification->setPosition(Modification::POSITION_NTERM);
+            } elseif ($mod['acid'] == ']') {
+                $modification->setPosition(Modification::POSITION_CTERM);
+            } else {
+                $modification->setResidues(array(
+                    $mod['acid']
+                ));
+            }
+            
             $modification->setMonoisotopicMass((float) $modId2Mod[$mod['mod_id']]['mono_mass']);
             $modification->setType(Modification::TYPE_FIXED);
             $mzIdentMl->addModification($modification);
@@ -139,9 +147,17 @@ class Phase1Postprocessor
         foreach ($varMods as $mod) {
             $modification = new Modification();
             $modification->setAccession('UNIMOD:' . $mod['mod_id']);
-            $modification->setResidues(array(
-                $mod['acid']
-            ));
+            
+            if ($mod['acid'] == '[') {
+                $modification->setPosition(Modification::POSITION_NTERM);
+            } elseif ($mod['acid'] == ']') {
+                $modification->setPosition(Modification::POSITION_CTERM);
+            } else {
+                $modification->setResidues(array(
+                    $mod['acid']
+                ));
+            }
+            
             $modification->setMonoisotopicMass((float) $modId2Mod[$mod['mod_id']]['mono_mass']);
             $mzIdentMl->addModification($modification);
         }

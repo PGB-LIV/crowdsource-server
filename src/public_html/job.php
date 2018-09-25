@@ -58,6 +58,8 @@ try {
 } catch (Exception $e) {
     file_put_contents('/home/andrew/public_html/crowdsource-server/src/php_exception.log', $e->getMessage() . PHP_EOL,
         FILE_APPEND);
+    file_put_contents('/home/andrew/public_html/crowdsource-server/src/php_exception.log', $e->getTraceAsString() . PHP_EOL,
+        FILE_APPEND);
 }
 
 $ip = 0;

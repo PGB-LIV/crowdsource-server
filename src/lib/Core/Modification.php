@@ -141,9 +141,17 @@ class Modification extends BaseModification
         $modification = array();
         $modification[Modification::ARRAY_ID] = $this->getId();
         $modification[Modification::ARRAY_MASS] = $this->getMonoisotopicMass();
-        $modification[Modification::ARRAY_RESIDUES] = implode('', $this->getResidues());
+        
+        if ($this->getPosition() == Modification::POSITION_NTERM) {
+            $modification[Modification::ARRAY_RESIDUES] = '[';
+        } elseif ($this->getPosition() == Modification::POSITION_CTERM) {
+            $modification[Modification::ARRAY_RESIDUES] = ']';
+        } else {
+            $modification[Modification::ARRAY_RESIDUES] = implode('', $this->getResidues());
+        }
         
         if (! is_null($this->getLocation())) {
+            
             $modification[Modification::ARRAY_LOCATION] = $this->getLocation();
         }
         

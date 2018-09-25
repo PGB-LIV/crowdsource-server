@@ -121,11 +121,20 @@ class Phase1Allocator extends AbstractAllocator implements AllocatorInterface
                 foreach ($mods as $modId) {
                     $modification = new Modification((int) $modId);
                     $modification->setMonoisotopicMass((float) $this->modMass[$modId]);
-                    $modification->setResidues($this->modRes[$modId]);
-
+                    
+                    $residues = $this->modRes[$modId];
+                    if ($residues[0] == '[') {
+                        $modification->setPosition(Modification::POSITION_NTERM);
+                    } elseif ($residues[0] == ']') {
+                        $modification->setPosition(Modification::POSITION_CTERM);
+                    } else {
+                        $modification->setResidues($residues);
+                    }
+                    
                     $peptide->addModification($modification);
                 }
             }
+            
             $peptide->setSequence($record['peptide']);
             $workUnit->addPeptide($peptide);
         }

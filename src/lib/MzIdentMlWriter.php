@@ -666,11 +666,48 @@ class MzIdentMlWriter
 
         $this->stream->writeAttribute('fixedMod', $modification->isFixed() ? 'true' : 'false');
         $this->stream->writeAttribute('massDelta', $modification->getMonoisotopicMass());
-        $this->stream->writeAttribute('residues', implode(' ', $modification->getResidues()));
-
+        
+        $residues = implode(' ', $modification->getResidues());
+        if (strlen($residues) == 0) {
+            $residues = '.';
+        }
+        
+        $this->stream->writeAttribute('residues', $residues);
+        
+        $this->writeSpecifityRules($modification);
+        
         // TODO: Do not hardcode to unimod
         $this->writeCvParam($modification->getAccession(), 'UNIMOD');
+        
+        $this->stream->endElement();
+    }
 
+    private function writeSpecifityRules(Modification $modification)
+    {
+        if ($modification->getPosition() == Modification::POSITION_ANY) {
+            return;
+        }
+        
+        $this->stream->startElement('SpecifityRules');
+        
+        switch ($modification->getPosition()) {
+            case Modification::POSITION_NTERM:
+                $this->writeCvParam('MS:1001189', $this->psiMsRef);
+                break;
+            case Modification::POSITION_CTERM:
+                $this->writeCvParam('MS:1001190', $this->psiMsRef);
+                break;
+            case Modification::POSITION_PROTEIN_NTERM:
+                $this->writeCvParam('MS:1002057', $this->psiMsRef);
+                break;
+            case Modification::POSITION_PROTEIN_CTERM:
+                $this->writeCvParam('MS:1002058', $this->psiMsRef);
+                break;
+            default:
+                // TODO: Correctly handle MS:1001875 / MS:1001876
+                break;
+        }
+        
         $this->stream->endElement();
     }
 
