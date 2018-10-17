@@ -19,8 +19,8 @@ class FalseDiscoveryRate
      */
     public function getFdr(array $identifications, $scoreKey, $sort = SORT_DESC)
     {
-        $scores[] = array();
-        $targetDecoy[] = array();
+        $scores = array();
+        $targetDecoy = array();
         foreach ($identifications as $identification) {
             $scores[] = (float) $identification->getScore($scoreKey);
             $isDecoy = false;

@@ -63,12 +63,39 @@ echo 'Selecting ' . $spectra . PHP_EOL;
 $protocolCollection = $reader->getAnalysisProtocolCollection();
 
 foreach ($protocolCollection['spectrum'] as $protocol) {
-    
+
     $fragmentTolerance = current($protocol['fragmentTolerance']);
     $precursorTolerance = current($protocol['parentTolerance']);
     $enzyme = current($protocol['enzymes'])['EnzymeName']['name'];
     $cleavage = current($protocol['enzymes'])['missedCleavages'];
     $modifications = $protocol['modifications'];
+}
+
+// Merge modifications
+for ($modId = 0; $modId < count($modifications); $modId ++) {
+    if (! isset($modifications[$modId])) {
+        continue;
+    }
+
+    $modification = $modifications[$modId];
+    foreach ($modifications as $duplicateId => $duplicate) {
+        if ($modId == $duplicateId) {
+            continue;
+        }
+
+        if ($modification->getAccession() != $duplicate->getAccession()) {
+            continue;
+        }
+
+        if ($modification->getPosition() != $duplicate->getPosition()) {
+            continue;
+        }
+
+        $residues = array_merge($modification->getResidues(), $duplicate->getResidues());
+
+        $modification->setResidues($residues);
+        unset($modifications[$duplicateId]);
+    }
 }
 
 $msgfConf = new MsgfPlusSearchParameters();
@@ -93,7 +120,7 @@ foreach ($modifications as $modification) {
 }
 
 $msGf = new MsgfPlusSearch('/mnt/nas/_CLUSTER_SOFTWARE/ms-gf+/current/MSGFPlus.jar');
-$msGf->search($msgfConf);
+//$msGf->search($msgfConf);
 
 $settings = $benchmarkPath . '/msamanda.xml';
 
@@ -107,25 +134,25 @@ $settingsData = '<?xml version="1.0" encoding="UTF-8"?>
 
 foreach ($modifications as $modification) {
     $settingsData .= '<modification';
-    
+
     if ($modification->isFixed()) {
         $settingsData .= ' fix="true"';
     }
-    
+
     if ($modification->getPosition() == Modification::POSITION_CTERM) {
         $settingsData .= ' cterm="true"';
     }
-    
+
     if ($modification->getPosition() == Modification::POSITION_NTERM) {
         $settingsData .= ' nterm="true"';
     }
-    
+
     $settingsData .= '>' . $modification->getName();
-    
+
     if (count($modification->getResidues()) > 0) {
         $settingsData .= '(' . implode(',', $modification->getResidues()) . ')';
     }
-    
+
     $settingsData .= '</modification>' . PHP_EOL;
 }
 
@@ -162,10 +189,11 @@ file_put_contents($settings, $settingsData);
 echo $settingsData . PHP_EOL;
 
 // MSAmanda
-$cmd = 'mono /mnt/nas/_CLUSTER_SOFTWARE/MSAmanda/2.0.0.11219/MSAmanda.exe -s "' . $spectra . '" -d "' . $database . '" -e "' . $settings . '" -f 2 -o "' . $benchmarkPath . '/msamanda.mzid"';
+$cmd = 'mono /mnt/nas/_CLUSTER_SOFTWARE/MSAmanda/2.0.0.11219/MSAmanda.exe -s "' . $spectra . '" -d "' . $database .
+    '" -e "' . $settings . '" -f 2 -o "' . $benchmarkPath . '/msamanda.mzid"';
 echo $cmd . PHP_EOL;
 
-echo `$cmd`;
+//echo `$cmd`;
 
 /*
  * FDR
@@ -176,7 +204,7 @@ $mzidPath = DATA_PATH . '/' . $jobId . '/results/results.mzid';
 $reader = new MzIdentMlReader1r2($mzidPath);
 $data = $reader->getAnalysisData();
 $identifications = array();
-foreach ($data as $spectraId => $spectra) {
+foreach ($data as $spectra) {
     foreach ($spectra->getIdentifications() as $identification) {
         if ($identification->getRank() == 1) {
             $identifications[] = $identification;
@@ -195,7 +223,7 @@ $mzidPath = DATA_PATH . '/' . $jobId . '/benchmark/msgf.mzid';
 $reader = new MzIdentMlReader1r2($mzidPath);
 $data = $reader->getAnalysisData();
 $identifications = array();
-foreach ($data as $spectraId => $spectra) {
+foreach ($data as $spectra) {
     foreach ($spectra->getIdentifications() as $identification) {
         if ($identification->getRank() == 1) {
             $identifications[] = $identification;
@@ -214,7 +242,7 @@ $mzidPath = DATA_PATH . '/' . $jobId . '/benchmark/msamanda.mzid';
 $reader = new MzIdentMlReader1r2($mzidPath);
 $data = $reader->getAnalysisData();
 $identifications = array();
-foreach ($data as $spectraId => $spectra) {
+foreach ($data as $spectra) {
     foreach ($spectra->getIdentifications() as $identification) {
         if ($identification->getRank() == 1) {
             $identifications[] = $identification;
