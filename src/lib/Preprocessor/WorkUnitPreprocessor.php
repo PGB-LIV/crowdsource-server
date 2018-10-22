@@ -32,6 +32,8 @@ class WorkUnitPreprocessor
 
     private $jobId;
 
+    private $fastaId;
+
     /**
      * Precursor mass tolerance as ppm value
      *
@@ -54,6 +56,9 @@ class WorkUnitPreprocessor
 
     private function initialise()
     {
+        $this->fastaId = $this->adodb->GetOne(
+            'SELECT `fasta`.`id` FROM `job_queue` LEFT JOIN `fasta` ON `fasta`.`hash` = `job_queue`.`database_hash` WHERE `job_queue`.`id` = 5 ');
+
         $toleranceRaw = $this->adodb->GetRow(
             'SELECT `precursor_tolerance`, `precursor_tolerance_unit` FROM `job_queue` WHERE `id` = ' . $this->jobId);
 
@@ -219,13 +224,13 @@ class WorkUnitPreprocessor
      */
     private function getModifiablePeptides($spectraMass, $where)
     {
-        $fastaId = 1;
         $tolerance = $this->massTolerance->getDaltonDelta($spectraMass);
         $pepMassLow = $spectraMass - $tolerance;
         $pepMassHigh = $spectraMass + $tolerance;
 
         $query = 'SELECT `f`.`peptide` FROM `fasta_peptide_fixed` `f`
-            LEFT JOIN `fasta_peptides` `p` ON `f`.`peptide` = `p`.`id` && `fasta` = ' . $fastaId . '
+            LEFT JOIN `fasta_peptides` `p` ON `f`.`peptide` = `p`.`id` && `fasta` = ' .
+            $this->fastaId . '
             WHERE `job` = ' . $this->jobId . ' && `fixed_mass` BETWEEN ' .
             $pepMassLow . ' AND ' . $pepMassHigh;
 

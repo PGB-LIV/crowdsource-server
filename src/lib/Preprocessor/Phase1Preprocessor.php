@@ -85,7 +85,6 @@ class Phase1Preprocessor extends AbstractPreprocessor
             $this->adodb->Execute(
                 'INSERT INTO `fasta` (`enzyme`, `hash`) VALUES (' . $enzymeId . ', UNHEX("' . $hash . '"))');
             $fastaId = $this->adodb->insert_Id();
-            exit();
             $fastaParser = new FastaReader($this->databasePath);
 
             $cleaver = DigestFactory::getDigest('Trypsin'); // $job['enzyme']);
