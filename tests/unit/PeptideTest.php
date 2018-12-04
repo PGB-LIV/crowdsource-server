@@ -25,64 +25,6 @@ class PeptideTest extends \PHPUnit_Framework_TestCase
     /**
      * @covers pgb_liv\crowdsource\Core\Peptide::__construct
      * @covers pgb_liv\crowdsource\Core\Peptide::setScore
-     * @covers pgb_liv\crowdsource\Core\Peptide::getScore
-     * @covers pgb_liv\crowdsource\Core\Peptide::getIonsMatched
-     *
-     * @uses pgb_liv\crowdsource\Core\Peptide
-     */
-    public function testObjectCanGetSetValidScore()
-    {
-        $id = 15;
-        $score = 133.7;
-        $ions = 12;
-        $peptide = new Peptide($id);
-        $this->assertInstanceOf('pgb_liv\crowdsource\Core\Peptide', $peptide);
-        
-        $peptide->setScore($score, $ions);
-        
-        $this->assertEquals($score, $peptide->getScore());
-        $this->assertEquals($ions, $peptide->getIonsMatched());
-    }
-
-    /**
-     * @covers pgb_liv\crowdsource\Core\Peptide::__construct
-     * @covers pgb_liv\crowdsource\Core\Peptide::setScore
-     * @expectedException InvalidArgumentException
-     *
-     * @uses pgb_liv\crowdsource\Core\Peptide
-     */
-    public function testObjectCanGetSetInvalidScore1()
-    {
-        $id = 15;
-        $score = 'fail';
-        $ions = 12;
-        $peptide = new Peptide($id);
-        $this->assertInstanceOf('pgb_liv\crowdsource\Core\Peptide', $peptide);
-        
-        $peptide->setScore($score, $ions);
-    }
-
-    /**
-     * @covers pgb_liv\crowdsource\Core\Peptide::__construct
-     * @covers pgb_liv\crowdsource\Core\Peptide::setScore
-     * @expectedException InvalidArgumentException
-     *
-     * @uses pgb_liv\crowdsource\Core\Peptide
-     */
-    public function testObjectCanGetSetInvalidScore2()
-    {
-        $id = 15;
-        $score = 151.456;
-        $ions = 'fail';
-        $peptide = new Peptide($id);
-        $this->assertInstanceOf('pgb_liv\crowdsource\Core\Peptide', $peptide);
-        
-        $peptide->setScore($score, $ions);
-    }
-
-    /**
-     * @covers pgb_liv\crowdsource\Core\Peptide::__construct
-     * @covers pgb_liv\crowdsource\Core\Peptide::setScore
      * @covers pgb_liv\crowdsource\Core\Peptide::toArray
      * @covers pgb_liv\crowdsource\Core\Peptide::toArrayMods
      * @covers pgb_liv\crowdsource\Core\Peptide::fromArray
