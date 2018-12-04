@@ -26,19 +26,21 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
 {
 
     /**
+     *
      * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
      *
      * @uses pgb_liv\crowdsource\Core\WorkUnit
      */
     public function testObjectCanBeConstructedForValidConstructorArguments()
     {
-        $workUnit = new WorkUnit(1, 1);
+        $workUnit = new WorkUnit("one-two-three");
         $this->assertInstanceOf('pgb_liv\crowdsource\Core\WorkUnit', $workUnit);
-        
+
         return $workUnit;
     }
 
     /**
+     *
      * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
      * @expectedException InvalidArgumentException
      *
@@ -46,44 +48,29 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanBeConstructedForInvalidConstructorArguments1()
     {
-        $workUnit = new WorkUnit('fail', 1);
+        $workUnit = new WorkUnit();
         $this->assertInstanceOf('pgb_liv\crowdsource\Core\WorkUnit', $workUnit);
-        
+
         return $workUnit;
     }
 
     /**
-     * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
-     * @expectedException InvalidArgumentException
      *
-     * @uses pgb_liv\crowdsource\Core\WorkUnit
-     */
-    public function testObjectCanBeConstructedForInvalidConstructorArguments2()
-    {
-        $workUnit = new WorkUnit(1, 'fail');
-        $this->assertInstanceOf('pgb_liv\crowdsource\Core\WorkUnit', $workUnit);
-        
-        return $workUnit;
-    }
-
-    /**
      * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
-     * @covers pgb_liv\crowdsource\Core\WorkUnit::getJobId
-     * @covers pgb_liv\crowdsource\Core\WorkUnit::getPrecursorId
+     * @covers pgb_liv\crowdsource\Core\WorkUnit::getUid
      *
      * @uses pgb_liv\crowdsource\Core\WorkUnit
      */
     public function testObjectCanGetConstructorArgs()
     {
-        $jobId = 1;
-        $precursorId = 2;
-        $workUnit = new WorkUnit($jobId, $precursorId);
-        
-        $this->assertEquals($jobId, $workUnit->getJobId());
-        $this->assertEquals($precursorId, $workUnit->getPrecursorId());
+        $uid = rand();
+        $workUnit = new WorkUnit($uid);
+
+        $this->assertEquals($uid, $workUnit->getUid());
     }
 
     /**
+     *
      * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
      * @covers pgb_liv\crowdsource\Core\WorkUnit::addFixedModification
      * @covers pgb_liv\crowdsource\Core\WorkUnit::getFixedModifications
@@ -92,20 +79,20 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanGetSetValidFixedModification()
     {
-        $jobId = 1;
-        $precursorId = 2;
-        $workUnit = new WorkUnit($jobId, $precursorId);
-        
+        $uid = rand();
+        $workUnit = new WorkUnit($uid);
+
         $mods = array();
         $mods[25] = new Modification(25, 79.97, array(
             'C'
         ));
         $workUnit->addFixedModification($mods[25]);
-        
+
         $this->assertEquals($mods, $workUnit->getFixedModifications());
     }
 
     /**
+     *
      * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
      * @covers pgb_liv\crowdsource\Core\WorkUnit::addFragmentIon
      * @covers pgb_liv\crowdsource\Core\WorkUnit::getFragmentIons
@@ -114,18 +101,18 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanGetSetValidFragmentIon()
     {
-        $jobId = 1;
-        $precursorId = 2;
-        $workUnit = new WorkUnit($jobId, $precursorId);
-        
+        $uid = rand();
+        $workUnit = new WorkUnit($uid);
+
         $fragments = array();
         $fragments[0] = new FragmentIon(79.97, 150.5);
         $workUnit->addFragmentIon($fragments[0]);
-        
+
         $this->assertEquals($fragments, $workUnit->getFragmentIons());
     }
 
     /**
+     *
      * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
      * @covers pgb_liv\crowdsource\Core\WorkUnit::addPeptide
      * @covers pgb_liv\crowdsource\Core\WorkUnit::getPeptides
@@ -135,21 +122,21 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanGetSetValidPeptide()
     {
-        $jobId = 1;
-        $precursorId = 2;
-        $workUnit = new WorkUnit($jobId, $precursorId);
-        
+        $uid = rand();
+        $workUnit = new WorkUnit($uid);
+
         $peptides = array();
         $peptides[] = new Peptide(0);
         $peptides[0]->setSequence('PEPTIDE');
-        
+
         $workUnit->addPeptide($peptides[0]);
-        
+
         $this->assertEquals($peptides, $workUnit->getPeptides());
         $this->assertEquals($peptides[0], $workUnit->getPeptide(0));
     }
 
     /**
+     *
      * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
      * @covers pgb_liv\crowdsource\Core\WorkUnit::getPeptide
      * @expectedException InvalidArgumentException
@@ -158,14 +145,13 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanGetInvalidPeptide()
     {
-        $jobId = 1;
-        $precursorId = 2;
-        
-        $workUnit = new WorkUnit($jobId, $precursorId);
+        $uid = rand();
+        $workUnit = new WorkUnit($uid);
         $workUnit->getPeptide('fail');
     }
 
     /**
+     *
      * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
      * @covers pgb_liv\crowdsource\Core\WorkUnit::setFragmentTolerance
      * @covers pgb_liv\crowdsource\Core\WorkUnit::getFragmentTolerance
@@ -175,18 +161,18 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanGetSetValidFragmentTolerance1()
     {
-        $jobId = 1;
-        $precursorId = 2;
-        $workUnit = new WorkUnit($jobId, $precursorId);
+        $uid = rand();
+        $workUnit = new WorkUnit($uid);
         $fragTol = 10.0;
         $fragUnit = 'ppm';
         $workUnit->setFragmentTolerance(new Tolerance($fragTol, $fragUnit));
-        
+
         $this->assertEquals($fragTol, $workUnit->getFragmentTolerance());
         $this->assertEquals($fragUnit, $workUnit->getFragmentToleranceUnit());
     }
 
     /**
+     *
      * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
      * @covers pgb_liv\crowdsource\Core\WorkUnit::toJson
      *
@@ -194,24 +180,25 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanGetValidJsonFromWorkUnit()
     {
-        $json = '{"job":1,"precursor":2,"fragments":[{"mz":79.97,"intensity":150.5}],"peptides":[{"id":512,"sequence":"PEPTIDE"},{"id":213,"sequence":"PEPTIDER"},{"id":0,"sequence":"PEPTIDEK"}],"fixedMods":[{"id":4,"mass":79.97,"residues":"C"}],"fragTol":0.05,"fragTolUnit":"Da"}';
-        $jobId = 1;
-        $precursorId = 2;
-        $workUnit = new WorkUnit($jobId, $precursorId);
+        $uid = rand();
+        $json = '{"uid":"' . $uid .
+            '","fragments":[{"mz":79.97,"intensity":150.5}],"peptides":[{"id":512,"sequence":"PEPTIDE"},{"id":213,"sequence":"PEPTIDER"},{"id":0,"sequence":"PEPTIDEK"}],"fixedMods":[{"id":4,"mass":79.97,"residues":"C"}],"fragTol":0.05,"fragTolUnit":"Da"}';
+
+        $workUnit = new WorkUnit($uid);
         $fragTol = 0.05;
         $fragUnit = 'da';
         $workUnit->setFragmentTolerance(new Tolerance($fragTol, $fragUnit));
-        
+
         $mods = array();
         $mods[4] = new Modification(4, 79.97, array(
             'C'
         ));
         $workUnit->addFixedModification($mods[4]);
-        
+
         $fragments = array();
         $fragments[] = new FragmentIon(79.97, 150.5);
         $workUnit->addFragmentIon($fragments[0]);
-        
+
         $peptides = array();
         $peptides[512] = new Peptide(512);
         $peptides[512]->setSequence('PEPTIDE');
@@ -219,15 +206,16 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
         $peptides[213]->setSequence('PEPTIDER');
         $peptides[0] = new Peptide(0);
         $peptides[0]->setSequence('PEPTIDEK');
-        
+
         $workUnit->addPeptide($peptides[512]);
         $workUnit->addPeptide($peptides[213]);
         $workUnit->addPeptide($peptides[0]);
-        
+
         $this->assertEquals($json, $workUnit->toJson());
     }
 
     /**
+     *
      * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
      * @covers pgb_liv\crowdsource\Core\WorkUnit::fromJson
      * @covers pgb_liv\crowdsource\Core\WorkUnit::fromJsonPeptides
@@ -236,44 +224,46 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanGetValidWorkUnitFromJson1()
     {
-        $json = '{"job":1,"precursor":2,"fragments":[{"mz":79.97,"intensity":150.5}],"peptides":[{"id":512,"sequence":"PEPTIDE","score":120.6,"ionsMatched":5},{"id":213,"sequence":"PEPTIDER","score":23.6,"ionsMatched":9},{"id":0,"sequence":"PEPTIDEK"}],"fixedMods":[{"id":21,"mass":79.97,"residues":"C"}],"fragTol":0.05,"fragTolUnit":"da"}';
-        $jobId = 1;
-        $precursorId = 2;
-        $workUnit = new WorkUnit($jobId, $precursorId);
+        $uid = rand();
+        $json = '{"uid":"' . $uid .
+            '","fragments":[{"mz":79.97,"intensity":150.5}],"peptides":[{"id":512,"sequence":"PEPTIDE","score":120.6,"ionsMatched":5},{"id":213,"sequence":"PEPTIDER","score":23.6,"ionsMatched":9},{"id":0,"sequence":"PEPTIDEK"}],"fixedMods":[{"id":21,"mass":79.97,"residues":"C"}],"fragTol":0.05,"fragTolUnit":"da"}';
+
+        $workUnit = new WorkUnit($uid);
         $fragTol = 0.05;
         $fragUnit = 'da';
         $workUnit->setFragmentTolerance(new Tolerance($fragTol, $fragUnit));
-        
+
         $mods = array();
         $mods[21] = new Modification(21, 79.97, array(
             'C'
         ));
         $workUnit->addFixedModification($mods[21]);
-        
+
         $fragments = array();
         $fragments[] = new FragmentIon(79.97, 150.5);
         $workUnit->addFragmentIon($fragments[0]);
-        
+
         $peptides = array();
         $peptides[512] = new Peptide(512);
         $peptides[512]->setSequence('PEPTIDE');
         $peptides[512]->setScore(120.6, 5);
-        
+
         $peptides[213] = new Peptide(213);
         $peptides[213]->setSequence('PEPTIDER');
         $peptides[213]->setScore(23.6, 9);
-        
+
         $peptides[0] = new Peptide(0);
         $peptides[0]->setSequence('PEPTIDEK');
-        
+
         $workUnit->addPeptide($peptides[512]);
         $workUnit->addPeptide($peptides[213]);
         $workUnit->addPeptide($peptides[0]);
-        
+
         $this->assertEquals($workUnit, WorkUnit::fromJson($json));
     }
 
     /**
+     *
      * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
      * @covers pgb_liv\crowdsource\Core\WorkUnit::fromJson
      * @covers pgb_liv\crowdsource\Core\WorkUnit::fromJsonPeptides
@@ -282,55 +272,57 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanGetValidWorkUnitFromJson2()
     {
-        $json = '{"job":1,"precursor":1,"peptides":[{"id":44982,"score":2,"ionsMatched":2},{"id":1516198,"score":2,"ionsMatched":2},{"id":150121,"score":1,"ionsMatched":1},{"id":712838,"score":1,"ionsMatched":1},{"id":1534399,"score":1,"ionsMatched":1},{"id":1968911,"score":1,"ionsMatched":1},{"id":3177860,"score":1,"ionsMatched":1},{"id":3276166,"score":1,"ionsMatched":1},{"id":3373588,"score":1,"ionsMatched":1},{"id":3560751,"score":1,"ionsMatched":1}]}';
-        $jobId = 1;
-        $precursorId = 1;
-        $workUnit = new WorkUnit($jobId, $precursorId);
-        
+        $uid = rand();
+        $json = '{"uid":"' . $uid .
+            '","peptides":[{"id":44982,"score":2,"ionsMatched":2},{"id":1516198,"score":2,"ionsMatched":2},{"id":150121,"score":1,"ionsMatched":1},{"id":712838,"score":1,"ionsMatched":1},{"id":1534399,"score":1,"ionsMatched":1},{"id":1968911,"score":1,"ionsMatched":1},{"id":3177860,"score":1,"ionsMatched":1},{"id":3276166,"score":1,"ionsMatched":1},{"id":3373588,"score":1,"ionsMatched":1},{"id":3560751,"score":1,"ionsMatched":1}]}';
+
+        $workUnit = new WorkUnit($uid);
+
         $peptide = new Peptide(44982);
         $peptide->setScore(2, 2);
         $workUnit->addPeptide($peptide);
-        
+
         $peptide = new Peptide(1516198);
         $peptide->setScore(2, 2);
         $workUnit->addPeptide($peptide);
-        
+
         $peptide = new Peptide(150121);
         $peptide->setScore(1, 1);
         $workUnit->addPeptide($peptide);
-        
+
         $peptide = new Peptide(712838);
         $peptide->setScore(1, 1);
         $workUnit->addPeptide($peptide);
-        
+
         $peptide = new Peptide(1534399);
         $peptide->setScore(1, 1);
         $workUnit->addPeptide($peptide);
-        
+
         $peptide = new Peptide(1968911);
         $peptide->setScore(1, 1);
         $workUnit->addPeptide($peptide);
-        
+
         $peptide = new Peptide(3177860);
         $peptide->setScore(1, 1);
         $workUnit->addPeptide($peptide);
-        
+
         $peptide = new Peptide(3276166);
         $peptide->setScore(1, 1);
         $workUnit->addPeptide($peptide);
-        
+
         $peptide = new Peptide(3373588);
         $peptide->setScore(1, 1);
         $workUnit->addPeptide($peptide);
-        
+
         $peptide = new Peptide(3560751);
         $peptide->setScore(1, 1);
         $workUnit->addPeptide($peptide);
-        
+
         $this->assertEquals($workUnit, WorkUnit::fromJson($json));
     }
 
     /**
+     *
      * @covers pgb_liv\crowdsource\Core\WorkUnit::fromJson
      * @expectedException InvalidArgumentException
      *
@@ -338,11 +330,12 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanGetInvalidWorkUnitFromJson1()
     {
-        $json = '{"job":1,"precursor":1,"peptides":[{"id":44982,"score":2,"ionsMatched":2},{"id":1516198,"score":2,"ionsMatched":2},{"id":150121,"score":1,"ionsMatched":1},{"id":712838,"score":1,"ionsMatched":1},{"id":1534399,"score":1,"ionsMatched":1}{"id":1968911,"score":1,"ionsMatched":1},{"id":3177860,"score":1,"ionsMatched":1},{"id":3276166,"score":1,"ionsMatched":1},{"id":3373588,"score":1,"ionsMatched":1},{"id":3560751,"score":1,"ionsMatched":1}]}';
+        $json = '{"uid":"one-two-three","peptides":[{"id":44982,"score":2,"ionsMatched":2},{"id":1516198,"score":2,"ionsMatched":2},{"id":150121,"score":1,"ionsMatched":1},{"id":712838,"score":1,"ionsMatched":1},{"id":1534399,"score":1,"ionsMatched":1}{"id":1968911,"score":1,"ionsMatched":1},{"id":3177860,"score":1,"ionsMatched":1},{"id":3276166,"score":1,"ionsMatched":1},{"id":3373588,"score":1,"ionsMatched":1},{"id":3560751,"score":1,"ionsMatched":1}]}';
         WorkUnit::fromJson($json);
     }
 
     /**
+     *
      * @covers pgb_liv\crowdsource\Core\WorkUnit::fromJson
      * @expectedException InvalidArgumentException
      *
@@ -355,6 +348,7 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     *
      * @covers pgb_liv\crowdsource\Core\WorkUnit::fromJson
      * @expectedException InvalidArgumentException
      *
