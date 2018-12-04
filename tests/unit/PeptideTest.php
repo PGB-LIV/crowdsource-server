@@ -24,7 +24,6 @@ class PeptideTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @covers pgb_liv\crowdsource\Core\Peptide::__construct
-     * @covers pgb_liv\crowdsource\Core\Peptide::setScore
      * @covers pgb_liv\crowdsource\Core\Peptide::toArray
      * @covers pgb_liv\crowdsource\Core\Peptide::toArrayMods
      * @covers pgb_liv\crowdsource\Core\Peptide::fromArray
