@@ -20,7 +20,10 @@ require_once '../conf/adodb.php';
 require_once '../conf/smarty.php';
 require_once '../vendor/autoload.php';
 
-$page = 'welcome';
+error_reporting(E_ALL);
+ini_set('display_errors', true);
+
+$page = 'index';
 
 if (isset($_REQUEST['page'])) {
     $page = $_REQUEST['page'];
