@@ -8,7 +8,6 @@
 		"smarty/smarty" : "3.*",
 		"gburtini/distributions" : "dev-master",
 		"phpobo/phpobo" : "dev-master",
-		"asyncphp/doorman" : "1.*",
 		"php-amqplib/php-amqplib" : "~2"
 	},
 	"require-dev" : {
@@ -17,7 +16,8 @@
 		"sebastian/phpcpd" : "2.*",
 		"phploc/phploc" : "2.*",
 		"phpmd/phpmd" : "2.*",
-		"phpunit/phpunit" : "4.*"
+		"phpunit/phpunit" : "4.*",
+		"theseer/phpdox" : "~0.8"
 	},
 	"minimum-stability" : "stable"
 }
