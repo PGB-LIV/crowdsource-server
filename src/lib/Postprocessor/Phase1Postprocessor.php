@@ -196,8 +196,10 @@ class Phase1Postprocessor
 
             $psmRecords = $this->adodb->Execute(
                 'SELECT `w`.`precursor`, `w`.`peptide`, `w`.`score`, `p`.`peptide` AS `sequence`, `p`.`is_decoy` FROM `workunit1` `w` 
-LEFT JOIN `fasta_peptides` `p` ON `fasta` = ' . $fastaId . ' && `p`.`id` = `w`.`peptide` 
-WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id'] . ' ORDER BY `score` DESC LIMIT 0,' .
+LEFT JOIN `fasta_peptides` `p` ON `fasta` = ' . $fastaId .
+                ' && `p`.`id` = `w`.`peptide` 
+WHERE `w`.`job` = ' .
+                $this->jobId . ' && `precursor` = ' . $precursorRecord['id'] . ' ORDER BY `score` DESC LIMIT 0,' .
                 self::PSM_LIMIT);
 
             $rank = 1;
@@ -208,7 +210,7 @@ WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id
 
                 $peptide = new Peptide();
                 $peptide->setSequence($psmRecord['sequence']);
-                $peptide->setIsDecoy($psmRecord['is_decoy'] == '1' ? true : false);
+                $peptide->setIsDecoy($psmRecord['is_decoy'] == '1');
 
                 $proteinRecords = $this->adodb->GetAll(
                     'SELECT DISTINCT `identifier`, `description`, `sequence`, `position_start` FROM `fasta_protein2peptide` `p2p` LEFT JOIN `fasta_proteins` `p` ON `p2p`.`protein` = `p`.`id` && `p2p`.`fasta` = `p`.`fasta` WHERE `p2p`.`fasta` = ' .

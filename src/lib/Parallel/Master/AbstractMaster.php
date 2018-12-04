@@ -100,7 +100,7 @@ abstract class AbstractMaster
         return true;
     }
 
-    protected abstract function initialise();
+    abstract protected function initialise();
 
-    protected abstract function finalise();
+    abstract protected function finalise();
 }

@@ -158,7 +158,6 @@ class Modification extends BaseModification
         }
 
         if (! is_null($this->getLocation())) {
-
             $modification[Modification::ARRAY_LOCATION] = $this->getLocation();
         }
 

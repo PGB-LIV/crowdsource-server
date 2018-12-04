@@ -343,8 +343,7 @@ class WorkUnitSlave extends AbstractSlave
         $pepMassHigh = $spectraMass + $tolerance;
 
         $query = 'SELECT `f`.`peptide` AS `id`, `p`.`peptide` AS `sequence` FROM `fasta_peptide_fixed` `f`
-            LEFT JOIN `fasta_peptides` `p` ON `f`.`peptide` = `p`.`id` && `fasta` = ' .
-            $this->fastaId . '
+            LEFT JOIN `fasta_peptides` `p` ON `f`.`peptide` = `p`.`id` && `fasta` = ' . $this->fastaId . '
             WHERE `job` = ' . $this->jobId . ' && `fixed_mass` BETWEEN ' .
             $pepMassLow . ' AND ' . $pepMassHigh;
 
@@ -355,7 +354,7 @@ class WorkUnitSlave extends AbstractSlave
         return $this->adodb->GetAll($query);
     }
 
-    function powerSet($array)
+    private function powerSet($array)
     {
         // add the empty set
         $results = array(

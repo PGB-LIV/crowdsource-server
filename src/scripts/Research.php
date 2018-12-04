@@ -63,7 +63,6 @@ echo 'Selecting ' . $spectra . PHP_EOL;
 $protocolCollection = $reader->getAnalysisProtocolCollection();
 
 foreach ($protocolCollection['spectrum'] as $protocol) {
-
     $fragmentTolerance = current($protocol['fragmentTolerance']);
     $precursorTolerance = current($protocol['parentTolerance']);
     $enzyme = current($protocol['enzymes'])['EnzymeName']['name'];

@@ -75,9 +75,9 @@ abstract class AbstractSlave
         $this->amqpConnection->close();
     }
 
-    public abstract function processJob($message);
+    abstract public function processJob($message);
 
-    protected abstract function initialise();
+    abstract protected function initialise();
 
-    protected abstract function finalise();
+    abstract protected function finalise();
 }

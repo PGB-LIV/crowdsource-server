@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2016 University of Liverpool
+ * Copyright 2018 University of Liverpool
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,16 +159,15 @@ class DatabasePreprocessor
             }
 
             $this->proteinPeptides[$id] = true;
-            
-            foreach ($peptide->getProteins() as $proteinEntry) {                
+
+            foreach ($peptide->getProteins() as $proteinEntry) {
                 $this->protein2peptideBulk->append(
                     sprintf('(%d, %d, %d, %d)', $this->fastaId, $proteinId, $id, $proteinEntry->getStart()));
             }
         }
-        
+
         $this->processDecoys($proteinId, $protein);
         $this->proteinPeptides = array();
-        
     }
 
     private function processDecoys($proteinId, $protein)
