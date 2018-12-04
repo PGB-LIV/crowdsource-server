@@ -88,7 +88,7 @@ class Modification extends BaseModification
      *
      * @param array $modificationArray
      *            Array of properties. See ARRAY_... for property names
-     * @return \pgb_liv\crowdsource\Core\Modification | array
+     * @return \pgb_liv\crowdsource\Core\Modification | \pgb_liv\crowdsource\Core\Modification[]
      */
     public static function fromArray(array $modificationArray)
     {
@@ -134,6 +134,8 @@ class Modification extends BaseModification
                 $modification->setLocation($modificationArray[Modification::ARRAY_LOCATION]);
             }
         }
+
+        return $modification;
     }
 
     /**

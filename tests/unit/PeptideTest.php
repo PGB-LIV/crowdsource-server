@@ -18,11 +18,13 @@ namespace pgb_liv\crowdsource\Test\Unit;
 
 use pgb_liv\crowdsource\Core\Peptide;
 use pgb_liv\crowdsource\Core\Modification;
+use pgb_liv\php_ms\Core\Identification;
 
 class PeptideTest extends \PHPUnit_Framework_TestCase
 {
 
     /**
+     *
      * @covers pgb_liv\crowdsource\Core\Peptide::__construct
      * @covers pgb_liv\crowdsource\Core\Peptide::toArray
      * @covers pgb_liv\crowdsource\Core\Peptide::toArrayMods
@@ -40,30 +42,40 @@ class PeptideTest extends \PHPUnit_Framework_TestCase
         $mod = new Modification(4, 146.14, array(
             'M'
         ));
-        
+
         $peptide = new Peptide($id);
         $peptideArray[Peptide::ARRAY_ID] = $id;
-        
+
         $this->assertInstanceOf('pgb_liv\crowdsource\Core\Peptide', $peptide);
         $peptide->setSequence($sequence);
         $peptideArray[Peptide::ARRAY_SEQUENCE] = $sequence;
-        
+        $peptideArray[Peptide::ARRAY_MODIFICATIONS] = array();
+
+        // Test basics
         $this->assertEquals($peptideArray, $peptide->toArray());
-        
-        $peptide->setScore($score, $ionsMatched);
-        $peptideArray[Peptide::ARRAY_SCORE] = $score;
-        $peptideArray[Peptide::ARRAY_IONS] = $ionsMatched;
-        
+
         $peptide->addModification($mod);
         $peptideArray[Peptide::ARRAY_MODIFICATIONS] = array();
         $peptideArray[Peptide::ARRAY_MODIFICATIONS][] = $mod->toArray();
         $peptideArray[Peptide::ARRAY_MODIFICATIONS][0][Modification::ARRAY_OCCURRENCES] = 1;
-        
+
+        // Test mods
         $this->assertEquals($peptideArray, $peptide->toArray());
-        $this->assertEquals($peptide, Peptide::fromArray($peptideArray));
+
+        $identification = new Identification();
+        $identification->setSequence($peptide);
+        $identification->setScore('-10lgP', $score);
+        $identification->setIonsMatched($ionsMatched);
+
+        $peptideArray[Peptide::ARRAY_SCORE] = $score;
+        $peptideArray[Peptide::ARRAY_IONS] = $ionsMatched;
+
+        // Test scores
+        $this->assertEquals($identification, Peptide::fromArray($peptideArray));
     }
 
     /**
+     *
      * @covers pgb_liv\crowdsource\Core\Peptide::fromArray
      * @expectedException InvalidArgumentException
      *
@@ -73,9 +85,9 @@ class PeptideTest extends \PHPUnit_Framework_TestCase
     {
         $peptideArray = array();
         $id = 'fail';
-        
+
         $peptideArray[Peptide::ARRAY_ID] = $id;
-        
+
         Peptide::fromArray($peptideArray);
     }
 }

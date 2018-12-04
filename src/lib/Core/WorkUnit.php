@@ -94,29 +94,6 @@ class WorkUnit
     }
 
     /**
-     *
-     * @deprecated Do not use, not safe
-     * @param int $id
-     * @throws \InvalidArgumentException
-     * @return \pgb_liv\crowdsource\Core\Peptide[]
-     */
-    public function getPeptide($id)
-    {
-        if (! is_int($id)) {
-            throw new \InvalidArgumentException(
-                'Argument 1 must be an integer value. Valued passed is of type ' . gettype($id));
-        }
-
-        foreach ($this->getPeptides() as $peptide) {
-            if ($peptide->getId() == $id) {
-                return $peptide;
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Gets the set of peptides stored by this workunit
      *
      * @return Identification[]

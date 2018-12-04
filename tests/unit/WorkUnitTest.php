@@ -21,6 +21,7 @@ use pgb_liv\crowdsource\Core\Peptide;
 use pgb_liv\crowdsource\Core\FragmentIon;
 use pgb_liv\php_ms\Core\Tolerance;
 use pgb_liv\crowdsource\Core\Modification;
+use pgb_liv\php_ms\Core\Identification;
 
 class WorkUnitTest extends \PHPUnit_Framework_TestCase
 {
@@ -34,21 +35,6 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
     public function testObjectCanBeConstructedForValidConstructorArguments()
     {
         $workUnit = new WorkUnit("one-two-three");
-        $this->assertInstanceOf('pgb_liv\crowdsource\Core\WorkUnit', $workUnit);
-
-        return $workUnit;
-    }
-
-    /**
-     *
-     * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
-     * @expectedException InvalidArgumentException
-     *
-     * @uses pgb_liv\crowdsource\Core\WorkUnit
-     */
-    public function testObjectCanBeConstructedForInvalidConstructorArguments1()
-    {
-        $workUnit = new WorkUnit();
         $this->assertInstanceOf('pgb_liv\crowdsource\Core\WorkUnit', $workUnit);
 
         return $workUnit;
@@ -114,9 +100,8 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
     /**
      *
      * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
-     * @covers pgb_liv\crowdsource\Core\WorkUnit::addPeptide
-     * @covers pgb_liv\crowdsource\Core\WorkUnit::getPeptides
-     * @covers pgb_liv\crowdsource\Core\WorkUnit::getPeptide
+     * @covers pgb_liv\crowdsource\Core\WorkUnit::addIdentification
+     * @covers pgb_liv\crowdsource\Core\WorkUnit::getIdentifications
      *
      * @uses pgb_liv\crowdsource\Core\WorkUnit
      */
@@ -125,29 +110,17 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
         $uid = rand();
         $workUnit = new WorkUnit($uid);
 
-        $peptides = array();
-        $peptides[] = new Peptide(0);
-        $peptides[0]->setSequence('PEPTIDE');
+        $identifications = array();
+        $identifications[0] = new Identification();
 
-        $workUnit->addPeptide($peptides[0]);
+        $peptide = new Peptide(0);
+        $peptide->setSequence('PEPTIDE');
 
-        $this->assertEquals($peptides, $workUnit->getPeptides());
-        $this->assertEquals($peptides[0], $workUnit->getPeptide(0));
-    }
+        $identifications[0]->setSequence($peptide);
 
-    /**
-     *
-     * @covers pgb_liv\crowdsource\Core\WorkUnit::__construct
-     * @covers pgb_liv\crowdsource\Core\WorkUnit::getPeptide
-     * @expectedException InvalidArgumentException
-     *
-     * @uses pgb_liv\crowdsource\Core\WorkUnit
-     */
-    public function testObjectCanGetInvalidPeptide()
-    {
-        $uid = rand();
-        $workUnit = new WorkUnit($uid);
-        $workUnit->getPeptide('fail');
+        $workUnit->addIdentification($identifications[0]);
+
+        $this->assertEquals($identifications, $workUnit->getIdentifications());
     }
 
     /**
@@ -180,9 +153,9 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanGetValidJsonFromWorkUnit()
     {
-        $uid = rand();
+        $uid = "245-45235-6789";
         $json = '{"uid":"' . $uid .
-            '","fragments":[{"mz":79.97,"intensity":150.5}],"peptides":[{"id":512,"sequence":"PEPTIDE"},{"id":213,"sequence":"PEPTIDER"},{"id":0,"sequence":"PEPTIDEK"}],"fixedMods":[{"id":4,"mass":79.97,"residues":"C"}],"fragTol":0.05,"fragTolUnit":"Da"}';
+            '","fragments":[{"mz":79.97,"intensity":150.5}],"peptides":[{"id":512,"sequence":"PEPTIDE","mods":[]},{"id":213,"sequence":"PEPTIDER","mods":[]},{"id":0,"sequence":"PEPTIDEK","mods":[]}],"fixedMods":[{"id":4,"mass":79.97,"residues":"C"}],"fragTol":0.05,"fragTolUnit":"Da"}';
 
         $workUnit = new WorkUnit($uid);
         $fragTol = 0.05;
@@ -199,17 +172,26 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
         $fragments[] = new FragmentIon(79.97, 150.5);
         $workUnit->addFragmentIon($fragments[0]);
 
-        $peptides = array();
-        $peptides[512] = new Peptide(512);
-        $peptides[512]->setSequence('PEPTIDE');
-        $peptides[213] = new Peptide(213);
-        $peptides[213]->setSequence('PEPTIDER');
-        $peptides[0] = new Peptide(0);
-        $peptides[0]->setSequence('PEPTIDEK');
+        $identifications = array();
+        $identifications[512] = new Identification();
+        $identifications[213] = new Identification();
+        $identifications[0] = new Identification();
 
-        $workUnit->addPeptide($peptides[512]);
-        $workUnit->addPeptide($peptides[213]);
-        $workUnit->addPeptide($peptides[0]);
+        $peptide = new Peptide(512);
+        $peptide->setSequence('PEPTIDE');
+        $identifications[512]->setSequence($peptide);
+
+        $peptide = new Peptide(213);
+        $peptide->setSequence('PEPTIDER');
+        $identifications[213]->setSequence($peptide);
+
+        $peptide = new Peptide(0);
+        $peptide->setSequence('PEPTIDEK');
+        $identifications[0]->setSequence($peptide);
+
+        $workUnit->addIdentification($identifications[512]);
+        $workUnit->addIdentification($identifications[213]);
+        $workUnit->addIdentification($identifications[0]);
 
         $this->assertEquals($json, $workUnit->toJson());
     }
@@ -224,40 +206,48 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanGetValidWorkUnitFromJson1()
     {
-        $uid = rand();
+        $uid = "45-57342-42525";
         $json = '{"uid":"' . $uid .
-            '","fragments":[{"mz":79.97,"intensity":150.5}],"peptides":[{"id":512,"sequence":"PEPTIDE","score":120.6,"ionsMatched":5},{"id":213,"sequence":"PEPTIDER","score":23.6,"ionsMatched":9},{"id":0,"sequence":"PEPTIDEK"}],"fixedMods":[{"id":21,"mass":79.97,"residues":"C"}],"fragTol":0.05,"fragTolUnit":"da"}';
+            '","fragments":[{"mz":79.97,"intensity":150.5}],"peptides":[{"id":512,"sequence":"PEPTIDE","S":120.6,"IM":5},{"id":213,"sequence":"PEPTIDER","S":23.6,"IM":9},{"id":0,"sequence":"PEPTIDEK"}],"fixedMods":[{"id":21,"mass":79.97,"residues":"C"}],"fragTol":0.05,"fragTolUnit":"da"}';
 
         $workUnit = new WorkUnit($uid);
         $fragTol = 0.05;
         $fragUnit = 'da';
         $workUnit->setFragmentTolerance(new Tolerance($fragTol, $fragUnit));
 
-        $mods = array();
-        $mods[21] = new Modification(21, 79.97, array(
+        $fixedMod = new Modification(21, 79.97, array(
             'C'
         ));
-        $workUnit->addFixedModification($mods[21]);
+        $workUnit->addFixedModification($fixedMod);
 
         $fragments = array();
         $fragments[] = new FragmentIon(79.97, 150.5);
         $workUnit->addFragmentIon($fragments[0]);
 
-        $peptides = array();
-        $peptides[512] = new Peptide(512);
-        $peptides[512]->setSequence('PEPTIDE');
-        $peptides[512]->setScore(120.6, 5);
+        $identifications = array();
+        $identifications[512] = new Identification();
+        $identifications[213] = new Identification();
+        $identifications[0] = new Identification();
 
-        $peptides[213] = new Peptide(213);
-        $peptides[213]->setSequence('PEPTIDER');
-        $peptides[213]->setScore(23.6, 9);
+        $peptide = new Peptide(512);
+        $peptide->setSequence('PEPTIDE');
+        $identifications[512]->setSequence($peptide);
+        $identifications[512]->setScore('-10lgP', 120.6);
+        $identifications[512]->setIonsMatched(5);
 
-        $peptides[0] = new Peptide(0);
-        $peptides[0]->setSequence('PEPTIDEK');
+        $peptide = new Peptide(213);
+        $peptide->setSequence('PEPTIDER');
+        $identifications[213]->setSequence($peptide);
+        $identifications[213]->setScore('-10lgP', 23.6);
+        $identifications[213]->setIonsMatched(9);
 
-        $workUnit->addPeptide($peptides[512]);
-        $workUnit->addPeptide($peptides[213]);
-        $workUnit->addPeptide($peptides[0]);
+        $peptide = new Peptide(0);
+        $peptide->setSequence('PEPTIDEK');
+        $identifications[0]->setSequence($peptide);
+
+        $workUnit->addIdentification($identifications[512]);
+        $workUnit->addIdentification($identifications[213]);
+        $workUnit->addIdentification($identifications[0]);
 
         $this->assertEquals($workUnit, WorkUnit::fromJson($json));
     }
@@ -272,51 +262,71 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanGetValidWorkUnitFromJson2()
     {
-        $uid = rand();
+        $uid = "1235-123-2215";
         $json = '{"uid":"' . $uid .
-            '","peptides":[{"id":44982,"score":2,"ionsMatched":2},{"id":1516198,"score":2,"ionsMatched":2},{"id":150121,"score":1,"ionsMatched":1},{"id":712838,"score":1,"ionsMatched":1},{"id":1534399,"score":1,"ionsMatched":1},{"id":1968911,"score":1,"ionsMatched":1},{"id":3177860,"score":1,"ionsMatched":1},{"id":3276166,"score":1,"ionsMatched":1},{"id":3373588,"score":1,"ionsMatched":1},{"id":3560751,"score":1,"ionsMatched":1}]}';
+            '","peptides":[{"id":44982,"S":2,"IM":2},{"id":1516198,"S":2,"IM":2},{"id":150121,"S":1,"IM":1},{"id":712838,"S":1,"IM":1},{"id":1534399,"S":1,"IM":1},{"id":1968911,"S":1,"IM":1},{"id":3177860,"S":1,"IM":1},{"id":3276166,"S":1,"IM":1},{"id":3373588,"S":1,"IM":1},{"id":3560751,"S":1,"IM":1}]}';
 
         $workUnit = new WorkUnit($uid);
 
-        $peptide = new Peptide(44982);
-        $peptide->setScore(2, 2);
-        $workUnit->addPeptide($peptide);
+        $identification = new Identification();
+        $identification->setSequence(new Peptide(44982));
+        $identification->setScore('-10lgP', 2);
+        $identification->setIonsMatched(2);
+        $workUnit->addIdentification($identification);
 
-        $peptide = new Peptide(1516198);
-        $peptide->setScore(2, 2);
-        $workUnit->addPeptide($peptide);
+        $identification = new Identification();
+        $identification->setSequence(new Peptide(1516198));
+        $identification->setScore('-10lgP', 2);
+        $identification->setIonsMatched(2);
+        $workUnit->addIdentification($identification);
 
-        $peptide = new Peptide(150121);
-        $peptide->setScore(1, 1);
-        $workUnit->addPeptide($peptide);
+        $identification = new Identification();
+        $identification->setSequence(new Peptide(150121));
+        $identification->setScore('-10lgP', 1);
+        $identification->setIonsMatched(1);
+        $workUnit->addIdentification($identification);
 
-        $peptide = new Peptide(712838);
-        $peptide->setScore(1, 1);
-        $workUnit->addPeptide($peptide);
+        $identification = new Identification();
+        $identification->setSequence(new Peptide(712838));
+        $identification->setScore('-10lgP', 1);
+        $identification->setIonsMatched(1);
+        $workUnit->addIdentification($identification);
 
-        $peptide = new Peptide(1534399);
-        $peptide->setScore(1, 1);
-        $workUnit->addPeptide($peptide);
+        $identification = new Identification();
+        $identification->setSequence(new Peptide(1534399));
+        $identification->setScore('-10lgP', 1);
+        $identification->setIonsMatched(1);
+        $workUnit->addIdentification($identification);
 
-        $peptide = new Peptide(1968911);
-        $peptide->setScore(1, 1);
-        $workUnit->addPeptide($peptide);
+        $identification = new Identification();
+        $identification->setSequence(new Peptide(1968911));
+        $identification->setScore('-10lgP', 1);
+        $identification->setIonsMatched(1);
+        $workUnit->addIdentification($identification);
 
-        $peptide = new Peptide(3177860);
-        $peptide->setScore(1, 1);
-        $workUnit->addPeptide($peptide);
+        $identification = new Identification();
+        $identification->setSequence(new Peptide(3177860));
+        $identification->setScore('-10lgP', 1);
+        $identification->setIonsMatched(1);
+        $workUnit->addIdentification($identification);
 
-        $peptide = new Peptide(3276166);
-        $peptide->setScore(1, 1);
-        $workUnit->addPeptide($peptide);
+        $identification = new Identification();
+        $identification->setSequence(new Peptide(3276166));
+        $identification->setScore('-10lgP', 1);
+        $identification->setIonsMatched(1);
+        $workUnit->addIdentification($identification);
 
-        $peptide = new Peptide(3373588);
-        $peptide->setScore(1, 1);
-        $workUnit->addPeptide($peptide);
+        $identification = new Identification();
+        $identification->setSequence(new Peptide(3373588));
+        $identification->setScore('-10lgP', 1);
+        $identification->setIonsMatched(1);
+        $workUnit->addIdentification($identification);
 
-        $peptide = new Peptide(3560751);
-        $peptide->setScore(1, 1);
-        $workUnit->addPeptide($peptide);
+        $identification = new Identification();
+        $identification->setSequence(new Peptide(3560751));
+        $identification->setScore('-10lgP', 1);
+        $identification->setIonsMatched(1);
+        $workUnit->addIdentification($identification);
 
         $this->assertEquals($workUnit, WorkUnit::fromJson($json));
     }
@@ -330,33 +340,7 @@ class WorkUnitTest extends \PHPUnit_Framework_TestCase
      */
     public function testObjectCanGetInvalidWorkUnitFromJson1()
     {
-        $json = '{"uid":"one-two-three","peptides":[{"id":44982,"score":2,"ionsMatched":2},{"id":1516198,"score":2,"ionsMatched":2},{"id":150121,"score":1,"ionsMatched":1},{"id":712838,"score":1,"ionsMatched":1},{"id":1534399,"score":1,"ionsMatched":1}{"id":1968911,"score":1,"ionsMatched":1},{"id":3177860,"score":1,"ionsMatched":1},{"id":3276166,"score":1,"ionsMatched":1},{"id":3373588,"score":1,"ionsMatched":1},{"id":3560751,"score":1,"ionsMatched":1}]}';
-        WorkUnit::fromJson($json);
-    }
-
-    /**
-     *
-     * @covers pgb_liv\crowdsource\Core\WorkUnit::fromJson
-     * @expectedException InvalidArgumentException
-     *
-     * @uses pgb_liv\crowdsource\Core\WorkUnit
-     */
-    public function testObjectCanGetInvalidWorkUnitFromJson2()
-    {
-        $json = '{"job":"fail","precursor":1,"peptides":[{"id":44982,"score":2,"ionsMatched":2},{"id":1516198,"score":2,"ionsMatched":2},{"id":150121,"score":1,"ionsMatched":1},{"id":712838,"score":1,"ionsMatched":1},{"id":1534399,"score":1,"ionsMatched":1},{"id":1968911,"score":1,"ionsMatched":1},{"id":3177860,"score":1,"ionsMatched":1},{"id":3276166,"score":1,"ionsMatched":1},{"id":3373588,"score":1,"ionsMatched":1},{"id":3560751,"score":1,"ionsMatched":1}]}';
-        WorkUnit::fromJson($json);
-    }
-
-    /**
-     *
-     * @covers pgb_liv\crowdsource\Core\WorkUnit::fromJson
-     * @expectedException InvalidArgumentException
-     *
-     * @uses pgb_liv\crowdsource\Core\WorkUnit
-     */
-    public function testObjectCanGetInvalidWorkUnitFromJson3()
-    {
-        $json = '{"job":1,"precursor":"fail","peptides":[{"id":44982,"score":2,"ionsMatched":2},{"id":1516198,"score":2,"ionsMatched":2},{"id":150121,"score":1,"ionsMatched":1},{"id":712838,"score":1,"ionsMatched":1},{"id":1534399,"score":1,"ionsMatched":1},{"id":1968911,"score":1,"ionsMatched":1},{"id":3177860,"score":1,"ionsMatched":1},{"id":3276166,"score":1,"ionsMatched":1},{"id":3373588,"score":1,"ionsMatched":1},{"id":3560751,"score":1,"ionsMatched":1}]}';
+        $json = '{"uid":"one-two-three","peptides":[{"id":44982,"S":2,"IM":2},{"id":1516198,"S":2,"IM":2},{"id":150121,"S":1,"IM":1},{"id":712838,"S":1,"IM":1},{"id":1534399,"S":1,"IM":1}{"id":1968911,"S":1,"IM":1},{"id":3177860,"S":1,"IM":1},{"id":3276166,"S":1,"IM":1},{"id":3373588,"S":1,"IM":1},{"id":3560751,"S":1,"IM":1}]}';
         WorkUnit::fromJson($json);
     }
 }
