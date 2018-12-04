@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2016 University of Liverpool
+ * Copyright 2018 University of Liverpool
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,11 @@ define('DB_USER', '');
 define('DB_PASS', '');
 define('DB_DB', '');
 
+define('AMQP_HOST', 'localhost');
+define('AMQP_PORT', 5672);
+define('AMQP_USER', '');
+define('AMQP_PASS', '');
+
 define('UNIMOD_PREFIX', 'unimod_');
 define('SCHEMA_URL', 'http://www.unimod.org/xmlns/schema/unimod_tables_1/unimod_tables_1.xsd');
 define('DATA_URL', 'http://www.unimod.org/xml/unimod_tables.xml');
@@ -32,7 +37,8 @@ define('ADODB_ERROR_LOG_DEST', '../log/adodb.log');
 define('MS2_PEAK_LIMIT', 100);
 define('MS2_PEAK_WINDOW', 100);
 
-define ('MESSAGE_QUEUE', ftok(__FILE__, 'CrowdSourcing'));
+define('MAX_PRECURSOR_IDENTS', 5);
+define('SCORE_PROPERTY', '-10lgP');
 
 /**
  * Maximum total number of modifications per peptide.

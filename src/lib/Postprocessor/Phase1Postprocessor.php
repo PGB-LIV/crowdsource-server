@@ -21,9 +21,9 @@ use pgb_liv\php_ms\Core\Modification;
 use pgb_liv\php_ms\Core\Identification;
 use pgb_liv\php_ms\Core\Spectra\PrecursorIon;
 use pgb_liv\php_ms\Core\Tolerance;
-use pgb_liv\crowdsource\MzIdentMlWriter;
 use pgb_liv\php_ms\Core\Protein;
 use pgb_liv\php_ms\Writer\MgfWriter;
+use pgb_liv\php_ms\Writer\MzIdentMlWriter;
 use pgb_liv\crowdsource\Core\FragmentIon;
 
 /**
@@ -60,6 +60,22 @@ class Phase1Postprocessor
 
         $this->adodb = $conn;
         $this->jobId = $jobId;
+    }
+
+    public function resultsReady()
+    {
+        $record = $this->adodb->GetRow(
+            'SELECT `workunits_created`, `workunits_returned` FROM `job_queue` WHERE `id` =' . $this->jobId);
+
+        if ($record['workunits_created'] == 0) {
+            return false;
+        }
+
+        if ($record['workunits_created'] != $record['workunits_returned']) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -128,7 +144,7 @@ class Phase1Postprocessor
         foreach ($fixedMods as $mod) {
             $modification = new Modification();
             $modification->setAccession('UNIMOD:' . $mod['mod_id']);
-            
+
             if ($mod['acid'] == '[') {
                 $modification->setPosition(Modification::POSITION_NTERM);
             } elseif ($mod['acid'] == ']') {
@@ -138,7 +154,7 @@ class Phase1Postprocessor
                     $mod['acid']
                 ));
             }
-            
+
             $modification->setMonoisotopicMass((float) $modId2Mod[$mod['mod_id']]['mono_mass']);
             $modification->setType(Modification::TYPE_FIXED);
             $mzIdentMl->addModification($modification);
@@ -147,7 +163,7 @@ class Phase1Postprocessor
         foreach ($varMods as $mod) {
             $modification = new Modification();
             $modification->setAccession('UNIMOD:' . $mod['mod_id']);
-            
+
             if ($mod['acid'] == '[') {
                 $modification->setPosition(Modification::POSITION_NTERM);
             } elseif ($mod['acid'] == ']') {
@@ -157,7 +173,7 @@ class Phase1Postprocessor
                     $mod['acid']
                 ));
             }
-            
+
             $modification->setMonoisotopicMass((float) $modId2Mod[$mod['mod_id']]['mono_mass']);
             $mzIdentMl->addModification($modification);
         }
@@ -179,8 +195,10 @@ class Phase1Postprocessor
             $precursorIon->setTitle($precursorRecord['title']);
 
             $psmRecords = $this->adodb->Execute(
-                'SELECT * FROM `workunit1` WHERE `job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id'] .
-                ' && `score` > 0 ORDER BY `score` DESC LIMIT 0,' . self::PSM_LIMIT);
+                'SELECT `w`.`precursor`, `w`.`peptide`, `w`.`score`, `p`.`peptide` AS `sequence`, `p`.`is_decoy` FROM `workunit1` `w` 
+LEFT JOIN `fasta_peptides` `p` ON `fasta` = ' . $fastaId . ' && `p`.`id` = `w`.`peptide` 
+WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id'] . ' ORDER BY `score` DESC LIMIT 0,' .
+                self::PSM_LIMIT);
 
             $rank = 1;
             foreach ($psmRecords as $psmRecord) {
@@ -188,13 +206,9 @@ class Phase1Postprocessor
                 $identification->setRank($rank);
                 $identification->setScore('-10lgP', $psmRecord['score']);
 
-                $peptideRecord = $this->adodb->GetRow(
-                    'SELECT `peptide`, `is_decoy` FROM `fasta_peptides` WHERE `fasta` = ' . $fastaId . ' && `id` = ' .
-                    $psmRecord['peptide']);
-
                 $peptide = new Peptide();
-                $peptide->setSequence($peptideRecord['peptide']);
-                $peptide->setIsDecoy($peptideRecord['is_decoy'] == '1' ? true : false);
+                $peptide->setSequence($psmRecord['sequence']);
+                $peptide->setIsDecoy($psmRecord['is_decoy'] == '1' ? true : false);
 
                 $proteinRecords = $this->adodb->GetAll(
                     'SELECT DISTINCT `identifier`, `description`, `sequence`, `position_start` FROM `fasta_protein2peptide` `p2p` LEFT JOIN `fasta_proteins` `p` ON `p2p`.`protein` = `p`.`id` && `p2p`.`fasta` = `p`.`fasta` WHERE `p2p`.`fasta` = ' .
@@ -223,7 +237,7 @@ class Phase1Postprocessor
 
                 $ptmRecords = $this->adodb->GetAll(
                     'SELECT `location`, `modification` FROM `workunit1_locations` WHERE `job` = ' . $this->jobId .
-                    ' && `id` = ' . $psmRecord['id']);
+                    ' && `precursor` = ' . $psmRecord['precursor'] . ' && `peptide` = ' . $psmRecord['peptide']);
 
                 foreach ($ptmRecords as $ptmRecord) {
                     $modId = $ptmRecord['modification'];
@@ -291,7 +305,7 @@ class Phase1Postprocessor
             $score = array();
             $score['score'] = $record['score'];
             $score['peptide'] = $record['peptide'];
-            $score['id'] = $record['id'];
+            $score['precursor'] = $record['precursor'];
             $score['ions_matched'] = $record['ions_matched'];
             $scores[$record['precursor']] = $score;
         }
@@ -301,7 +315,8 @@ class Phase1Postprocessor
 
         $fileHandle = fopen(DATA_PATH . '/' . $this->jobId . '/results/results.csv', 'w');
         fwrite($fileHandle,
-            'Peptide,-10lgP,Mass,Length,ppm,m/z,RT,Intensity,Fraction,Scan,Source File,Accession,PTM,AScore,IonMatches' . PHP_EOL);
+            'Peptide,-10lgP,Mass,Length,ppm,m/z,RT,Intensity,Fraction,Scan,Source File,Accession,PTM,AScore,IonMatches' .
+            PHP_EOL);
 
         foreach ($scores as $id => $score) {
             $peptideRecord = $this->adodb->GetRow(
@@ -317,7 +332,7 @@ class Phase1Postprocessor
 
             $ptmRecords = $this->adodb->GetAll(
                 'SELECT `location`, `modification` FROM `workunit1_locations` WHERE `job` = ' . $this->jobId .
-                ' && `id` = ' . $score['id']);
+                ' && `precursor` = ' . $score['precursor'] . ' && `peptide` = ' . $score['peptide']);
 
             $accession = 'DECOY';
             if (! empty($proteinRecords)) {

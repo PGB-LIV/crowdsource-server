@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2016 University of Liverpool
+ * Copyright 2018 University of Liverpool
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,16 +39,19 @@ class Phase1Preprocessor extends AbstractPreprocessor
     /**
      * Marks the preprocessing stage this phase as preparing
      */
-    protected function initialise($phase)
+    protected function initialise()
     {
-        parent::initialise($phase);
-
         $job = $this->adodb->GetRow(
-            'SELECT `database_file`, `raw_file`, `miss_cleave_max` FROM `job_queue` WHERE `id` = ' . $this->jobId);
+            'SELECT `database_file`, `raw_file`, `miss_cleave_max`, `enzyme` FROM `job_queue` WHERE `id` = ' .
+            $this->jobId);
 
         $this->databasePath = $job['database_file'];
         $this->maxMissedCleavage = $job['miss_cleave_max'];
         $this->rawPath = $job['raw_file'];
+        $this->enzyme = $this->adodb->GetRow('SELECT `id`, `name` FROM `enzymes` WHERE `id` = ' . $job['enzyme']);
+
+        $this->adodb->Execute(
+            'UPDATE `job_queue` SET `workunits_created` = 0, `workunits_returned` = 0 WHERE `id` =' . $this->jobId);
     }
 
     /**
@@ -56,16 +59,13 @@ class Phase1Preprocessor extends AbstractPreprocessor
      */
     public function process()
     {
-        $this->initialise(1);
+        $this->initialise();
 
         echo 'Pre-processing database: ' . $this->databasePath . PHP_EOL;
         $this->indexDatabase();
 
         echo 'Pre-processing raw data: ' . $this->rawPath . PHP_EOL;
         $this->indexRaw();
-
-        echo 'Pre-processing work units.' . PHP_EOL;
-        $this->indexWorkUnits();
 
         $this->finalise();
     }
@@ -75,19 +75,19 @@ class Phase1Preprocessor extends AbstractPreprocessor
      */
     private function indexDatabase()
     {
+        $this->setState('FASTA');
         $hash = hash_file(static::HASH_ALGO, $this->databasePath);
         $fastaId = $this->adodb->GetOne('SELECT `id` FROM `fasta` WHERE `hash` = UNHEX("' . $hash . '")');
 
         // TODO: Should verify indexing complete?
         if (is_null($fastaId)) {
             // Index FASTA
-            $enzymeId = 1; // TODO
             $this->adodb->Execute(
-                'INSERT INTO `fasta` (`enzyme`, `hash`) VALUES (' . $enzymeId . ', UNHEX("' . $hash . '"))');
+                'INSERT INTO `fasta` (`enzyme`, `hash`) VALUES (' . $this->enzyme['id'] . ', UNHEX("' . $hash . '"))');
             $fastaId = $this->adodb->insert_Id();
             $fastaParser = new FastaReader($this->databasePath);
 
-            $cleaver = DigestFactory::getDigest('Trypsin'); // $job['enzyme']);
+            $cleaver = DigestFactory::getDigest($this->enzyme['name']);
 
             $databaseProcessor = new DatabasePreprocessor($this->adodb, $fastaParser, $fastaId, $cleaver);
             $databaseProcessor->process();
@@ -96,7 +96,7 @@ class Phase1Preprocessor extends AbstractPreprocessor
         $this->adodb->Execute(
             'UPDATE `job_queue` SET `database_hash` = UNHEX("' . $hash . '") WHERE `id` = ' . $this->jobId);
 
-        // TODO: Generate fixed mod table
+        // Generate fixed mod table
         $modifications = $this->adodb->GetAssoc(
             'SELECT `j`.`acid`, `mono_mass` FROM `job_fixed_mod` `j` LEFT JOIN `unimod_modifications` ON `j`.`mod_id` = `record_id` WHERE `j`.`job` = ' .
             $this->jobId);
@@ -104,7 +104,7 @@ class Phase1Preprocessor extends AbstractPreprocessor
         // Remove any data from a previous run
         $this->adodb->Execute('DELETE FROM `fasta_peptide_fixed` WHERE `job` = ' . $this->jobId);
 
-        // TODO: fill fixed mod with peptides that meet requirements
+        // Fill fixed mod with peptides that meet requirements
         $this->adodb->Execute(
             'INSERT INTO `fasta_peptide_fixed` SELECT ' . $this->jobId .
             ', `id`, `mass` FROM `fasta_peptides` WHERE `fasta` = "' . $fastaId . '" && `missed_cleavage` <= ' .
@@ -125,19 +125,11 @@ SET `fixed_mass`=`fixed_mass` + ((`length` - LENGTH(REPLACE(`p`.`peptide`, "' . 
      */
     private function indexRaw()
     {
+        $this->setState('RAW');
         $mgfParser = new MgfReader($this->rawPath);
 
         $rawProcessor = new RawPreprocessor($this->adodb, $mgfParser, $this->jobId);
         $rawProcessor->setMs2PeakCount(MS2_PEAK_LIMIT, MS2_PEAK_WINDOW);
         $rawProcessor->process();
-    }
-
-    /**
-     * Creates an index of all phase 1 work units
-     */
-    private function indexWorkUnits()
-    {
-        $workProcessor = new WorkUnitPreprocessor($this->adodb, $this->jobId);
-        $workProcessor->process();
     }
 }

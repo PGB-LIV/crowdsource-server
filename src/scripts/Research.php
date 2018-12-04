@@ -2,7 +2,7 @@
 use pgb_liv\php_ms\Reader\MzIdentMlReader1r2;
 use pgb_liv\php_ms\Search\Parameters\MsgfPlusSearchParameters;
 use pgb_liv\php_ms\Search\MsgfPlusSearch;
-use pgb_liv\crowdsource\FalseDiscoveryRate;
+use pgb_liv\php_ms\Statistic\FalseDiscoveryRate;
 use pgb_liv\crowdsource\Core\Modification;
 
 /**
@@ -83,7 +83,8 @@ for ($modId = 0; $modId < count($modifications); $modId ++) {
             continue;
         }
 
-        if ($modification->getAccession() != $duplicate->getAccession()) {
+        // TODO: phpMs needs to set accession
+        if ($modification->getName() != $duplicate->getName()) {
             continue;
         }
 
@@ -112,7 +113,7 @@ $msgfConf->setMaxPrecursorCharge(255);
 $msgfConf->setMaxPeptideLength(60);
 $msgfConf->setDecoyEnabled(true);
 
-$modFile = $msgfConf->createModificationFile($modifications);
+$modFile = $msgfConf->createModificationFile($modifications, 4);
 copy($modFile, $benchmarkPath . '/msgf_mods.txt');
 
 foreach ($modifications as $modification) {
@@ -120,7 +121,7 @@ foreach ($modifications as $modification) {
 }
 
 $msGf = new MsgfPlusSearch('/mnt/nas/_CLUSTER_SOFTWARE/ms-gf+/current/MSGFPlus.jar');
-//$msGf->search($msgfConf);
+// $msGf->search($msgfConf);
 
 $settings = $benchmarkPath . '/msamanda.xml';
 
@@ -133,6 +134,9 @@ $settingsData = '<?xml version="1.0" encoding="UTF-8"?>
 ';
 
 foreach ($modifications as $modification) {
+    if ($modification->getName() == 'Methyl') {
+        continue;
+    }
     $settingsData .= '<modification';
 
     if ($modification->isFixed()) {
@@ -158,8 +162,10 @@ foreach ($modifications as $modification) {
 
 $settingsData .= '</modifications>
 <instrument>b, y</instrument>
-<ms1_tol unit="' . $precursorTolerance->getUnit() . '">' . $precursorTolerance->getTolerance() . '</ms1_tol>
-<ms2_tol unit="' . $fragmentTolerance->getUnit() . '">' . $fragmentTolerance->getTolerance() . '</ms2_tol>
+<ms1_tol unit="' .
+    $precursorTolerance->getUnit() . '">' . $precursorTolerance->getTolerance() . '</ms1_tol>
+<ms2_tol unit="' .
+    $fragmentTolerance->getUnit() . '">' . $fragmentTolerance->getTolerance() . '</ms2_tol>
 <max_rank>1</max_rank>
 <generate_decoy>true</generate_decoy>
 <PerformDeisotoping>true</PerformDeisotoping>
@@ -177,7 +183,7 @@ $settingsData .= '</modifications>
 <unimod_obo_file>/mnt/nas/_CLUSTER_SOFTWARE/MSAmanda/2.0.0.11219/unimod.obo</unimod_obo_file>
 <psims_obo_file>/mnt/nas/_CLUSTER_SOFTWARE/MSAmanda/2.0.0.11219/psi-ms.obo</psims_obo_file>
 <monoisotopic>true</monoisotopic>
-<considered_charges>2+,3+,4+</considered_charges>
+<considered_charges>1+,2+,3+,4+,5+,6+,7+</considered_charges>
 <LoadedProteinsAtOnce>100000</LoadedProteinsAtOnce>
 <LoadedSpectraAtOnce>4000</LoadedSpectraAtOnce>
 <data_folder>DEFAULT</data_folder>
@@ -186,14 +192,12 @@ $settingsData .= '</modifications>
 
 file_put_contents($settings, $settingsData);
 
-echo $settingsData . PHP_EOL;
-
 // MSAmanda
 $cmd = 'mono /mnt/nas/_CLUSTER_SOFTWARE/MSAmanda/2.0.0.11219/MSAmanda.exe -s "' . $spectra . '" -d "' . $database .
     '" -e "' . $settings . '" -f 2 -o "' . $benchmarkPath . '/msamanda.mzid"';
 echo $cmd . PHP_EOL;
 
-//echo `$cmd`;
+// echo `$cmd`;
 
 /*
  * FDR
@@ -211,12 +215,13 @@ foreach ($data as $spectra) {
         }
     }
 }
-$fdr = new FalseDiscoveryRate();
-$fdr->getFdr($identifications, 'MS:1002352');
+
+$fdr = new FalseDiscoveryRate($identifications, 'MS:1002352');
 
 $benchmark['CrowdSource'] = array(
     '0.01' => $fdr->getMatches(0.01),
-    '0.1' => $fdr->getMatches(0.1)
+    '0.05' => $fdr->getMatches(0.05),
+    '1' => count($identifications)
 );
 
 $mzidPath = DATA_PATH . '/' . $jobId . '/benchmark/msgf.mzid';
@@ -230,12 +235,12 @@ foreach ($data as $spectra) {
         }
     }
 }
-$fdr = new FalseDiscoveryRate();
-$fdr->getFdr($identifications, 'MS:1002053', SORT_ASC);
+$fdr = new FalseDiscoveryRate($identifications, 'MS:1002053', SORT_ASC);
 
-$benchmark['msgf'] = array(
+$benchmark['MS-GF+'] = array(
     '0.01' => $fdr->getMatches(0.01),
-    '0.1' => $fdr->getMatches(0.1)
+    '0.05' => $fdr->getMatches(0.05),
+    '1' => count($identifications)
 );
 
 $mzidPath = DATA_PATH . '/' . $jobId . '/benchmark/msamanda.mzid';
@@ -249,14 +254,15 @@ foreach ($data as $spectra) {
         }
     }
 }
-$fdr = new FalseDiscoveryRate();
-$fdr->getFdr($identifications, 'MS:1002319');
 
-$benchmark['msamanda'] = array(
+$fdr = new FalseDiscoveryRate($identifications, 'MS:1002319');
+
+$benchmark['MSAmanda'] = array(
     '0.01' => $fdr->getMatches(0.01),
-    '0.1' => $fdr->getMatches(0.1)
+    '0.05' => $fdr->getMatches(0.05),
+    '1' => count($identifications)
 );
 
 foreach ($benchmark as $searchEngine => $results) {
-    echo $searchEngine . "\t" . $results['0.01'] . "\t" . $results['0.1'] . PHP_EOL;
+    echo $searchEngine . "\t" . $results['0.01'] . "\t" . $results['0.05'] . "\t" . $results['1'] . PHP_EOL;
 }

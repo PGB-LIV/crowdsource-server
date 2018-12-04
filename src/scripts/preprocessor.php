@@ -16,6 +16,8 @@
  */
 use pgb_liv\crowdsource\Preprocessor\Phase1Preprocessor;
 use pgb_liv\crowdsource\Postprocessor\Phase1Postprocessor;
+use pgb_liv\crowdsource\Parallel\Master\WorkUnitMaster;
+use pgb_liv\crowdsource\Parallel\Master\ResultUnitMaster;
 
 error_reporting(E_ALL);
 ini_set('display_errors', true);
@@ -46,34 +48,53 @@ if (! flock($lock, LOCK_EX | LOCK_NB)) {
 
 echo '[' . date('r') . '] Starting preprocessor.' . PHP_EOL;
 
-$job = $adodb->GetRow('SELECT `id`, `phase` FROM `job_queue` WHERE `state` = \'DONE\' ORDER BY `job_time` ASC');
+$job = $adodb->GetRow('SELECT `id`, `state` FROM `job_queue` WHERE `state` != \'COMPLETE\' ORDER BY `job_time` ASC');
 
 if (empty($job)) {
     die('[' . date('r') . '] Terminating. No jobs awaiting processing.' . PHP_EOL);
 }
 
-$phase = (int) $job['phase'];
+$state = $job['state'];
 $jobId = (int) $job['id'];
 
 if (empty($job)) {
     die('[' . date('r') . '] Terminating. Nothing to do.' . PHP_EOL);
 }
 
-echo '[' . date('r') . '] Found job: ' . $job['id'] . ' - Phase: ' . $phase . '.' . PHP_EOL;
+echo '[' . date('r') . '] Found job: ' . $job['id'] . ' - Phase: ' . $state . '.' . PHP_EOL;
 
-if ($phase == 0) {
-    $phase1 = new Phase1Preprocessor($adodb, $jobId);
-    $phase1->process();
-} elseif ($phase == 1) {
-    $phase1  = new Phase1Postprocessor($adodb, $jobId);    
-    echo '[' . date('r') . '] Generating results.' . PHP_EOL;
-    $phase1->generateResults();
-    
-    echo '[' . date('r') . '] Purging temporary data.' . PHP_EOL;
-    $phase1->clean();
+// Either new or has failed
+switch ($state) {
+    case 'NEW':
+    case 'FASTA':
+    case 'RAW':
+        $phase1 = new Phase1Preprocessor($adodb, $jobId);
+        $phase1->process();
+    case 'INDEXED':
+    case 'WORKUNITS':
+        // TODO: Purge queues
+        $master = new WorkUnitMaster($adodb, $jobId);
+        $master->processJobs();
+    case 'PROCESSING':
+        $master = new ResultUnitMaster($adodb, $jobId);
+        $master->processJobs();
 
-    echo '[' . date('r') . '] Marking job complete.' . PHP_EOL;
-    $phase1->finalise();
+        // TODO: Validate job is complete
+        $phase1 = new Phase1Postprocessor($adodb, $jobId);
+
+        if ($phase1->resultsReady()) {
+            echo '[' . date('r') . '] Generating results.' . PHP_EOL;
+            $phase1->generateResults();
+
+            echo '[' . date('r') . '] Purging temporary data.' . PHP_EOL;
+            $phase1->clean();
+
+            echo '[' . date('r') . '] Marking job complete.' . PHP_EOL;
+            $phase1->finalise();
+        }
+        break;
+    default:
+        echo '[' . date('r') . '] Unknown state: ' . $state . PHP_EOL;
 }
 
 echo '[' . date('r') . '] Done.' . PHP_EOL;

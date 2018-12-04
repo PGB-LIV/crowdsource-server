@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2016 University of Liverpool
+ * Copyright 2018 University of Liverpool
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,10 @@ class BulkQuery
 
     private $appendCount = 0;
 
+    private $autoExec = true;
+
+    private $execRequired = false;
+
     /**
      * Creates a new instance with the specified parser as input
      *
@@ -41,11 +45,12 @@ class BulkQuery
      * @param string $prefix
      *            Initial query prefix that will initiate each bulk query
      */
-    public function __construct(\ADOConnection $conn, $prefix)
+    public function __construct(\ADOConnection $conn, $prefix, $autoExec = true)
     {
         $this->adodb = $conn;
         $this->prefix = $prefix;
-        
+        $this->autoExec = $autoExec;
+
         // Auto-detect buffer length
         $this->bufferLength = $this->adodb->getRow('SHOW VARIABLES LIKE \'max_allowed_packet\';');
         $this->bufferLength = $this->bufferLength['Value'] - ((int) ($this->bufferLength['Value'] / 10));
@@ -77,6 +82,7 @@ class BulkQuery
         $this->adodb->execute($this->query);
         $this->appendCount = 0;
         $this->query = null;
+        $this->execRequired = false;
     }
 
     public function append($query)
@@ -84,23 +90,37 @@ class BulkQuery
         if (is_null($this->query)) {
             $this->query = $this->prefix;
         }
-        
+
         if ($this->appendCount > 0) {
             $this->query .= ',';
         }
-        
+
         $this->query .= $query;
         $this->appendCount ++;
-        
+
         if (strlen($this->query) > $this->bufferLength) {
+            $this->execRequired = true;
+        }
+
+        if ($this->autoExec && $this->execRequired) {
+            $this->execute();
+        }
+    }
+
+    public function flush()
+    {
+        if (! is_null($this->query)) {
             $this->execute();
         }
     }
 
     public function close()
     {
-        if (! is_null($this->query)) {
-            $this->execute();
-        }
+        $this->flush();
+    }
+
+    public function isExecRequired()
+    {
+        return $this->execRequired;
     }
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2016 University of Liverpool
+ * Copyright 2018 University of Liverpool
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,20 +45,14 @@ abstract class AbstractPreprocessor
             throw new \InvalidArgumentException(
                 'Job ID must be an integer value. Valued passed is of type ' . gettype($jobId));
         }
-        
+
         $this->adodb = $conn;
         $this->jobId = $jobId;
     }
 
-    /**
-     * Marks the preprocessing stage this phase as preparing
-     */
-    protected function initialise($phase)
+    protected function setState($state)
     {
-        $this->phase = $phase;
-        $this->adodb->Execute(
-            'UPDATE `job_queue` SET `state` = \'PREPARING\', `phase` = \'' . $this->phase . '\' WHERE `id` = ' .
-                 $this->jobId);
+        $this->adodb->Execute('UPDATE `job_queue` SET  `state` = "' . $state . '" WHERE `id` = ' . $this->jobId);
     }
 
     /**
@@ -66,6 +60,6 @@ abstract class AbstractPreprocessor
      */
     protected function finalise()
     {
-        $this->adodb->Execute('UPDATE `job_queue` SET  `state` = \'READY\' WHERE `id` = ' . $this->jobId);
+        $this->setState('INDEXED');
     }
 }

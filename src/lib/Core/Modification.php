@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2016 University of Liverpool
+ * Copyright 2018 University of Liverpool
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,13 +60,13 @@ class Modification extends BaseModification
             throw new \InvalidArgumentException(
                 'Argument 1 must be an int value. Valued passed is of type ' . gettype($id));
         }
-        
+
         $this->id = $id;
-        
+
         if (! is_null($monoMass)) {
             $this->setMonoisotopicMass($monoMass);
         }
-        
+
         if (! is_null($residues)) {
             $this->setResidues($residues);
         }
@@ -96,39 +96,44 @@ class Modification extends BaseModification
         if (isset($modificationArray[Modification::ARRAY_OCCURRENCES])) {
             $occurrences = $modificationArray[Modification::ARRAY_OCCURRENCES];
         } elseif (isset($modificationArray[Modification::ARRAY_LOCATION]) &&
-             is_array($modificationArray[Modification::ARRAY_LOCATION])) {
+            is_array($modificationArray[Modification::ARRAY_LOCATION])) {
             $occurrences = count($modificationArray[Modification::ARRAY_LOCATION]);
         }
-        
+
         $modifications = array();
         for ($i = 0; $i < $occurrences; $i ++) {
-            $modification = new Modification($modificationArray[Modification::ARRAY_ID]);
-            
-            if (isset($modificationArray[Modification::ARRAY_MASS])) {
-                $modification->setMonoisotopicMass($modificationArray[Modification::ARRAY_MASS]);
-            }
-            
-            if (isset($modificationArray[Modification::ARRAY_RESIDUES])) {
-                $residues = str_split($modificationArray[Modification::ARRAY_RESIDUES]);
-                $modification->setResidues($residues);
-            }
-            
-            if (isset($modificationArray[Modification::ARRAY_LOCATION])) {
-                if (is_array($modificationArray[Modification::ARRAY_LOCATION])) {
-                    $modification->setLocation($modificationArray[Modification::ARRAY_LOCATION][$i]);
-                } else {
-                    $modification->setLocation($modificationArray[Modification::ARRAY_LOCATION]);
-                }
-            }
-            
+            $modification = self::getModificationFromArray($modificationArray, $i);
+
             if ($occurrences == 1) {
                 return $modification;
             }
-            
+
             $modifications[] = $modification;
         }
-        
+
         return $modifications;
+    }
+
+    private static function getModificationFromArray(array $modificationArray, $modificationIndex)
+    {
+        $modification = new Modification($modificationArray[Modification::ARRAY_ID]);
+
+        if (isset($modificationArray[Modification::ARRAY_MASS])) {
+            $modification->setMonoisotopicMass($modificationArray[Modification::ARRAY_MASS]);
+        }
+
+        if (isset($modificationArray[Modification::ARRAY_RESIDUES])) {
+            $residues = str_split($modificationArray[Modification::ARRAY_RESIDUES]);
+            $modification->setResidues($residues);
+        }
+
+        if (isset($modificationArray[Modification::ARRAY_LOCATION])) {
+            if (is_array($modificationArray[Modification::ARRAY_LOCATION])) {
+                $modification->setLocation($modificationArray[Modification::ARRAY_LOCATION][$modificationIndex]);
+            } else {
+                $modification->setLocation($modificationArray[Modification::ARRAY_LOCATION]);
+            }
+        }
     }
 
     /**
@@ -141,7 +146,7 @@ class Modification extends BaseModification
         $modification = array();
         $modification[Modification::ARRAY_ID] = $this->getId();
         $modification[Modification::ARRAY_MASS] = $this->getMonoisotopicMass();
-        
+
         if ($this->getPosition() == Modification::POSITION_NTERM) {
             $modification[Modification::ARRAY_RESIDUES] = '[';
         } elseif ($this->getPosition() == Modification::POSITION_CTERM) {
@@ -149,12 +154,12 @@ class Modification extends BaseModification
         } else {
             $modification[Modification::ARRAY_RESIDUES] = implode('', $this->getResidues());
         }
-        
+
         if (! is_null($this->getLocation())) {
-            
+
             $modification[Modification::ARRAY_LOCATION] = $this->getLocation();
         }
-        
+
         return $modification;
     }
 }
