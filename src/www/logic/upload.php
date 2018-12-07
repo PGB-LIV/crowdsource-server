@@ -1,26 +1,13 @@
 <?php
-$rawFastaFiles = scandir(DATA_PATH . '/databases/curated');
-
-$fastaFiles = array();
-foreach ($rawFastaFiles as $fastaFile) {
-    if ($fastaFile == '.' || $fastaFile == '..') {
-        continue;
-    }
-
-    $fastaFiles[] = $fastaFile;
-}
-
-$smarty->assign('fastaFiles', $fastaFiles);
-
-if (isset($_FILES['mgf']) && $_FILES['mgf']['error'] == 0) {
-    if (filesize($_FILES['mgf']['tmp_name']) > 104857600) {
+if (isset($_FILES['rawFile']) && $_FILES['rawFile']['error'] == 0) {
+    if (filesize($_FILES['rawFile']['tmp_name']) > 104857600) {
         echo 'MGF file too large';
         return;
     }
 
     $fields = array();
     $fields['database_file'] = DATA_PATH . '/databases/curated/' . $_POST['fasta'];
-    $fields['raw_file'] = $_FILES['mgf']['tmp_name'];
+    $fields['raw_file'] = $_FILES['rawFile']['tmp_name'];
     $fields['enzyme'] = $_POST['enzyme'];
     $fields['miss_cleave_max'] = 3;
     $fields['charge_min'] = 1;
@@ -28,14 +15,11 @@ if (isset($_FILES['mgf']) && $_FILES['mgf']['error'] == 0) {
     $fields['peptide_min'] = 6;
     $fields['peptide_max'] = 60;
 
-    $tolerance = explode(' ', $_POST['precursorTolerance']);
+    $fields['precursor_tolerance'] = (int) $_POST['precursorTolerance'];
+    $fields['precursor_tolerance_unit'] = 'ppm';
 
-    $fields['precursor_tolerance'] = $tolerance[0];
-    $fields['precursor_tolerance_unit'] = $tolerance[1];
-
-    $tolerance = explode(' ', $_POST['fragmentTolerance']);
-    $fields['fragment_tolerance'] = $tolerance[0];
-    $fields['fragment_tolerance_unit'] = $tolerance[1];
+    $fields['fragment_tolerance'] = (int) $_POST['fragmentTolerance'];
+    $fields['fragment_tolerance_unit'] = 'ppm';
 
     $table = 'job_queue';
     $sql = $adodb->getInsertSql($table, $fields);
@@ -46,13 +30,17 @@ if (isset($_FILES['mgf']) && $_FILES['mgf']['error'] == 0) {
     $rawPath = DATA_PATH . '/' . $jobId;
     mkdir($rawPath);
 
-    $rawPath .= '/' . $_FILES['mgf']['name'];
-    copy($_FILES['mgf']['tmp_name'], $rawPath);
+    $rawPath .= '/' . $_FILES['rawFile']['name'];
+    copy($_FILES['rawFile']['tmp_name'], $rawPath);
 
     $adodb->Execute('UPDATE `job_queue` SET `raw_file` = ' . $adodb->quote($rawPath) . ' WHERE `id` = ' . $jobId);
 
-    if (isset($_POST['fixed']) && $_POST['fixed'] == 'Yes') {
-        $adodb->Execute('INSERT INTO `job_fixed_mod` (`job`, `mod_id`, `acid`) VALUES (' . $jobId . ', 4, "C")');
+    foreach ($_POST['fixed'] as $fixedMod) {
+        switch ($fixedMod) {
+            case 'carb':
+                $adodb->Execute('INSERT INTO `job_fixed_mod` (`job`, `mod_id`, `acid`) VALUES (' . $jobId . ', 4, "C")');
+                break;
+        }
     }
 
     foreach ($_POST['variable'] as $variableMod) {
@@ -79,9 +67,7 @@ if (isset($_FILES['mgf']) && $_FILES['mgf']['error'] == 0) {
                 break;
         }
     }
-    $adodb->Execute(
-        'UPDATE `job_queue` SET `raw_file` = ' . $adodb->quote($rawPath) . ', `state` = "DONE" WHERE `id` = ' . $jobId);
 
-    header('Location: index.php?page=monitor&job=' . $jobId);
+    header('Location: index.php?job=' . $jobId . '#download');
     exit();
 }

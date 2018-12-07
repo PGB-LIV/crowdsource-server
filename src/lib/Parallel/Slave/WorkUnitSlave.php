@@ -25,6 +25,7 @@ use pgb_liv\crowdsource\Core\FragmentIon;
 use pgb_liv\crowdsource\Core\Modification;
 use pgb_liv\crowdsource\Core\Peptide;
 use pgb_liv\php_ms\Core\Identification;
+use pgb_liv\crowdsource\Parallel\Master\WorkUnitMaster;
 
 /**
  * Accepts a Job ID and generates potential identification
@@ -57,7 +58,7 @@ class WorkUnitSlave extends AbstractSlave
 
     public function __construct(\ADOConnection $conn)
     {
-        parent::__construct($conn, self::JOB_QUEUE_NAME);
+        parent::__construct($conn, WorkUnitMaster::WORKUNIT_QUEUE_NAME);
     }
 
     private function processPrecursor(array $job)
@@ -343,7 +344,8 @@ class WorkUnitSlave extends AbstractSlave
         $pepMassHigh = $spectraMass + $tolerance;
 
         $query = 'SELECT `f`.`peptide` AS `id`, `p`.`peptide` AS `sequence` FROM `fasta_peptide_fixed` `f`
-            LEFT JOIN `fasta_peptides` `p` ON `f`.`peptide` = `p`.`id` && `fasta` = ' . $this->fastaId . '
+            LEFT JOIN `fasta_peptides` `p` ON `f`.`peptide` = `p`.`id` && `fasta` = ' .
+            $this->fastaId . '
             WHERE `job` = ' . $this->jobId . ' && `fixed_mass` BETWEEN ' .
             $pepMassLow . ' AND ' . $pepMassHigh;
 
@@ -385,7 +387,7 @@ class WorkUnitSlave extends AbstractSlave
 
     public function processJob($message)
     {
-        $object = json_decode($message->body);
+        $object = json_decode($message->body, true);
 
         $this->processPrecursor($object);
 

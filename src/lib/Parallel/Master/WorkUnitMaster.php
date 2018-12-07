@@ -28,7 +28,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 class WorkUnitMaster extends AbstractMaster
 {
 
-    const JOB_QUEUE_NAME = 'JobQueue';
+    const WORKUNIT_QUEUE_NAME = 'WorkUnitQueue';
 
     const SLAVE_PATH = 'Slave/WorkUnitSlave.php';
 
@@ -37,7 +37,7 @@ class WorkUnitMaster extends AbstractMaster
     public function __construct(\ADOConnection $conn, $jobId)
     {
         parent::__construct($conn, self::SLAVE_PATH, array(
-            self::JOB_QUEUE_NAME
+            self::WORKUNIT_QUEUE_NAME
         ));
 
         if (! is_int($jobId)) {
@@ -50,7 +50,7 @@ class WorkUnitMaster extends AbstractMaster
 
     private function fillQueue()
     {
-        $this->amqpChannel->queue_declare(self::JOB_QUEUE_NAME, false, false, false, false);
+        $this->amqpChannel->queue_declare(self::WORKUNIT_QUEUE_NAME, false, false, false, false);
 
         $recordSet = $this->adodb->Execute('SELECT `id`, `mass` FROM `raw_ms1` WHERE `job` = ' . $this->jobId);
 
@@ -65,7 +65,7 @@ class WorkUnitMaster extends AbstractMaster
 
             $msg = new AMQPMessage($package);
 
-            $this->amqpChannel->basic_publish($msg, '', self::JOB_QUEUE_NAME);
+            $this->amqpChannel->basic_publish($msg, '', self::WORKUNIT_QUEUE_NAME);
 
             echo 'Added ' . $record['id'] . PHP_EOL;
         }

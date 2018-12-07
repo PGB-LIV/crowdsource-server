@@ -90,11 +90,6 @@ abstract class AbstractMaster
             if ($return[1] > 0) {
                 return false;
             }
-
-            // TODO: Messages awaiting Ack
-            if ($return[1] > 0) {
-                return false;
-            }
         }
 
         return true;

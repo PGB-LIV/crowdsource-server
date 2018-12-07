@@ -30,23 +30,18 @@
         </nav>
 
         <!-- Main -->
-        <div id="main">
-            {include file='home.tpl'} 
-            {include file='learn.tpl'}
-            {include file='monitor.tpl'}
-            {include file='upload.tpl'}
-            {include file='download.tpl'}
-        </div>
+        <div id="main">{include file='home.tpl'} {include
+            file='learn.tpl'} {include file='monitor.tpl'} {include
+            file='upload.tpl'} {include file='download.tpl'}</div>
 
         <!-- Footer -->
         <div id="footer">
             <ul class="copyright">
-                <li>&copy; Untitled.</li>
+                <li>&copy;2019 University of Liverpool.</li>
                 <li>Design: <a href="http://html5up.net">HTML5
                         UP</a></li>
             </ul>
         </div>
-
     </div>
 
     <!-- Scripts -->
@@ -55,6 +50,5 @@
     <script src="assets/js/breakpoints.min.js"></script>
     <script src="assets/js/util.js"></script>
     <script src="assets/js/main.js"></script>
-
 </body>
 </html>

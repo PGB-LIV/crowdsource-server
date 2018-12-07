@@ -19,12 +19,12 @@ use pgb_liv\crowdsource\Parallel\Slave\ResultUnitSlave;
 error_reporting(E_ALL);
 ini_set('display_errors', true);
 
-chdir(__DIR__);
+chdir(__DIR__ . '/../');
 
-require_once '../../conf/config.php';
-require_once '../../conf/autoload.php';
-require_once '../../conf/adodb.php';
-require_once '../../vendor/autoload.php';
+require_once '../conf/config.php';
+require_once '../conf/autoload.php';
+require_once '../conf/adodb.php';
+require_once '../vendor/autoload.php';
 
 $slave = new ResultUnitSlave($adodb);
 $slave->processQueue();

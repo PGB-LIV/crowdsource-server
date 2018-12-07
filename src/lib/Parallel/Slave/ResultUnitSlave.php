@@ -45,8 +45,6 @@ class ResultUnitSlave extends AbstractSlave
 
     private $pendingIncrement = array();
 
-    private $resultChannel;
-
     /**
      *
      * @var IdentificationSort
@@ -55,7 +53,7 @@ class ResultUnitSlave extends AbstractSlave
 
     public function __construct(\ADOConnection $conn)
     {
-        parent::__construct($conn);
+        parent::__construct($conn, self::RESULT_QUEUE_NAME);
 
         $this->bulkWorkUnit = new BulkQuery($this->adodb,
             'INSERT IGNORE INTO `workunit1` (`job`,`precursor`,`peptide`,`ions_matched`,`score`) VALUES ', false);
@@ -88,10 +86,11 @@ class ResultUnitSlave extends AbstractSlave
         $this->pendingIncrement[$jobId] ++;
 
         $identifications = $workUnit->getIdentifications();
-        $this->identSort->sort($identifications, false);
+
+        $this->identificationSort->sort($identifications, false);
 
         // Only store top N results
-        for ($identIndex = 0; $identIndex < MAX_PRECURSOR_IDENTS; $identIndex ++) {
+        for ($identIndex = 0; $identIndex < min(count($identifications), MAX_PRECURSOR_IDENTS); $identIndex ++) {
             $identification = $identifications[$identIndex];
             if ($identification->getScore(SCORE_PROPERTY) == 0) {
                 continue;
@@ -129,7 +128,7 @@ class ResultUnitSlave extends AbstractSlave
         $this->bulkLocation->flush();
 
         foreach ($this->pendingAcks as $ack) {
-            $this->resultChannel->basic_ack($ack);
+            $this->amqpChannel->basic_ack($ack);
         }
 
         foreach ($this->pendingIncrement as $jobId => $increment) {

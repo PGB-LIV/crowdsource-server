@@ -5,7 +5,8 @@
 
     <p>Only MGF files are supported.</p>
 
-    <form enctype="multipart/form-data" action="#" method="POST">
+    <form enctype="multipart/form-data" action="?page=upload"
+        method="POST">
         <div>
             <div class="row">
                 <div class="col-6 col-12-medium">
