@@ -32,11 +32,11 @@ abstract class AbstractMaster
 
     private $slavePids = array();
 
-    protected $adodb;
-
     private $slaveScript;
 
     private $watchQueues;
+
+    protected $adodb;
 
     protected $amqpChannel;
 

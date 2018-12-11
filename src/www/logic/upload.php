@@ -68,6 +68,6 @@ if (isset($_FILES['rawFile']) && $_FILES['rawFile']['error'] == 0) {
         }
     }
 
-    header('Location: index.php?job=' . $jobId . '#download');
+    header('Location: index.php?id=' . $jobId . '#download');
     exit();
 }
