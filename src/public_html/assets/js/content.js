@@ -48,7 +48,9 @@ function updateResults() {
 							content += "<p>Your search is complete.<br />";
 							content += '<a href="http://pgb.liv.ac.uk/shiny/ash/?id='
 									+ jobId + '">Visualise results</a><br />';
-							content += '<a href="#">Download results (mzIdentML)</a></p>';
+							content += '<a href="results/'
+									+ jobId
+									+ '/psm.mzid">Download results (mzIdentML)</a></p>';
 							break;
 
 						default:

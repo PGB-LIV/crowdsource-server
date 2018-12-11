@@ -20,5 +20,8 @@ if (! file_exists($resultsPath)) {
 }
 
 header('Content-Type: ' . $mime);
+header("Content-Transfer-Encoding: Binary");
+header("Content-disposition: attachment; filename=results_" . $jobId . ".mzid");
+
 echo file_get_contents($resultsPath);
 exit();
