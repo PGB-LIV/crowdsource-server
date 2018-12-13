@@ -48,7 +48,7 @@ if (! flock($lock, LOCK_EX | LOCK_NB)) {
 
 echo '[' . date('r') . '] Starting preprocessor.' . PHP_EOL;
 
-$job = $adodb->GetRow('SELECT `id`, `state` FROM `job_queue` WHERE `state` != \'COMPLETE\' ORDER BY `job_time` ASC');
+$job = $adodb->GetRow('SELECT `id`, `state` FROM `job_queue` WHERE `state` != \'COMPLETE\' ORDER BY `created_at` ASC');
 
 if (empty($job)) {
     die('[' . date('r') . '] Terminating. No jobs awaiting processing.' . PHP_EOL);
@@ -76,7 +76,7 @@ switch ($state) {
         $master = new WorkUnitMaster($adodb, $jobId);
         $master->processJobs();
     case 'PROCESSING':
-        $master = new ResultUnitMaster($adodb, $jobId);
+        $master = new ResultUnitMaster($adodb);
         $master->processJobs();
 
         // TODO: Validate job is complete

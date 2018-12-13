@@ -72,6 +72,69 @@ function updateResults() {
 					});
 }
 
+function updateStatus() {
+	$
+			.getJSON(
+					"http://pgb.liv.ac.uk/~andrew/crowdsource-server/src/public_html/index.php?page=json_monitor_status",
+					function(data) {
+
+						var content = "<header><h3>Current Job</h3></header>";
+
+						if (data.job_current == 'NONE') {
+							content += '<p>Dracula is currently idle.</p>';
+						} else {
+							content += '<p>Dracula is currently consuming job '
+									+ data.job_current + ' ('
+									+ data.job_progress + '% complete) since '
+									+ data.job_start + '.</p>';
+						}
+
+						content += "<header><h3>Queued Jobs</h3></header>";
+
+						if (data.jobs_queued > 0) {
+							content += '<p>There are currently '
+									+ data.jobs_queued
+									+ ' jobs in the queue, next job is estimated to start in '
+									+ data.job_next_start + ' hours</p>';
+						} else {
+							content += '<p>There are currently no jobs queued for processing.</p>';
+						}
+
+						content += "<header><h3>Completed Jobs</h3></header>";
+
+						content += '<p>Dracula has devoured '
+								+ data.jobs_completed + ' jobs since '
+								+ data.first_job_at + ', analysing '
+								+ data.scans_completed
+								+ ' scans. Last jobs was completed at '
+								+ data.last_job_at + '.</p>';
+
+						content += '<table><thead><tr><th>ID</th><th>Scans</th><th>Duration</th></tr></thead><tbody>';
+
+						for (var i = 0; i < data.last_jobs.length; i++) {
+							content += '<tr>';
+							content += '<td>' + data.last_jobs[i].id + '</td>';
+							content += '<td>'
+									+ data.last_jobs[i].workunits_returned
+									+ '</td>';
+							content += '<td>' + data.last_jobs[i].duration
+									+ '</td>';
+							content += '</tr>';
+						}
+						content += '</tbody></table>';
+
+						var today = new Date();
+						content += '<p style="text-align: right; font-size: 50%">As at '
+								+ today.toLocaleString("en-gb") + '</p>';
+
+						$(".status_here").empty();
+						$(".status_here").append(content);
+
+						setTimeout(updateStatus, 15000);
+					});
+}
+
 $(document).ready(function() {
 	updateResults();
+	updateStatus();
 });

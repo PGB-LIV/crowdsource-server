@@ -73,7 +73,7 @@ class WorkUnitMaster extends AbstractMaster
 
     protected function initialise()
     {
-        $this->adodb->Execute('UPDATE `job_queue` SET  `state` = "WORKUNITS" WHERE `id` = ' . $this->jobId);
+        $this->adodb->Execute('UPDATE `job_queue` SET  `state` = "WORKUNITS", `process_start` = NOW() WHERE `id` = ' . $this->jobId);
 
         $this->fillQueue();
     }

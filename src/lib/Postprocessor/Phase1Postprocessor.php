@@ -75,6 +75,8 @@ class Phase1Postprocessor
             return false;
         }
 
+        $this->adodb->Execute('UPDATE `job_queue` SET `process_end` = NOW() WHERE `id` = ' . $this->jobId);
+
         return true;
     }
 
@@ -196,10 +198,8 @@ class Phase1Postprocessor
 
             $psmRecords = $this->adodb->Execute(
                 'SELECT `w`.`precursor`, `w`.`peptide`, `w`.`score`, `p`.`peptide` AS `sequence`, `p`.`is_decoy` FROM `workunit1` `w` 
-LEFT JOIN `fasta_peptides` `p` ON `fasta` = ' . $fastaId .
-                ' && `p`.`id` = `w`.`peptide` 
-WHERE `w`.`job` = ' .
-                $this->jobId . ' && `precursor` = ' . $precursorRecord['id'] . ' ORDER BY `score` DESC LIMIT 0,' .
+LEFT JOIN `fasta_peptides` `p` ON `fasta` = ' . $fastaId . ' && `p`.`id` = `w`.`peptide` 
+WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id'] . ' ORDER BY `score` DESC LIMIT 0,' .
                 self::PSM_LIMIT);
 
             $rank = 1;
