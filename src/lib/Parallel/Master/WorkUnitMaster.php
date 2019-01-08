@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2018 University of Liverpool
+ * Copyright 2019 University of Liverpool
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,9 @@ class WorkUnitMaster extends AbstractMaster
 
     protected function initialise()
     {
-        $this->adodb->Execute('UPDATE `job_queue` SET  `state` = "WORKUNITS", `process_start` = NOW() WHERE `id` = ' . $this->jobId);
+        $this->adodb->Execute(
+            'UPDATE `job_queue` SET  `state` = "WORKUNITS", `process_start` = NOW(), `workunits_created` = 0, `workunits_returned` = 0 WHERE `id` = ' .
+            $this->jobId);
 
         $this->fillQueue();
     }

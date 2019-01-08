@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2018 University of Liverpool
+ * Copyright 2019 University of Liverpool
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,16 @@ class WorkUnit
 
     const JSON_TOLERANCE_UNIT = 'fragTolUnit';
 
+    const JSON_HOSTNAME = 'hostname';
+
+    const JSON_USER = 'user';
+
+    const JSON_BYTES_SENT = 'bytesSent';
+
+    const JSON_BYTES_RECEIVED = 'bytesReceived';
+
+    const JSON_PROCESS_TIME = 'processTime';
+
     private $uid;
 
     private $fixedModifications = array();
@@ -52,6 +62,41 @@ class WorkUnit
     private $identification = array();
 
     private $fragmentTolerance;
+
+    /**
+     * Hostname running the parasite
+     *
+     * @var string
+     */
+    private $hostname;
+
+    /**
+     * The IP of the user running the parasite
+     *
+     * @var int
+     */
+    private $user;
+
+    /**
+     * The amount of bytes sent out
+     *
+     * @var int
+     */
+    private $bytesSent;
+
+    /**
+     * The amount of bytes received
+     *
+     * @var int
+     */
+    private $bytesReceived;
+
+    /**
+     * The process time of the job
+     *
+     * @var float
+     */
+    private $processTime;
 
     public function __construct($uid)
     {
@@ -91,6 +136,56 @@ class WorkUnit
     public function getUid()
     {
         return $this->uid;
+    }
+
+    public function setHostname($hostname)
+    {
+        $this->hostname = $hostname;
+    }
+
+    public function getHostname()
+    {
+        return $this->hostname;
+    }
+
+    public function setUser($user)
+    {
+        $this->user = $user;
+    }
+
+    public function getUser()
+    {
+        return $this->user;
+    }
+
+    public function setBytesSent($bytes)
+    {
+        $this->bytesSent = $bytes;
+    }
+
+    public function getBytesSent()
+    {
+        return $this->bytesSent;
+    }
+
+    public function setBytesReceived($bytes)
+    {
+        $this->bytesReceived = $bytes;
+    }
+
+    public function getBytesReceived()
+    {
+        return $this->bytesReceived;
+    }
+
+    public function setProcessTime($processTime)
+    {
+        $this->processTime = $processTime;
+    }
+
+    public function getProcessTime()
+    {
+        return $this->processTime;
     }
 
     /**
@@ -195,6 +290,27 @@ class WorkUnit
             foreach ($jsonObj[WorkUnit::JSON_FRAGMENTS] as $fragment) {
                 $workUnit->addFragmentIon(FragmentIon::fromArray($fragment));
             }
+        }
+
+        // Parse meta
+        if (isset($jsonObj[WorkUnit::JSON_HOSTNAME])) {
+            $workUnit->setHostname($jsonObj[WorkUnit::JSON_HOSTNAME]);
+        }
+
+        if (isset($jsonObj[WorkUnit::JSON_USER])) {
+            $workUnit->setUser($jsonObj[WorkUnit::JSON_USER]);
+        }
+
+        if (isset($jsonObj[WorkUnit::JSON_BYTES_SENT])) {
+            $workUnit->setBytesSent($jsonObj[WorkUnit::JSON_BYTES_SENT]);
+        }
+
+        if (isset($jsonObj[WorkUnit::JSON_BYTES_RECEIVED])) {
+            $workUnit->setBytesReceived($jsonObj[WorkUnit::JSON_BYTES_RECEIVED]);
+        }
+
+        if (isset($jsonObj[WorkUnit::JSON_PROCESS_TIME])) {
+            $workUnit->setProcessTime($jsonObj[WorkUnit::JSON_PROCESS_TIME]);
         }
 
         return $workUnit;

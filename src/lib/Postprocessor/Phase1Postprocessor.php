@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2018 University of Liverpool
+ * Copyright 2019 University of Liverpool
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,7 @@ class Phase1Postprocessor
             mkdir($path);
         }
 
+        $this->writeStats();
         $this->writeCsv();
         $this->writeMzIdentMl();
         $this->writeMgf();
@@ -105,6 +106,7 @@ class Phase1Postprocessor
         $this->adodb->Execute('DELETE FROM `raw_ms2` WHERE `job` = ' . $this->jobId);
         $this->adodb->Execute('DELETE FROM `workunit1` WHERE `job` = ' . $this->jobId);
         $this->adodb->Execute('DELETE FROM `workunit1_locations` WHERE `job` = ' . $this->jobId);
+        $this->adodb->Execute('DELETE FROM `analytic_meta` WHERE `job` = ' . $this->jobId);
     }
 
     public function finalise()
@@ -198,8 +200,10 @@ class Phase1Postprocessor
 
             $psmRecords = $this->adodb->Execute(
                 'SELECT `w`.`precursor`, `w`.`peptide`, `w`.`score`, `p`.`peptide` AS `sequence`, `p`.`is_decoy` FROM `workunit1` `w` 
-LEFT JOIN `fasta_peptides` `p` ON `fasta` = ' . $fastaId . ' && `p`.`id` = `w`.`peptide` 
-WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id'] . ' ORDER BY `score` DESC LIMIT 0,' .
+LEFT JOIN `fasta_peptides` `p` ON `fasta` = ' . $fastaId .
+                ' && `p`.`id` = `w`.`peptide` 
+WHERE `w`.`job` = ' .
+                $this->jobId . ' && `precursor` = ' . $precursorRecord['id'] . ' ORDER BY `score` DESC LIMIT 0,' .
                 self::PSM_LIMIT);
 
             $rank = 1;
@@ -445,5 +449,22 @@ WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id
         }
 
         $mgfWriter->close();
+    }
+
+    private function writeStats()
+    {
+        // Write users
+        $users = $this->adodb->GetAll(
+            'SELECT `ip`,  COUNT(*) AS `workunits`, SUM(`sent`) AS `bytes_sent`, AVG(`sent`) AS `bytes_sent_avg`, SUM(`received`) AS `bytes_received`, AVG(`received`) AS `bytes_received_avg`, SUM(`cpu`) AS `cpu_total`, MAX(`cpu`) AS `cpu_max`, MIN(`cpu`) AS `cpu_min` FROM `analytic_meta` WHERE `job` = ' .
+            $this->jobId . ' GROUP BY `ip`');
+        $json = json_encode($users);
+        file_put_contents(DATA_PATH . '/' . $this->jobId . '/results/users.json', $json);
+
+        // Write hosts
+        $users = $this->adodb->GetAll(
+            'SELECT `host`,  COUNT(*) AS `workunits`, SUM(`sent`) AS `bytes_sent`, SUM(`received`) AS `bytes_received`, SUM(`cpu`) AS `cpu_total`, MAX(`cpu`) AS `cpu_max`, MIN(`cpu`) AS `cpu_min` FROM `analytic_meta`  WHERE `job` = ' .
+            $this->jobId . ' GROUP BY `host`');
+        $json = json_encode($users);
+        file_put_contents(DATA_PATH . '/' . $this->jobId . '/results/hosts.json', $json);
     }
 }

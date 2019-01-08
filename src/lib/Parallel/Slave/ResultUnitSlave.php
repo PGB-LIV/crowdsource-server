@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2018 University of Liverpool
+ * Copyright 2019 University of Liverpool
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,6 +103,12 @@ class ResultUnitSlave extends AbstractSlave
             array_sum($this->pendingIncrement) > 900) {
             $this->flush();
         }
+
+        $this->adodb->Execute(
+            'INSERT IGNORE INTO `analytic_meta` (`job`, `uid`, `sent`, `received`, `ip`, `host`, `cpu`) VALUES (' .
+            $jobId . ',' . $this->adodb->Quote($workUnit->getUid()) . ',' . $workUnit->getBytesSent() . ',' .
+            $workUnit->getBytesReceived() . ',' . $workUnit->getUser() . ',' .
+            $this->adodb->Quote($workUnit->getHostname()) . ',' . $workUnit->getProcessTime() . ')');
     }
 
     private function recordIdentification($jobId, $precursorId, Identification $identification)

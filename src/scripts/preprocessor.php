@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2018 University of Liverpool
+ * Copyright 2019 University of Liverpool
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,14 +68,17 @@ switch ($state) {
     case 'NEW':
     case 'FASTA':
     case 'RAW':
+        echo '[' . date('r') . '] Indexing Job.' . PHP_EOL;
         $phase1 = new Phase1Preprocessor($adodb, $jobId);
         $phase1->process();
     case 'INDEXED':
     case 'WORKUNITS':
         // TODO: Purge queues
+        echo '[' . date('r') . '] Preparing Workunits.' . PHP_EOL;
         $master = new WorkUnitMaster($adodb, $jobId);
         $master->processJobs();
     case 'PROCESSING':
+        echo '[' . date('r') . '] Processing Results.' . PHP_EOL;
         $master = new ResultUnitMaster($adodb);
         $master->processJobs();
 
