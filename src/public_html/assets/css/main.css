@@ -1439,7 +1439,7 @@ ul.actions li:first-child {
 .icon:before {
     -moz-osx-font-smoothing: grayscale;
     -webkit-font-smoothing: antialiased;
-    font-family: FontAwesome;
+    font-family: 'FontAwesome';
     font-style: normal;
     font-weight: normal;
     text-transform: none !important;
@@ -1529,15 +1529,15 @@ ul.actions li:first-child {
 }
 
 #nav a:hover {
-    opacity: 1.0;
+    opacity: 1;
 }
 
 #nav a:hover span {
-    opacity: 1.0;
+    opacity: 1;
 }
 
 #nav a.active {
-    opacity: 1.0;
+    opacity: 1;
 }
 
 #nav a.active:after {
@@ -1617,7 +1617,7 @@ body.is-preload #wrapper {
     overflow: hidden;
     width: 100%;
     background: #ffffff;
-    box-shadow: 0px 1px 0px 0px rgba(0, 0, 0, .25);
+    box-shadow: 0 1px 0 0 rgba(0, 0, 0, .25);
     -moz-transition: min-height .5s ease-in-out, max-height .5s ease-in-out;
     -webkit-transition: min-height .5s ease-in-out, max-height .5s
         ease-in-out;
@@ -1690,7 +1690,6 @@ body.is-preload #wrapper {
 }
 
 #main>.panel.intro .pic img {
-    position: relative;
     display: block;
     position: absolute;
     top: 0;

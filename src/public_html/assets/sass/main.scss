@@ -7,11 +7,9 @@
 @import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,300italic,400italic');
 @import url('font-awesome.min.css');
 
-/*
-	Astral by HTML5 UP
-	html5up.net | @ajlkn
-	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
-*/
+// Astral by HTML5 UP
+// html5up.net | @ajlkn
+// Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
 
 // Breakpoints.
 
@@ -94,7 +92,7 @@
 		appearance: none;
 	}
 
-/* Row */
+// Row
 
 	.row {
 		@include html-grid((1.25em, 1.25em));
@@ -116,7 +114,7 @@
 		}
 	}
 
-/* Basic */
+// Basic
 
 	// Set box model to border-box.
 	// Based on css-tricks.com/inheriting-box-sizing-probably-slightly-better-best-practice
@@ -240,7 +238,7 @@
 		margin-bottom: 2em;
 	}
 
-/* Table */
+// Table
 
 	table {
 		width: 100%;
@@ -268,7 +266,7 @@
 		}
 	}
 
-/* Form */
+// Form
 
 	form {
 		label {
@@ -319,7 +317,7 @@
 		}
 	}
 
-/* Section/Article */
+// Section/Article
 
 	section, article {
 		margin-bottom: 3em;
@@ -343,7 +341,7 @@
 		}
 	}
 
-/* Image */
+// Image
 
 	.image {
 		display: inline-block;
@@ -380,7 +378,7 @@
 		}
 	}
 
-/* Button */
+// Button
 
 	input[type='button'],
 	input[type='submit'],
@@ -436,7 +434,7 @@
 		}
 	}
 
-/* List */
+// List
 
 	ul {
 		list-style: disc;
@@ -457,7 +455,7 @@
 		}
 	}
 
-/* Actions */
+// Actions
 
 	ul.actions {
 		list-style: none;
@@ -485,7 +483,7 @@
 		}
 	}
 
-/* Icons */
+// Icons
 
 	.icon {
 		position: relative;
@@ -505,7 +503,7 @@
 		}
 	}
 
-/* Nav */
+// Nav
 
 	#nav {
 		text-align: center;
@@ -540,7 +538,7 @@
 				left: 50%;
 				bottom: -0.75em;
 				margin-left: -0.5em;
-				border-bottom: solid 0em #ffffff;
+				border-bottom: solid 0 #ffffff;
 				border-left: solid .5em transparent;
 				border-right: solid .5em transparent;
 				@include vendor('transition', 'border-bottom-width .25s ease-in-out');
@@ -576,15 +574,15 @@
 			}
 
 			&:hover {
-				opacity: 1.0;
+				opacity: 1;
 
 				span {
-					opacity: 1.0;
+					opacity: 1;
 				}
 			}
 
 			&.active {
-				opacity: 1.0;
+				opacity: 1;
 
 				&:after {
 					border-bottom-width: .5em;
@@ -601,7 +599,7 @@
 		}
 	}
 
-/* Wrapper */
+// Wrapper
 
 	#wrapper {
 		width: 45em;
@@ -640,14 +638,14 @@
 		}
 	}
 
-/* Main */
+// Main
 
 	#main {
 		position: relative;
 		overflow: hidden;
 		width: 100%;
 		background: #ffffff;
-		box-shadow: 0px 1px 0px 0px rgba(0, 0, 0, .25);
+		box-shadow: 0 1px 0 0 rgba(0, 0, 0, .25);
 		@include vendor('transition', (
 			'min-height .5s ease-in-out',
 			'max-height .5s ease-in-out'
@@ -795,7 +793,7 @@
 		}
 	}
 
-/* Footer */
+// Footer
 
 	#footer {
 		color: rgba(255, 255, 255, .45);
