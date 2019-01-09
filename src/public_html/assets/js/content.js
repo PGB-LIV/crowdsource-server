@@ -106,21 +106,39 @@ function updateStatus() {
 								+ data.jobs_completed + ' jobs since '
 								+ data.first_job_at + ', analysing '
 								+ data.scans_completed
-								+ ' scans. Last jobs was completed at '
+								+ ' work units. Last job was completed at '
 								+ data.last_job_at + '.</p>';
 
-						content += '<table><thead><tr><th>ID</th><th>Scans</th><th>Duration</th></tr></thead><tbody>';
+						content += '<table><thead><tr><th>ID</th><th>Scans</th><th>Duration</th><th>Bandwidth (MB)</th></tr></thead><tbody>';
 
 						for (var i = 0; i < data.last_jobs.length; i++) {
+							var duration = data.last_jobs[i].duration;
+							
+						    var ms = duration % 1000;
+						    duration = Math.floor(duration / 1000);
+
+						    var hours = Math.floor(duration / 3600);
+						    duration = duration - (hours * 3600);
+
+						    var minutes = Math.floor((duration - (hours * 3600)) / 60);
+						    duration = duration - (minutes * 60);
+
+			    			hours = hours + "";		
+			    			minutes = minutes + "";		
+						    var seconds = duration + "";
+						    			
+						    			
 							content += '<tr>';
 							content += '<td>' + data.last_jobs[i].id + '</td>';
 							content += '<td>'
-									+ data.last_jobs[i].workunits_returned
+									+ data.last_jobs[i].precursors
 									+ '</td>';
-							content += '<td>' + data.last_jobs[i].duration
+							content += '<td>' + hours.padStart(2, '0') + ':' + minutes.padStart(2, '0') + ':' + seconds.padStart(2, '0') + '.' + ms + '</td>';
+							content += '<td>' + Math.round(((data.last_jobs[i].data / 1024) / 1024) * 100) / 100
 									+ '</td>';
 							content += '</tr>';
 						}
+						
 						content += '</tbody></table>';
 
 						var today = new Date();

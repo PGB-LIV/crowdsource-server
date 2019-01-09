@@ -120,7 +120,13 @@ foreach ($modifications as $modification) {
 }
 
 $msGf = new MsgfPlusSearch('/mnt/nas/_CLUSTER_SOFTWARE/ms-gf+/current/MSGFPlus.jar');
-// $msGf->search($msgfConf);
+
+echo 'Running MS-GF+... ';
+if (!file_exists(DATA_PATH . '/' . $jobId . '/benchmark/msgf.mzid'))
+{
+    $msGf->search($msgfConf);
+}
+echo 'Done ' . PHP_EOL;
 
 $settings = $benchmarkPath . '/msamanda.xml';
 
@@ -196,7 +202,12 @@ $cmd = 'mono /mnt/nas/_CLUSTER_SOFTWARE/MSAmanda/2.0.0.11219/MSAmanda.exe -s "' 
     '" -e "' . $settings . '" -f 2 -o "' . $benchmarkPath . '/msamanda.mzid"';
 echo $cmd . PHP_EOL;
 
-// echo `$cmd`;
+echo 'Running MSAmanda+... ';
+if (!file_exists(DATA_PATH . '/' . $jobId . '/benchmark/msamanda.mzid'))
+{
+    echo `$cmd`;
+}
+echo 'Done ' . PHP_EOL;
 
 /*
  * FDR
@@ -217,7 +228,7 @@ foreach ($data as $spectra) {
 
 $fdr = new FalseDiscoveryRate($identifications, 'MS:1002352');
 
-$benchmark['CrowdSource'] = array(
+$benchmark['Dracula'] = array(
     '0.01' => $fdr->getMatches(0.01),
     '0.05' => $fdr->getMatches(0.05),
     '1' => count($identifications)
@@ -262,6 +273,8 @@ $benchmark['MSAmanda'] = array(
     '1' => count($identifications)
 );
 
+echo str_pad('SearchEngine', 15, ' ', STR_PAD_RIGHT) . "1%\t5%\tTotal" . PHP_EOL;
+
 foreach ($benchmark as $searchEngine => $results) {
-    echo $searchEngine . "\t" . $results['0.01'] . "\t" . $results['0.05'] . "\t" . $results['1'] . PHP_EOL;
+    echo str_pad($searchEngine, 15, ' ', STR_PAD_RIGHT) . $results['0.01'] . "\t" . $results['0.05'] . "\t" . $results['1'] . PHP_EOL;
 }

@@ -454,17 +454,25 @@ WHERE `w`.`job` = ' .
     private function writeStats()
     {
         // Write users
-        $users = $this->adodb->GetAll(
+        $data = $this->adodb->GetAll(
             'SELECT `ip`,  COUNT(*) AS `workunits`, SUM(`sent`) AS `bytes_sent`, AVG(`sent`) AS `bytes_sent_avg`, SUM(`received`) AS `bytes_received`, AVG(`received`) AS `bytes_received_avg`, SUM(`cpu`) AS `cpu_total`, MAX(`cpu`) AS `cpu_max`, MIN(`cpu`) AS `cpu_min` FROM `analytic_meta` WHERE `job` = ' .
             $this->jobId . ' GROUP BY `ip`');
-        $json = json_encode($users);
-        file_put_contents(DATA_PATH . '/' . $this->jobId . '/results/users.json', $json);
+
+        $json = json_encode($data, JSON_PRETTY_PRINT);
+        file_put_contents(DATA_PATH . '/' . $this->jobId . '/results/user.json', $json);
 
         // Write hosts
-        $users = $this->adodb->GetAll(
-            'SELECT `host`,  COUNT(*) AS `workunits`, SUM(`sent`) AS `bytes_sent`, SUM(`received`) AS `bytes_received`, SUM(`cpu`) AS `cpu_total`, MAX(`cpu`) AS `cpu_max`, MIN(`cpu`) AS `cpu_min` FROM `analytic_meta`  WHERE `job` = ' .
+        $data = $this->adodb->GetAll(
+            'SELECT `host`,  COUNT(*) AS `workunits`, SUM(`sent`) AS `bytes_sent`, SUM(`received`) AS `bytes_received`, SUM(`cpu`) AS `cpu_total`, MAX(`cpu`) AS `cpu_max`, MIN(`cpu`) AS `cpu_min` FROM `analytic_meta` WHERE `job` = ' .
             $this->jobId . ' GROUP BY `host`');
-        $json = json_encode($users);
-        file_put_contents(DATA_PATH . '/' . $this->jobId . '/results/hosts.json', $json);
+        $json = json_encode($data, JSON_PRETTY_PRINT);
+        file_put_contents(DATA_PATH . '/' . $this->jobId . '/results/host.json', $json);
+
+        // Write precursors
+        $data = $this->adodb->GetAll(
+            'SELECT SUBSTRING(SUBSTRING_INDEX(`uid`, "-", 2), LOCATE("-", `uid`)+1) AS `precursor`, COUNT(*) AS `workunits`, SUM(`sent`) AS `bytes_sent`, AVG(`sent`) AS `bytes_sent_avg`, SUM(`received`) AS `bytes_received`, AVG(`received`) AS `bytes_received_avg`, SUM(`cpu`) AS `cpu_total`, MAX(`cpu`) AS `cpu_max`, MIN(`cpu`) AS `cpu_min` FROM `analytic_meta` WHERE `job` = ' .
+            $this->jobId . ' GROUP BY `precursor` ');
+        $json = json_encode($data, JSON_PRETTY_PRINT);
+        file_put_contents(DATA_PATH . '/' . $this->jobId . '/results/precursor.json', $json);
     }
 }
