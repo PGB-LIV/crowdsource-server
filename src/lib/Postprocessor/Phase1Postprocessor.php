@@ -82,8 +82,6 @@ class Phase1Postprocessor
 
     /**
      * Writes results in CSV format matching Peaks output, for ease of reading/comparison
-     *
-     * @todo Update to write as mzIdentML
      */
     public function generateResults()
     {
@@ -200,10 +198,8 @@ class Phase1Postprocessor
 
             $psmRecords = $this->adodb->Execute(
                 'SELECT `w`.`precursor`, `w`.`peptide`, `w`.`score`, `p`.`peptide` AS `sequence`, `p`.`is_decoy` FROM `workunit1` `w` 
-LEFT JOIN `fasta_peptides` `p` ON `fasta` = ' . $fastaId .
-                ' && `p`.`id` = `w`.`peptide` 
-WHERE `w`.`job` = ' .
-                $this->jobId . ' && `precursor` = ' . $precursorRecord['id'] . ' ORDER BY `score` DESC LIMIT 0,' .
+LEFT JOIN `fasta_peptides` `p` ON `fasta` = ' . $fastaId . ' && `p`.`id` = `w`.`peptide` 
+WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id'] . ' ORDER BY `score` DESC LIMIT 0,' .
                 self::PSM_LIMIT);
 
             $rank = 1;
