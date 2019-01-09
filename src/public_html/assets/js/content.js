@@ -1,7 +1,7 @@
 function updateResults() {
 	var jobId = $("#job_id").val();
 
-	if (jobId == undefined || jobId == "") {
+	if (jobId === undefined || jobId === "") {
 		return;
 	}
 
@@ -65,8 +65,8 @@ function updateResults() {
 						$(".results_here").empty();
 						$(".results_here").append(content);
 
-						if (data.status != "COMPLETE"
-								&& data.status != "NOT_FOUND") {
+						if (data.status !== "COMPLETE"
+								&& data.status !== "NOT_FOUND") {
 							setTimeout(updateResults, 10000);
 						}
 					});
@@ -77,10 +77,9 @@ function updateStatus() {
 			.getJSON(
 					"http://pgb.liv.ac.uk/~andrew/crowdsource-server/src/public_html/index.php?page=json_monitor_status",
 					function(data) {
-
 						var content = "<header><h3>Current Job</h3></header>";
 
-						if (data.job_current == 'NONE') {
+						if (data.job_current === 'NONE') {
 							content += '<p>Dracula is currently idle.</p>';
 						} else {
 							content += '<p>Dracula is currently consuming job '
@@ -110,7 +109,7 @@ function updateStatus() {
 								+ data.last_job_at + '.</p>';
 
 						content += '<table><thead><tr><th>ID</th><th>Scans</th><th>Duration</th><th>Bandwidth (MB)</th></tr></thead><tbody>';
-
+						
 						for (var i = 0; i < data.last_jobs.length; i++) {
 							var duration = data.last_jobs[i].duration;
 							
@@ -123,11 +122,10 @@ function updateStatus() {
 						    var minutes = Math.floor((duration - (hours * 3600)) / 60);
 						    duration = duration - (minutes * 60);
 
-			    			hours = hours + "";		
-			    			minutes = minutes + "";		
-						    var seconds = duration + "";
-						    			
-						    			
+			    			hours = hours + "";
+			    			minutes = minutes + "";
+						    var seconds = duration + "";						    			
+						    
 							content += '<tr>';
 							content += '<td>' + data.last_jobs[i].id + '</td>';
 							content += '<td>'
@@ -138,7 +136,7 @@ function updateStatus() {
 									+ '</td>';
 							content += '</tr>';
 						}
-						
+
 						content += '</tbody></table>';
 
 						var today = new Date();

@@ -26,12 +26,12 @@
 // Reset.
 // Based on meyerweb.com/eric/tools/css/reset (v2.0 | 20110126 | License: public domain)
 
-	html, body, div, span, applet, object,
+	html, body, div, span, object,
 	iframe, h1, h2, h3, h4, h5, h6, p, blockquote,
-	pre, a, abbr, acronym, address, big, cite,
+	pre, a, abbr, address, cite,
 	code, del, dfn, em, img, ins, kbd, q, s, samp,
-	small, strike, strong, sub, sup, tt, var, b,
-	u, i, center, dl, dt, dd, ol, ul, li, fieldset,
+	small, strong, sub, sup, var, b,
+	u, i, dl, dt, dd, ol, ul, li, fieldset,
 	form, label, legend, table, caption, tbody,
 	tfoot, thead, tr, th, td, article, aside,
 	canvas, details, embed, figure, figcaption,
@@ -278,9 +278,9 @@
 			margin: 0 0 1em 0;
 		}
 
-		input[type="text"],
-		input[type="email"],
-		input[type="password"],
+		input[type='text'],
+		input[type='email'],
+		input[type='password'],
 		select,
 		textarea {
 			-webkit-appearance: none;
@@ -295,9 +295,9 @@
 			}
 		}
 
-		input[type="text"],
-		input[type="email"],
-		input[type="password"],
+		input[type='text'],
+		input[type='email'],
+		input[type='password'],
 		select {
 			line-height: 1.35em;
 		}
@@ -382,9 +382,9 @@
 
 /* Button */
 
-	input[type="button"],
-	input[type="submit"],
-	input[type="reset"],
+	input[type='button'],
+	input[type='submit'],
+	input[type='reset'],
 	button,
 	.button {
 		@include vendor('transition', 'background-color .25s ease-in-out');
