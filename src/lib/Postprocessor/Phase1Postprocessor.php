@@ -28,7 +28,7 @@ use pgb_liv\crowdsource\Core\FragmentIon;
 
 /**
  * Logic for performing result generation and database clean up after a job is complete
- *
+ * @todo This class needs refactoring to independent classes for each output type
  * @author Andrew Collins
  */
 class Phase1Postprocessor
@@ -112,7 +112,7 @@ class Phase1Postprocessor
         $this->adodb->Execute('UPDATE `job_queue` SET `state` = "COMPLETE" WHERE `id` = ' . $this->jobId);
     }
 
-    private function writeMzIdentMl()
+    private function initialiseMzIdentML(MzIdentMlWriter $mzIdentMl)
     {
         $jobRecord = $this->adodb->GetRow(
             'SELECT `f`.`id`, `raw_file`, `database_file`, `precursor_tolerance`, `precursor_tolerance_unit`, `fragment_tolerance`, `fragment_tolerance_unit`, `f`.`enzyme`, `miss_cleave_max` FROM `job_queue` `jq` LEFT JOIN `fasta` `f` ON `database_hash` = `hash` && `jq`.`enzyme` = `f`.`enzyme` WHERE `jq`.`id` = ' .
@@ -121,10 +121,7 @@ class Phase1Postprocessor
         $targetSequenceCount = $this->adodb->GetOne(
             'SELECT COUNT(*) FROM `fasta_proteins` WHERE `fasta` = ' . $jobRecord['id']);
         $creationDate = filemtime($jobRecord['database_file']);
-
-        $path = DATA_PATH . '/' . $this->jobId . '/results/results.mzid';
-
-        $mzIdentMl = new MzIdentMlWriter($path);
+        
         $mzIdentMl->addCv('UNIMOD Modifications ontology', null, 'http://www.unimod.org/obo/unimod.obo', 'UNIMOD');
 
         $mzIdentMl->addSoftware('CS', 'CrowdSourcing', '1.0');
@@ -188,6 +185,8 @@ class Phase1Postprocessor
         $precursorRecords = $this->adodb->Execute('SELECT * FROM `raw_ms1` WHERE `job` = ' . $this->jobId);
 
         $precursorIons = array();
+        $proteinMap = array();
+        
         foreach ($precursorRecords as $precursorRecord) {
             $precursorIon = new PrecursorIon();
             $precursorIon->setIdentifier($precursorRecord['id']);
@@ -217,24 +216,31 @@ WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id
                     $fastaId . ' AND `peptide` = ' . $psmRecord['peptide']);
 
                 foreach ($proteinRecords as $proteinRecord) {
-                    // TODO: Memory can be reduced here if needed
-                    $protein = new Protein();
                     $uid = '';
-
-                    $protein->setDescription($proteinRecord['description']);
-                    $protein->setSequence($proteinRecord['sequence']);
-
                     if ($peptide->isDecoy()) {
-                        $uid = 'DECOY_';
-                        $protein->reverseSequence();
+                        $uid .= 'DECOY_';
                     }
-
+                    
                     $uid .= $proteinRecord['identifier'];
-                    $protein->setUniqueIdentifier($uid);
-                    $protein->setAccession($uid);
-
-                    $peptide->addProtein($protein, $proteinRecord['position_start'] + 1,
-                        $proteinRecord['position_start'] + $peptide->getLength() + 1);
+                    
+                    if (! isset($proteinMap[$uid])) {
+                        $protein = new Protein();
+                        $protein->setDescription($proteinRecord['description']);
+                        $protein->setSequence($proteinRecord['sequence']);
+                        
+                        if ($peptide->isDecoy()) {
+                            $protein->reverseSequence();
+                        }
+                        
+                        $protein->setUniqueIdentifier($uid);
+                        $protein->setAccession($uid);
+                        
+                        $proteinMap[$uid] = $protein;
+                    }
+                    
+                    $protein = $proteinMap[$uid];
+                    
+                    $peptide->addProtein($protein, $proteinRecord['position_start'] + 1, $proteinRecord['position_start'] + $peptide->getLength() + 1);
                 }
 
                 $ptmRecords = $this->adodb->GetAll(
@@ -281,9 +287,21 @@ WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id
 
             $precursorIons[] = $precursorIon;
         }
+        
+        return $precursorIons;
+    }
 
+    private function writeMzIdentMl()
+    {
+        echo '[' . date('r') . '] Writing mzIdentML....' . PHP_EOL;
+        $path = DATA_PATH . '/' . $this->jobId . '/results/results.mzid';
+        $mzIdentMl = new MzIdentMlWriter($path);
+        $precursorIons = $this->initialiseMzIdentML($mzIdentMl);
+        
+        echo '[' . date('r') . '] Data prepared.' . PHP_EOL;
         $mzIdentMl->addIdentifiedPrecursors($precursorIons);
-
+        
+        echo '[' . date('r') . '] MzIdentML written.' . PHP_EOL;
         $mzIdentMl->close();
     }
 
@@ -415,10 +433,13 @@ WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id
             fwrite($fileHandle, $identification->getIonsMatched());
             fwrite($fileHandle, PHP_EOL);
         }
+        
+        echo '[' . date('r') . '] CSV written.' . PHP_EOL;
     }
 
     private function writeMgf()
     {
+        echo '[' . date('r') . '] Writing MGF.' . PHP_EOL;
         $mgfWriter = new MgfWriter(DATA_PATH . '/' . $this->jobId . '/results/processed.mgf');
 
         $precursorRecords = $this->adodb->Execute('SELECT * FROM `raw_ms1` WHERE `job` = ' . $this->jobId);
@@ -445,10 +466,12 @@ WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id
         }
 
         $mgfWriter->close();
+        echo '[' . date('r') . '] MzIdentML written.' . PHP_EOL;
     }
 
     private function writeStats()
     {
+        echo '[' . date('r') . '] Writing stats.' . PHP_EOL;
         // Write users
         $data = $this->adodb->GetAll(
             'SELECT `ip`,  COUNT(*) AS `workunits`, SUM(`sent`) AS `bytes_sent`, AVG(`sent`) AS `bytes_sent_avg`, SUM(`received`) AS `bytes_received`, AVG(`received`) AS `bytes_received_avg`, SUM(`cpu`) AS `cpu_total`, MAX(`cpu`) AS `cpu_max`, MIN(`cpu`) AS `cpu_min` FROM `analytic_meta` WHERE `job` = ' .
@@ -470,5 +493,6 @@ WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id
             $this->jobId . ' GROUP BY `precursor` ');
         $json = json_encode($data, JSON_PRETTY_PRINT);
         file_put_contents(DATA_PATH . '/' . $this->jobId . '/results/precursor.json', $json);
+        echo '[' . date('r') . '] MzIdentML stats.' . PHP_EOL;
     }
 }
