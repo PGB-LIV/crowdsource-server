@@ -23,6 +23,7 @@ use pgb_liv\crowdsource\Core\Modification;
 
 error_reporting(E_ALL);
 ini_set('display_errors', true);
+ini_set('memory_limit', '4G');
 
 chdir(__DIR__);
 
@@ -37,14 +38,15 @@ $mzidPath = DATA_PATH . '/' . $jobId . '/results/results.mzid';
 echo 'Reading ' . $mzidPath . PHP_EOL;
 $reader = new MzIdentMlReader1r2($mzidPath);
 
-$dataCollection = $reader->getDataCollection();
-$database = DATA_PATH . '/databases/curated/' . $dataCollection['inputs']['SearchDatabase']['SDB_0']['location'];
+$inputs = $reader->getInputs();
+$database = DATA_PATH . '/databases/curated/' . $inputs['SearchDatabase']['SDB_0']['location'];
 $tmp = scandir(DATA_PATH . '/' . $jobId);
 foreach ($tmp as $input) {
     if (substr($input, - 3) == 'mgf') {
         $spectra = DATA_PATH . '/' . $jobId . '/' . $input;
     }
 }
+echo 'Selecting ' . $spectra . PHP_EOL;
 
 $benchmarkPath = DATA_PATH . '/' . $jobId . '/benchmark';
 if (! file_exists($benchmarkPath)) {
@@ -56,7 +58,6 @@ copy($database, $tmp);
 $database = $tmp;
 
 echo 'Selecting ' . $database . PHP_EOL;
-echo 'Selecting ' . $spectra . PHP_EOL;
 
 // MS-GF+
 
@@ -215,17 +216,18 @@ echo 'Done ' . PHP_EOL;
 $benchmark = array();
 
 $mzidPath = DATA_PATH . '/' . $jobId . '/results/results.mzid';
-$reader = new MzIdentMlReader1r2($mzidPath);
-$data = $reader->getAnalysisData();
 $identifications = array();
+echo 'Reading ' . $mzidPath . PHP_EOL;
+$reader = new MzIdentMlReader1r2($mzidPath);
+$reader->setRankFilter(1);
+$data = $reader->getAnalysisData();
 foreach ($data as $spectra) {
     foreach ($spectra->getIdentifications() as $identification) {
-        if ($identification->getRank() == 1) {
-            $identifications[] = $identification;
-        }
+        $identifications[] = $identification;
     }
 }
 
+echo 'Calculating FDR ' . PHP_EOL;
 $fdr = new FalseDiscoveryRate($identifications, 'MS:1002352');
 
 $benchmark['Dracula'] = array(
@@ -235,16 +237,18 @@ $benchmark['Dracula'] = array(
 );
 
 $mzidPath = DATA_PATH . '/' . $jobId . '/benchmark/msgf.mzid';
-$reader = new MzIdentMlReader1r2($mzidPath);
-$data = $reader->getAnalysisData();
 $identifications = array();
+echo 'Reading ' . $mzidPath . PHP_EOL;
+$reader = new MzIdentMlReader1r2($mzidPath);
+$reader->setRankFilter(1);
+$data = $reader->getAnalysisData();
 foreach ($data as $spectra) {
     foreach ($spectra->getIdentifications() as $identification) {
-        if ($identification->getRank() == 1) {
-            $identifications[] = $identification;
-        }
+        $identifications[] = $identification;
     }
 }
+
+echo 'Calculating FDR ' . PHP_EOL;
 $fdr = new FalseDiscoveryRate($identifications, 'MS:1002053', SORT_ASC);
 
 $benchmark['MS-GF+'] = array(
@@ -254,17 +258,18 @@ $benchmark['MS-GF+'] = array(
 );
 
 $mzidPath = DATA_PATH . '/' . $jobId . '/benchmark/msamanda.mzid';
-$reader = new MzIdentMlReader1r2($mzidPath);
-$data = $reader->getAnalysisData();
 $identifications = array();
+echo 'Reading ' . $mzidPath . PHP_EOL;
+$reader = new MzIdentMlReader1r2($mzidPath);
+$reader->setRankFilter(1);
+$data = $reader->getAnalysisData();
 foreach ($data as $spectra) {
     foreach ($spectra->getIdentifications() as $identification) {
-        if ($identification->getRank() == 1) {
-            $identifications[] = $identification;
-        }
+        $identifications[] = $identification;
     }
 }
 
+echo 'Calculating FDR ' . PHP_EOL;
 $fdr = new FalseDiscoveryRate($identifications, 'MS:1002319');
 
 $benchmark['MSAmanda'] = array(
