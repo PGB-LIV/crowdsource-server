@@ -64,11 +64,12 @@ foreach ($_POST['variable'] as $variableMod) {
         case 'oxidation':
             $adodb->Execute('INSERT INTO `job_variable_mod` (`job`, `mod_id`, `acid`) VALUES (' . $jobId . ', 35, "M")');
             break;
-        case 'acetylation':
-            $adodb->Execute('INSERT INTO `job_variable_mod` (`job`, `mod_id`, `acid`) VALUES (' . $jobId . ', 1, "[")');
+        case 'deamidation':
+            $adodb->Execute('INSERT INTO `job_variable_mod` (`job`, `mod_id`, `acid`) VALUES (' . $jobId . ', 7, "N")');
+            $adodb->Execute('INSERT INTO `job_variable_mod` (`job`, `mod_id`, `acid`) VALUES (' . $jobId . ', 7, "Q")');
             break;
-        case 'methylation':
-            $adodb->Execute('INSERT INTO `job_variable_mod` (`job`, `mod_id`, `acid`) VALUES (' . $jobId . ', 34, "]")');
+        default:
+            // Unknown mod?
             break;
     }
 }

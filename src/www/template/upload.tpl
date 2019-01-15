@@ -61,10 +61,7 @@
                     <select name="variable[]" multiple="multiple">
                         <option value="phospho">Phospho (STY)</option>
                         <option value="oxidation">Oxidation (M)</option>
-                        <option value="acetylation">Acetylation
-                            ([)</option>
-                        <option value="methylation">Methylation
-                            (])</option>
+                        <option value="deamidation">Deamidation (NQ)</option>
                     </select>
                 </div>
                 <div class="col-12">

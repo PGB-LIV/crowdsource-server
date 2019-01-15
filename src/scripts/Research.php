@@ -32,7 +32,13 @@ require_once '../conf/autoload.php';
 require_once '../conf/adodb.php';
 require_once '../vendor/autoload.php';
 
-$jobId = 2;
+$jobId = 1;
+
+if (isset($argv[1]))
+{
+    $jobId = $argv[1];
+}
+
 $mzidPath = DATA_PATH . '/' . $jobId . '/results/results.mzid';
 
 echo 'Reading ' . $mzidPath . PHP_EOL;
@@ -120,13 +126,14 @@ foreach ($modifications as $modification) {
     $msgfConf->addModification($modification);
 }
 
-$msGf = new MsgfPlusSearch('/mnt/nas/_CLUSTER_SOFTWARE/ms-gf+/current/MSGFPlus.jar');
+$msGf = new MsgfPlusSearch('/mnt/nas/_CLUSTER_SOFTWARE/ms-gf+/2018.10.15/MSGFPlus.jar');
 
 echo 'Running MS-GF+... ';
 if (!file_exists(DATA_PATH . '/' . $jobId . '/benchmark/msgf.mzid'))
 {
     $msGf->search($msgfConf);
 }
+
 echo 'Done ' . PHP_EOL;
 
 $settings = $benchmarkPath . '/msamanda.xml';
@@ -140,9 +147,6 @@ $settingsData = '<?xml version="1.0" encoding="UTF-8"?>
 ';
 
 foreach ($modifications as $modification) {
-    if ($modification->getName() == 'Methyl') {
-        continue;
-    }
     $settingsData .= '<modification';
 
     if ($modification->isFixed()) {
