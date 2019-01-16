@@ -282,6 +282,29 @@ $benchmark['MSAmanda'] = array(
     '1' => count($identifications)
 );
 
+$mzidPath = DATA_PATH . '/' . $jobId . '/benchmark/peptides_1_1_0.mzid';
+if (file_exists($mzidPath))
+{
+    $identifications = array();
+    echo 'Reading ' . $mzidPath . PHP_EOL;
+    $reader = new MzIdentMlReader1r2($mzidPath);
+    $reader->setRankFilter(1);
+    $data = $reader->getAnalysisData();
+    foreach ($data as $spectra) {
+        foreach ($spectra->getIdentifications() as $identification) {
+            $identifications[] = $identification;
+        }
+    }
+    
+    echo 'Calculating FDR ' . PHP_EOL;
+    $fdr = new FalseDiscoveryRate($identifications, 'MS:1001950');
+    
+    $benchmark['Peaks'] = array(
+        '0.01' => $fdr->getMatches(0.01),
+        '0.05' => $fdr->getMatches(0.05),
+        '1' => count($identifications)
+    );
+}
 echo str_pad('SearchEngine', 15, ' ', STR_PAD_RIGHT) . "1%\t5%\tTotal" . PHP_EOL;
 
 foreach ($benchmark as $searchEngine => $results) {

@@ -307,6 +307,8 @@ WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id
 
     private function writeCsv()
     {
+        echo '[' . date('r') . '] Writing CSV.' . PHP_EOL;
+        
         $jobRecord = $this->adodb->GetRow(
             'SELECT `f`.`id`, `raw_file` FROM `job_queue` `jq` LEFT JOIN `fasta` `f` ON `database_hash` = `hash` && `jq`.`enzyme` = `f`.`enzyme` WHERE `jq`.`id` = ' .
             $this->jobId);
@@ -493,6 +495,6 @@ WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id
             $this->jobId . ' GROUP BY `precursor` ');
         $json = json_encode($data, JSON_PRETTY_PRINT);
         file_put_contents(DATA_PATH . '/' . $this->jobId . '/results/precursor.json', $json);
-        echo '[' . date('r') . '] MzIdentML stats.' . PHP_EOL;
+        echo '[' . date('r') . '] Stats written.' . PHP_EOL;
     }
 }
