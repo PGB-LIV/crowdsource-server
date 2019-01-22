@@ -1,5 +1,6 @@
 <?php
 use pgb_liv\php_ms\Reader\MzIdentMlReader1r2;
+use pgb_liv\php_ms\Reader\HupoPsi\PsiVerb;
 use pgb_liv\php_ms\Search\Parameters\MsgfPlusSearchParameters;
 use pgb_liv\php_ms\Search\MsgfPlusSearch;
 use pgb_liv\php_ms\Statistic\FalseDiscoveryRate;
@@ -23,7 +24,7 @@ use pgb_liv\crowdsource\Core\Modification;
 
 error_reporting(E_ALL);
 ini_set('display_errors', true);
-ini_set('memory_limit', '4G');
+ini_set('memory_limit', '8G');
 
 chdir(__DIR__);
 
@@ -32,10 +33,126 @@ require_once '../conf/autoload.php';
 require_once '../conf/adodb.php';
 require_once '../vendor/autoload.php';
 
+function getInputs(MzIdentMlReader1r2 $reader, array &$benchmark)
+{
+    $inputs = $reader->getInputs();
+
+    $benchmark['database'] = '';
+    foreach ($inputs['SearchDatabase'] as $database) {
+        $benchmark['database'] .= basename($database['location']) . '<br />';
+    }
+
+    $benchmark['spectra'] = '';
+    foreach ($inputs['SpectraData'] as $spectra) {
+        $benchmark['spectra'] .= basename($spectra['location']) . '<br />';
+    }
+}
+
+function getProtocol(MzIdentMlReader1r2 $reader, array &$benchmark)
+{
+    $protocolCollection = $reader->getAnalysisProtocolCollection();
+
+    foreach ($protocolCollection['spectrum'] as $protocol) {
+        $benchmark['name'] = $protocol['software']['name'];
+        $benchmark['version'] = $protocol['software']['version'];
+
+        if (isset($protocol['software']['version'])) {
+            $benchmark['version'] = $protocol['software']['version'];
+        }
+
+        if (isset($protocol['fragmentTolerance']) || isset($protocol['parentTolerance'])) {
+            if (isset($protocol['fragmentTolerance'])) {
+                foreach ($protocol['fragmentTolerance'] as $tolerance) {
+                    $benchmark['fragTol'] = $tolerance->getTolerance() . ' ' . $tolerance->getUnit();
+                }
+            }
+
+            if (isset($protocol['parentTolerance'])) {
+                foreach ($protocol['parentTolerance'] as $tolerance) {
+                    $benchmark['precTol'] = $tolerance->getTolerance() . ' ' . $tolerance->getUnit();
+                }
+            }
+        }
+
+        if (isset($protocol['enzymes'])) {
+            foreach ($protocol['enzymes'] as $enzyme) {
+                if (isset($enzyme['EnzymeName']['name'])) {
+                    $name = $enzyme['EnzymeName']['name'];
+                } else {
+                    $name = $enzyme['id'];
+                }
+
+                $benchmark['enzyme'] = $name;
+                $benchmark['missedCleavages'] = $enzyme['missedCleavages'];
+            }
+        }
+
+        if (isset($protocol['modifications'])) {
+            $benchmark['mods'] = '';
+
+            foreach ($protocol['modifications'] as $modification) {
+                $benchmark['mods'] .= '[' . ($modification->isFixed() ? 'F' : 'V') . '] ' . $modification->getName() .
+                    ' (' . implode(',', $modification->getResidues());
+
+                if ($modification->getPosition() != Modification::POSITION_ANY) {
+                    $benchmark['mods'] .= '@' . $modification->getPosition();
+                }
+
+                $benchmark['mods'] .= ') ' . $modification->getMonoisotopicMass() . ' ' . '<br />';
+            }
+        }
+    }
+
+    if (isset($protocolCollection['protein'])) {
+        $protocol = $protocolCollection['protein'];
+
+        $benchmark['threshold'] = '';
+        foreach ($protocol['threshold'] as $threshold) {
+            $benchmark['threshold'] .= $threshold[PsiVerb::CV_ACCESSION] . ': ' . $threshold['name'];
+        }
+    }
+}
+
+function getBenchmark($mzidPath, $scoreKey, $sort = SORT_DESC)
+{
+    $identifications = array();
+    $benchmark = array();
+
+    $reader = new MzIdentMlReader1r2($mzidPath);
+    $reader->setRankFilter(1);
+
+    getInputs($reader, $benchmark);
+    getProtocol($reader, $benchmark);
+
+    $data = $reader->getAnalysisData();
+    foreach ($data as $spectra) {
+        foreach ($spectra->getIdentifications() as $identification) {
+            if (isset($identifications[$spectra->getIdentifier()])) {
+                $oldId = $identifications[$spectra->getIdentifier()];
+
+                if ($oldId->getScore($scoreKey) > $identification->getScore($scoreKey) && $sort == SORT_DESC) {
+                    continue;
+                }
+            }
+
+            $identifications[] = $identification;
+        }
+    }
+
+    $data = null;
+
+    $fdr = new FalseDiscoveryRate($identifications, $scoreKey, $sort);
+
+    $benchmark['0.01'] = $fdr->getMatches(0.01);
+    $benchmark['0.05'] = $fdr->getMatches(0.05);
+    $benchmark['1'] = count($identifications);
+
+    return $benchmark;
+}
+
 $jobId = 1;
 
-if (isset($argv[1]))
-{
+if (isset($argv[1])) {
     $jobId = $argv[1];
 }
 
@@ -46,6 +163,8 @@ $reader = new MzIdentMlReader1r2($mzidPath);
 
 $inputs = $reader->getInputs();
 $database = DATA_PATH . '/databases/curated/' . $inputs['SearchDatabase']['SDB_0']['location'];
+
+unset($inputs);
 $tmp = scandir(DATA_PATH . '/' . $jobId);
 foreach ($tmp as $input) {
     if (substr($input, - 3) == 'mgf') {
@@ -59,13 +178,12 @@ if (! file_exists($benchmarkPath)) {
     mkdir($benchmarkPath);
 }
 
+echo 'Copying ' . $database . PHP_EOL;
 $tmp = $benchmarkPath . '/' . basename($database);
 copy($database, $tmp);
 $database = $tmp;
 
 echo 'Selecting ' . $database . PHP_EOL;
-
-// MS-GF+
 
 $protocolCollection = $reader->getAnalysisProtocolCollection();
 
@@ -105,6 +223,10 @@ for ($modId = 0; $modId < count($modifications); $modId ++) {
     }
 }
 
+unset($protocolCollection);
+unset($reader);
+
+// MS-GF+
 $msgfConf = new MsgfPlusSearchParameters();
 $msgfConf->setDatabases($database);
 $msgfConf->setSpectraPath($spectra);
@@ -129,8 +251,7 @@ foreach ($modifications as $modification) {
 $msGf = new MsgfPlusSearch('/mnt/nas/_CLUSTER_SOFTWARE/ms-gf+/2018.10.15/MSGFPlus.jar');
 
 echo 'Running MS-GF+... ';
-if (!file_exists(DATA_PATH . '/' . $jobId . '/benchmark/msgf.mzid'))
-{
+if (! file_exists($benchmarkPath . '/msgf.mzid')) {
     $msGf->search($msgfConf);
 }
 
@@ -187,11 +308,11 @@ $settingsData .= '</modifications>
 <MinimumPepLength>6</MinimumPepLength>
 </search_settings>
 <basic_settings>
-<instruments_file>/mnt/nas/_CLUSTER_SOFTWARE/MSAmanda/2.0.0.11219/Instruments.xml</instruments_file>
-<unimod_file>/mnt/nas/_CLUSTER_SOFTWARE/MSAmanda/2.0.0.11219/unimod.xml</unimod_file>
-<enzyme_file>/mnt/nas/_CLUSTER_SOFTWARE/MSAmanda/2.0.0.11219/enzymes.xml</enzyme_file>
-<unimod_obo_file>/mnt/nas/_CLUSTER_SOFTWARE/MSAmanda/2.0.0.11219/unimod.obo</unimod_obo_file>
-<psims_obo_file>/mnt/nas/_CLUSTER_SOFTWARE/MSAmanda/2.0.0.11219/psi-ms.obo</psims_obo_file>
+<instruments_file>Instruments.xml</instruments_file>
+<unimod_file>unimod.xml</unimod_file>
+<enzyme_file>enzymes.xml</enzyme_file>
+<unimod_obo_file>unimod.obo</unimod_obo_file>
+<psims_obo_file>psi-ms.obo</psims_obo_file>
 <monoisotopic>true</monoisotopic>
 <considered_charges>1+,2+,3+,4+,5+,6+,7+</considered_charges>
 <LoadedProteinsAtOnce>100000</LoadedProteinsAtOnce>
@@ -203,110 +324,42 @@ $settingsData .= '</modifications>
 file_put_contents($settings, $settingsData);
 
 // MSAmanda
-$cmd = 'mono /mnt/nas/_CLUSTER_SOFTWARE/MSAmanda/2.0.0.11219/MSAmanda.exe -s "' . $spectra . '" -d "' . $database .
-    '" -e "' . $settings . '" -f 2 -o "' . $benchmarkPath . '/msamanda.mzid"';
+$cmd = 'ssh server1 "cd /mnt/software/MSAmanda/2.0.0.11219/;mono MSAmanda.exe -s \"' . $spectra . '\" -d \"' . $database .
+    '\" -e \"' . $settings . '\" -f 2 -o \"' . $benchmarkPath . '/msamanda.mzid\""';
 echo $cmd . PHP_EOL;
 
 echo 'Running MSAmanda+... ';
-if (!file_exists(DATA_PATH . '/' . $jobId . '/benchmark/msamanda.mzid'))
-{
+if (! file_exists($benchmarkPath . '/msamanda.mzid')) {
+    $cwd = getcwd();
+    chdir('/mnt/nas/_CLUSTER_SOFTWARE/MSAmanda/2.0.0.11219/');
     echo `$cmd`;
+    chdir($cwd);
 }
+
 echo 'Done ' . PHP_EOL;
 
+echo 'Calculating FDR' . PHP_EOL;
 /*
  * FDR
  */
 $benchmark = array();
+echo 'Calculating Dracula' . PHP_EOL;
+$benchmark[] = getBenchmark(DATA_PATH . '/' . $jobId . '/results/results.mzid', 'MS:1002352');
+echo 'Calculating MS-GF+' . PHP_EOL;
+$benchmark[] = getBenchmark($benchmarkPath . '/msgf.mzid', 'MS:1002053', SORT_ASC);
+echo 'Calculating MSAmanda' . PHP_EOL;
+$benchmark[] = getBenchmark($benchmarkPath . '/msamanda.mzid', 'MS:1002319');
 
-$mzidPath = DATA_PATH . '/' . $jobId . '/results/results.mzid';
-$identifications = array();
-echo 'Reading ' . $mzidPath . PHP_EOL;
-$reader = new MzIdentMlReader1r2($mzidPath);
-$reader->setRankFilter(1);
-$data = $reader->getAnalysisData();
-foreach ($data as $spectra) {
-    foreach ($spectra->getIdentifications() as $identification) {
-        $identifications[] = $identification;
-    }
+if (file_exists($benchmarkPath . '/peptides_1_1_0.mzid')) {
+    echo 'Calculating Peaks' . PHP_EOL;
+    $benchmark[] = getBenchmark($benchmarkPath . '/peptides_1_1_0.mzid', 'MS:1001950');
 }
 
-echo 'Calculating FDR ' . PHP_EOL;
-$fdr = new FalseDiscoveryRate($identifications, 'MS:1002352');
+file_put_contents($benchmarkPath . '/benchmarks.json', json_encode($benchmark));
 
-$benchmark['Dracula'] = array(
-    '0.01' => $fdr->getMatches(0.01),
-    '0.05' => $fdr->getMatches(0.05),
-    '1' => count($identifications)
-);
-
-$mzidPath = DATA_PATH . '/' . $jobId . '/benchmark/msgf.mzid';
-$identifications = array();
-echo 'Reading ' . $mzidPath . PHP_EOL;
-$reader = new MzIdentMlReader1r2($mzidPath);
-$reader->setRankFilter(1);
-$data = $reader->getAnalysisData();
-foreach ($data as $spectra) {
-    foreach ($spectra->getIdentifications() as $identification) {
-        $identifications[] = $identification;
-    }
-}
-
-echo 'Calculating FDR ' . PHP_EOL;
-$fdr = new FalseDiscoveryRate($identifications, 'MS:1002053', SORT_ASC);
-
-$benchmark['MS-GF+'] = array(
-    '0.01' => $fdr->getMatches(0.01),
-    '0.05' => $fdr->getMatches(0.05),
-    '1' => count($identifications)
-);
-
-$mzidPath = DATA_PATH . '/' . $jobId . '/benchmark/msamanda.mzid';
-$identifications = array();
-echo 'Reading ' . $mzidPath . PHP_EOL;
-$reader = new MzIdentMlReader1r2($mzidPath);
-$reader->setRankFilter(1);
-$data = $reader->getAnalysisData();
-foreach ($data as $spectra) {
-    foreach ($spectra->getIdentifications() as $identification) {
-        $identifications[] = $identification;
-    }
-}
-
-echo 'Calculating FDR ' . PHP_EOL;
-$fdr = new FalseDiscoveryRate($identifications, 'MS:1002319');
-
-$benchmark['MSAmanda'] = array(
-    '0.01' => $fdr->getMatches(0.01),
-    '0.05' => $fdr->getMatches(0.05),
-    '1' => count($identifications)
-);
-
-$mzidPath = DATA_PATH . '/' . $jobId . '/benchmark/peptides_1_1_0.mzid';
-if (file_exists($mzidPath))
-{
-    $identifications = array();
-    echo 'Reading ' . $mzidPath . PHP_EOL;
-    $reader = new MzIdentMlReader1r2($mzidPath);
-    $reader->setRankFilter(1);
-    $data = $reader->getAnalysisData();
-    foreach ($data as $spectra) {
-        foreach ($spectra->getIdentifications() as $identification) {
-            $identifications[] = $identification;
-        }
-    }
-    
-    echo 'Calculating FDR ' . PHP_EOL;
-    $fdr = new FalseDiscoveryRate($identifications, 'MS:1001950');
-    
-    $benchmark['Peaks'] = array(
-        '0.01' => $fdr->getMatches(0.01),
-        '0.05' => $fdr->getMatches(0.05),
-        '1' => count($identifications)
-    );
-}
 echo str_pad('SearchEngine', 15, ' ', STR_PAD_RIGHT) . "1%\t5%\tTotal" . PHP_EOL;
 
 foreach ($benchmark as $searchEngine => $results) {
-    echo str_pad($searchEngine, 15, ' ', STR_PAD_RIGHT) . $results['0.01'] . "\t" . $results['0.05'] . "\t" . $results['1'] . PHP_EOL;
+    echo str_pad($searchEngine, 15, ' ', STR_PAD_RIGHT) . $results['0.01'] . "\t" . $results['0.05'] . "\t" .
+        $results['1'] . PHP_EOL;
 }
