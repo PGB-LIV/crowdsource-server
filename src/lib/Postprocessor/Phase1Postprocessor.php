@@ -124,7 +124,7 @@ class Phase1Postprocessor
         
         $mzIdentMl->addCv('UNIMOD Modifications ontology', null, 'http://www.unimod.org/obo/unimod.obo', 'UNIMOD');
 
-        $mzIdentMl->addSoftware('CS', 'CrowdSourcing', '1.0');
+        $mzIdentMl->addSoftware('DRAC', 'Dracula', '1.0');
         $mzIdentMl->addSearchData(basename($jobRecord['database_file']), $targetSequenceCount, $creationDate,
             $creationDate);
         $mzIdentMl->addDecoyData('DECOY_' . basename($jobRecord['database_file']));
