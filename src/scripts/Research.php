@@ -130,12 +130,36 @@ function getBenchmark($mzidPath, $scoreKey, $sort = SORT_DESC)
             if (isset($identifications[$spectra->getIdentifier()])) {
                 $oldId = $identifications[$spectra->getIdentifier()];
 
-                if ($oldId->getScore($scoreKey) > $identification->getScore($scoreKey) && $sort == SORT_DESC) {
+                if ($oldId->getScore($scoreKey) == $identification->getScore($scoreKey)) {
+                    $isDecoy = false;
+                    if ($oldId->getSequence()->isDecoy()) {
+                        $isDecoy = true;
+                    }
+
+                    foreach ($oldId->getSequence()->getProteins() as $proteinEntry) {
+                        $protein = $proteinEntry->getProtein();
+                        if ($protein->isDecoy()) {
+                            $isDecoy = true;
+                            break;
+                        }
+                    }
+
+                    // Old ID not a decoy. Keep it
+                    if (! $isDecoy) {
+                        continue;
+                    }
+                }
+
+                if ($sort == SORT_DESC && $oldId->getScore($scoreKey) > $identification->getScore($scoreKey)) {
+                    continue;
+                }
+
+                if ($sort == SORT_ASC && $oldId->getScore($scoreKey) < $identification->getScore($scoreKey)) {
                     continue;
                 }
             }
 
-            $identifications[] = $identification;
+            $identifications[$spectra->getIdentifier()] = $identification;
         }
     }
 
