@@ -28,6 +28,7 @@ use pgb_liv\crowdsource\Core\FragmentIon;
 
 /**
  * Logic for performing result generation and database clean up after a job is complete
+ *
  * @todo This class needs refactoring to independent classes for each output type
  * @author Andrew Collins
  */
@@ -121,7 +122,7 @@ class Phase1Postprocessor
         $targetSequenceCount = $this->adodb->GetOne(
             'SELECT COUNT(*) FROM `fasta_proteins` WHERE `fasta` = ' . $jobRecord['id']);
         $creationDate = filemtime($jobRecord['database_file']);
-        
+
         $mzIdentMl->addCv('UNIMOD Modifications ontology', null, 'http://www.unimod.org/obo/unimod.obo', 'UNIMOD');
 
         $mzIdentMl->addSoftware('DRAC', 'Dracula', '1.0');
@@ -186,7 +187,7 @@ class Phase1Postprocessor
 
         $precursorIons = array();
         $proteinMap = array();
-        
+
         foreach ($precursorRecords as $precursorRecord) {
             $precursorIon = new PrecursorIon();
             $precursorIon->setIdentifier($precursorRecord['id']);
@@ -197,13 +198,21 @@ class Phase1Postprocessor
 
             $psmRecords = $this->adodb->Execute(
                 'SELECT `w`.`precursor`, `w`.`peptide`, `w`.`score`, `p`.`peptide` AS `sequence`, `p`.`is_decoy` FROM `workunit1` `w` 
-LEFT JOIN `fasta_peptides` `p` ON `fasta` = ' . $fastaId . ' && `p`.`id` = `w`.`peptide` 
-WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id'] . ' ORDER BY `score` DESC LIMIT 0,' .
+LEFT JOIN `fasta_peptides` `p` ON `fasta` = ' . $fastaId .
+                ' && `p`.`id` = `w`.`peptide` 
+WHERE `w`.`job` = ' .
+                $this->jobId . ' && `precursor` = ' . $precursorRecord['id'] . ' ORDER BY `score` DESC LIMIT 0,' .
                 self::PSM_LIMIT);
 
-            $rank = 1;
+            $rank = 0;
+            $lastScore = - 1;
             foreach ($psmRecords as $psmRecord) {
                 $identification = new Identification();
+
+                if ($psmRecord['score'] != $lastScore) {
+                    $rank ++;
+                }
+
                 $identification->setRank($rank);
                 $identification->setScore('-10lgP', $psmRecord['score']);
 
@@ -220,27 +229,28 @@ WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id
                     if ($peptide->isDecoy()) {
                         $uid .= 'DECOY_';
                     }
-                    
+
                     $uid .= $proteinRecord['identifier'];
-                    
+
                     if (! isset($proteinMap[$uid])) {
                         $protein = new Protein();
                         $protein->setDescription($proteinRecord['description']);
                         $protein->setSequence($proteinRecord['sequence']);
-                        
+
                         if ($peptide->isDecoy()) {
                             $protein->reverseSequence();
                         }
-                        
+
                         $protein->setUniqueIdentifier($uid);
                         $protein->setAccession($uid);
-                        
+
                         $proteinMap[$uid] = $protein;
                     }
-                    
+
                     $protein = $proteinMap[$uid];
-                    
-                    $peptide->addProtein($protein, $proteinRecord['position_start'] + 1, $proteinRecord['position_start'] + $peptide->getLength() + 1);
+
+                    $peptide->addProtein($protein, $proteinRecord['position_start'] + 1,
+                        $proteinRecord['position_start'] + $peptide->getLength() + 1);
                 }
 
                 $ptmRecords = $this->adodb->GetAll(
@@ -277,8 +287,6 @@ WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id
 
                 $identification->setSequence($peptide);
                 $precursorIon->addIdentification($identification);
-
-                $rank ++;
             }
 
             if (count($precursorIon->getIdentifications()) == 0) {
@@ -287,7 +295,7 @@ WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id
 
             $precursorIons[] = $precursorIon;
         }
-        
+
         return $precursorIons;
     }
 
@@ -297,10 +305,10 @@ WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id
         $path = DATA_PATH . '/' . $this->jobId . '/results/results.mzid';
         $mzIdentMl = new MzIdentMlWriter($path);
         $precursorIons = $this->initialiseMzIdentML($mzIdentMl);
-        
+
         echo '[' . date('r') . '] Data prepared.' . PHP_EOL;
         $mzIdentMl->addIdentifiedPrecursors($precursorIons);
-        
+
         echo '[' . date('r') . '] MzIdentML written.' . PHP_EOL;
         $mzIdentMl->close();
     }
@@ -308,7 +316,7 @@ WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id
     private function writeCsv()
     {
         echo '[' . date('r') . '] Writing CSV.' . PHP_EOL;
-        
+
         $jobRecord = $this->adodb->GetRow(
             'SELECT `f`.`id`, `raw_file` FROM `job_queue` `jq` LEFT JOIN `fasta` `f` ON `database_hash` = `hash` && `jq`.`enzyme` = `f`.`enzyme` WHERE `jq`.`id` = ' .
             $this->jobId);
@@ -435,7 +443,7 @@ WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id
             fwrite($fileHandle, $identification->getIonsMatched());
             fwrite($fileHandle, PHP_EOL);
         }
-        
+
         echo '[' . date('r') . '] CSV written.' . PHP_EOL;
     }
 
