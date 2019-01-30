@@ -124,7 +124,7 @@ class Phase1Postprocessor
         
         $mzIdentMl->addCv('UNIMOD Modifications ontology', null, 'http://www.unimod.org/obo/unimod.obo', 'UNIMOD');
 
-        $mzIdentMl->addSoftware('DRAC', 'Dracula', '1.0');
+        $mzIdentMl->addSoftware('CS', 'CrowdSourcing', '1.0');
         $mzIdentMl->addSearchData(basename($jobRecord['database_file']), $targetSequenceCount, $creationDate,
             $creationDate);
         $mzIdentMl->addDecoyData('DECOY_' . basename($jobRecord['database_file']));
@@ -201,15 +201,9 @@ LEFT JOIN `fasta_peptides` `p` ON `fasta` = ' . $fastaId . ' && `p`.`id` = `w`.`
 WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id'] . ' ORDER BY `score` DESC LIMIT 0,' .
                 self::PSM_LIMIT);
 
-            $rank = 0;
-            $lastScore = - 1;
+            $rank = 1;
             foreach ($psmRecords as $psmRecord) {
                 $identification = new Identification();
-
-                if ($psmRecord['score'] != $lastScore) {
-                    $rank ++;
-                }
-
                 $identification->setRank($rank);
                 $identification->setScore('-10lgP', $psmRecord['score']);
 
@@ -283,6 +277,8 @@ WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id
 
                 $identification->setSequence($peptide);
                 $precursorIon->addIdentification($identification);
+
+                $rank ++;
             }
 
             if (count($precursorIon->getIdentifications()) == 0) {
