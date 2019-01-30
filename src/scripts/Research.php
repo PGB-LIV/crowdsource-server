@@ -113,9 +113,8 @@ function getProtocol(MzIdentMlReader1r2 $reader, array &$benchmark)
     }
 }
 
-function getBenchmark($mzidPath, $scoreKey, $sort = SORT_DESC)
+function getBenchmark($mzidPath, $scoreKey, array &$spectra2Ident, $sort = SORT_DESC)
 {
-    $identifications = array();
     $benchmark = array();
 
     $reader = new MzIdentMlReader1r2($mzidPath);
@@ -125,6 +124,9 @@ function getBenchmark($mzidPath, $scoreKey, $sort = SORT_DESC)
     getProtocol($reader, $benchmark);
 
     $data = $reader->getAnalysisData();
+    
+    $spectra2Ident = array();
+    $identifications = array();
     foreach ($data as $spectra) {
         foreach ($spectra->getIdentifications() as $identification) {
             if (isset($identifications[$spectra->getIdentifier()])) {
@@ -160,6 +162,7 @@ function getBenchmark($mzidPath, $scoreKey, $sort = SORT_DESC)
             }
 
             $identifications[$spectra->getIdentifier()] = $identification;
+            $spectra2Ident[$spectra->getTitle()] = $identification->getSequence()->getSequence();
         }
     }
 
@@ -367,19 +370,26 @@ echo 'Calculating FDR' . PHP_EOL;
  * FDR
  */
 $benchmark = array();
+$spectra2Id = array();
 echo 'Calculating Dracula' . PHP_EOL;
-$benchmark[] = getBenchmark(DATA_PATH . '/' . $jobId . '/results/results.mzid', 'MS:1002352');
+$benchmark[] = getBenchmark(DATA_PATH . '/' . $jobId . '/results/results.mzid', 'MS:1002352', $spectra2Id);
+file_put_contents($benchmarkPath . '/dracula.json', json_encode($spectra2Id, JSON_PRETTY_PRINT));
+
 echo 'Calculating MS-GF+' . PHP_EOL;
-$benchmark[] = getBenchmark($benchmarkPath . '/msgf.mzid', 'MS:1002053', SORT_ASC);
+$benchmark[] = getBenchmark($benchmarkPath . '/msgf.mzid', 'MS:1002053', $spectra2Id, SORT_ASC);
+file_put_contents($benchmarkPath . '/msgf.json', json_encode($spectra2Id, JSON_PRETTY_PRINT));
+
 echo 'Calculating MSAmanda' . PHP_EOL;
-$benchmark[] = getBenchmark($benchmarkPath . '/msamanda.mzid', 'MS:1002319');
+$benchmark[] = getBenchmark($benchmarkPath . '/msamanda.mzid', 'MS:1002319', $spectra2Id);
+file_put_contents($benchmarkPath . '/msamanda.json', json_encode($spectra2Id, JSON_PRETTY_PRINT));
 
 if (file_exists($benchmarkPath . '/peptides_1_1_0.mzid')) {
     echo 'Calculating Peaks' . PHP_EOL;
-    $benchmark[] = getBenchmark($benchmarkPath . '/peptides_1_1_0.mzid', 'MS:1001950');
+    $benchmark[] = getBenchmark($benchmarkPath . '/peptides_1_1_0.mzid', 'MS:1001950', $spectra2Id);
+    file_put_contents($benchmarkPath . '/peaks.json', json_encode($spectra2Id, JSON_PRETTY_PRINT));
 }
 
-file_put_contents($benchmarkPath . '/benchmarks.json', json_encode($benchmark));
+file_put_contents($benchmarkPath . '/benchmarks.json', json_encode($benchmark, JSON_PRETTY_PRINT));
 
 echo str_pad('SearchEngine', 15, ' ', STR_PAD_RIGHT) . "1%\t5%\tTotal" . PHP_EOL;
 
