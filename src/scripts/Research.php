@@ -5,6 +5,7 @@ use pgb_liv\php_ms\Search\Parameters\MsgfPlusSearchParameters;
 use pgb_liv\php_ms\Search\MsgfPlusSearch;
 use pgb_liv\php_ms\Statistic\FalseDiscoveryRate;
 use pgb_liv\crowdsource\Core\Modification;
+use pgb_liv\php_ms\Core\Peptide;
 
 /**
  * Copyright 2018 University of Liverpool
@@ -32,6 +33,30 @@ require_once '../conf/config.php';
 require_once '../conf/autoload.php';
 require_once '../conf/adodb.php';
 require_once '../vendor/autoload.php';
+
+function Ident2String(Peptide $peptide)
+{
+    $mods = array();
+    foreach ($peptide->getModifications() as $modification) {
+        $mods[$modification->getLocation()] = $modification->getMonoisotopicMass();
+    }
+    
+    ksort($mods);
+    
+    $pepStr = $peptide->getSequence();
+    
+    $seqRet = '';
+    
+    for ($i = 0; $i < strlen($pepStr); $i ++) {
+        $seqRet .= $pepStr[$i];
+        
+        if (isset($mods[$i + 1])) {
+            $seqRet .= '[' . $mods[$i + 1] . ']';
+        }
+    }
+    
+    return $seqRet;
+}
 
 function getInputs(MzIdentMlReader1r2 $reader, array &$benchmark)
 {
@@ -162,7 +187,7 @@ function getBenchmark($mzidPath, $scoreKey, array &$spectra2Ident, $sort = SORT_
             }
 
             $identifications[$spectra->getIdentifier()] = $identification;
-            $spectra2Ident[$spectra->getTitle()] = $identification->getSequence()->getSequence();
+            $spectra2Ident[$spectra->getTitle()] = Ident2String($identification->getSequence());
         }
     }
 
@@ -374,6 +399,10 @@ $spectra2Id = array();
 echo 'Calculating Dracula' . PHP_EOL;
 $benchmark[] = getBenchmark(DATA_PATH . '/' . $jobId . '/results/results.mzid', 'MS:1002352', $spectra2Id);
 file_put_contents($benchmarkPath . '/dracula.json', json_encode($spectra2Id, JSON_PRETTY_PRINT));
+
+foreach ($benchmark as $searchEngine => $results) {
+    echo str_pad($searchEngine, 15, ' ', STR_PAD_RIGHT) . $results['0.01'] . "\t" . $results['0.05'] . "\t" . $results['1'] . PHP_EOL;
+}
 
 echo 'Calculating MS-GF+' . PHP_EOL;
 $benchmark[] = getBenchmark($benchmarkPath . '/msgf.mzid', 'MS:1002053', $spectra2Id, SORT_ASC);
