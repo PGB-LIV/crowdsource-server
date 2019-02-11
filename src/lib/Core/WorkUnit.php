@@ -44,6 +44,8 @@ class WorkUnit
 
     const JSON_PROCESS_TIME = 'processTime';
 
+    const JSON_CHARGE = 'z';
+
     private $uid;
 
     private $fixedModifications = array();
@@ -98,9 +100,26 @@ class WorkUnit
      */
     private $processTime;
 
+    /**
+     * Charge value
+     *
+     * @var int
+     */
+    private $charge;
+
     public function __construct($uid)
     {
         $this->setUid($uid);
+    }
+
+    public function setCharge($charge)
+    {
+        $this->charge = (int) $charge;
+    }
+
+    public function getCharge()
+    {
+        return $this->charge;
     }
 
     public function addFixedModification(Modification $modification)
@@ -241,6 +260,8 @@ class WorkUnit
         $data[WorkUnit::JSON_TOLERANCE_VALUE] = $this->getFragmentTolerance();
         $data[WorkUnit::JSON_TOLERANCE_UNIT] = $this->getFragmentToleranceUnit();
 
+        $data[WorkUnit::JSON_CHARGE] = $this->charge;
+        
         return json_encode($data);
     }
 

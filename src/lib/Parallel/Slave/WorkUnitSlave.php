@@ -70,6 +70,7 @@ class WorkUnitSlave extends AbstractSlave
 
         $precursor = $job['precursor'];
         $mass = $job['mass'];
+        $charge = $job['charge'];
 
         // Unmodified
         $peptides = $this->getPeptides($mass);
@@ -116,7 +117,7 @@ class WorkUnitSlave extends AbstractSlave
         }
 
         if (count($candidates) > 0) {
-            $this->createWorkUnits($precursor, $candidates);
+            $this->createWorkUnits($precursor, $candidates, $charge);
         }
     }
 
@@ -150,13 +151,14 @@ class WorkUnitSlave extends AbstractSlave
         return $mods;
     }
 
-    private function createWorkUnits($precursorId, array $candidates)
+    private function createWorkUnits($precursorId, array $candidates, $charge)
     {
         echo $precursorId . '-' . count($candidates) . PHP_EOL;
 
         $uid = $this->jobId . '-' . $precursorId;
 
         $workUnit = new WorkUnit($uid . '-0');
+        $workUnit->setCharge($charge);
 
         $fragmentIons = $this->getFragmentIons($precursorId);
 

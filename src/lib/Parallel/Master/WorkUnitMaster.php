@@ -52,13 +52,14 @@ class WorkUnitMaster extends AbstractMaster
     {
         $this->amqpChannel->queue_declare(self::WORKUNIT_QUEUE_NAME, false, false, false, false);
 
-        $recordSet = $this->adodb->Execute('SELECT `id`, `mass` FROM `raw_ms1` WHERE `job` = ' . $this->jobId);
+        $recordSet = $this->adodb->Execute('SELECT `id`, `mass`, `charge` FROM `raw_ms1` WHERE `job` = ' . $this->jobId);
 
         foreach ($recordSet as $record) {
             $object = array(
                 'job' => $this->jobId,
                 'precursor' => $record['id'],
-                'mass' => $record['mass']
+                'mass' => $record['mass'],
+                'charge' => $record['charge']
             );
 
             $package = json_encode($object);
