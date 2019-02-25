@@ -100,7 +100,7 @@ class ResultUnitSlave extends AbstractSlave
         }
 
         if ($this->bulkWorkUnit->isExecRequired() || $this->bulkLocation->isExecRequired() ||
-            array_sum($this->pendingIncrement) > 900) {
+            array_sum($this->pendingIncrement) > 100) {
             $this->flush();
         }
 

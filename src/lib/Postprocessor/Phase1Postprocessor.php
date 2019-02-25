@@ -100,12 +100,12 @@ class Phase1Postprocessor
 
     public function clean()
     {
-        $this->adodb->Execute('DELETE FROM `fasta_peptide_fixed` WHERE `job` = ' . $this->jobId);
-        $this->adodb->Execute('DELETE FROM `raw_ms1` WHERE `job` = ' . $this->jobId);
-        $this->adodb->Execute('DELETE FROM `raw_ms2` WHERE `job` = ' . $this->jobId);
-        $this->adodb->Execute('DELETE FROM `workunit1` WHERE `job` = ' . $this->jobId);
-        $this->adodb->Execute('DELETE FROM `workunit1_locations` WHERE `job` = ' . $this->jobId);
-        $this->adodb->Execute('DELETE FROM `analytic_meta` WHERE `job` = ' . $this->jobId);
+        $this->adodb->Execute('TRUNCATE `fasta_peptide_fixed`');
+        $this->adodb->Execute('TRUNCATE `raw_ms1`');
+        $this->adodb->Execute('TRUNCATE `raw_ms2`');
+        $this->adodb->Execute('TRUNCATE `workunit1`');
+        $this->adodb->Execute('TRUNCATE `workunit1_locations`');
+        $this->adodb->Execute('TRUNCATE `analytic_meta`');
     }
 
     public function finalise()
@@ -198,10 +198,8 @@ class Phase1Postprocessor
 
             $psmRecords = $this->adodb->Execute(
                 'SELECT `w`.`precursor`, `w`.`peptide`, `w`.`score`, `p`.`peptide` AS `sequence`, `p`.`is_decoy` FROM `workunit1` `w` 
-LEFT JOIN `fasta_peptides` `p` ON `fasta` = ' . $fastaId .
-                ' && `p`.`id` = `w`.`peptide` 
-WHERE `w`.`job` = ' .
-                $this->jobId . ' && `precursor` = ' . $precursorRecord['id'] . ' ORDER BY `score` DESC LIMIT 0,' .
+LEFT JOIN `fasta_peptides` `p` ON `fasta` = ' . $fastaId . ' && `p`.`id` = `w`.`peptide` 
+WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id'] . ' ORDER BY `score` DESC LIMIT 0,' .
                 self::PSM_LIMIT);
 
             $rank = 0;
@@ -221,7 +219,7 @@ WHERE `w`.`job` = ' .
                 $peptide->setIsDecoy($psmRecord['is_decoy'] == '1');
 
                 $proteinRecords = $this->adodb->GetAll(
-                    'SELECT DISTINCT `identifier`, `description`, `sequence`, `position_start` FROM `fasta_protein2peptide` `p2p` LEFT JOIN `fasta_proteins` `p` ON `p2p`.`protein` = `p`.`id` && `p2p`.`fasta` = `p`.`fasta` WHERE `p2p`.`fasta` = ' .
+                    'SELECT `identifier`, `description`, `sequence`, `position_start` FROM `fasta_protein2peptide` `p2p` LEFT JOIN `fasta_proteins` `p` ON `p2p`.`protein` = `p`.`id` && `p2p`.`fasta` = `p`.`fasta` WHERE `p2p`.`fasta` = ' .
                     $fastaId . ' AND `peptide` = ' . $psmRecord['peptide']);
 
                 foreach ($proteinRecords as $proteinRecord) {

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2018 University of Liverpool
+ * Copyright 2019 University of Liverpool
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,10 @@ abstract class AbstractMaster
 
     protected function spawnSlaves()
     {
-        $this->slavePids = array();
-        for ($i = 0; $i < self::MAX_SLAVES; $i ++) {
-            $pid = shell_exec('nohup php ' . $this->slaveScript . ' > /dev/null & echo $!');
-            $this->slavePids[] = trim($pid);
+        for ($i = count($this->slavePids); $i < self::MAX_SLAVES; $i ++) {
+            $pid = trim(shell_exec('nohup php ' . $this->slaveScript . ' > /dev/null & echo $!'));
+            echo 'Slave ' . $pid . ' spawned.' . PHP_EOL;
+            $this->slavePids[] = $pid;
         }
     }
 
@@ -53,6 +53,21 @@ abstract class AbstractMaster
     {
         foreach ($this->slavePids as $pid) {
             exec('kill -KILL ' . $pid);
+        }
+    }
+
+    protected function statSlaves()
+    {
+        foreach ($this->slavePids as $idx => $pid) {
+            $output = null;
+            $retValue = - 1;
+
+            exec('ps -p ' . $pid, $output, $retValue);
+
+            if ($retValue != 0) {
+                echo 'Slave ' . $pid . ' has terminated.' . PHP_EOL;
+                unset($this->slavePids[$idx]);
+            }
         }
     }
 
@@ -70,11 +85,14 @@ abstract class AbstractMaster
     {
         $this->initialise();
 
-        $this->spawnSlaves();
-
         do {
-            sleep(1);
-        } while (! $this->isFinished());
+            $this->statSlaves();
+            if (! $this->isFinished()) {
+                $this->spawnSlaves();
+            }
+
+            sleep(5);
+        } while (count($this->slavePids) > 0);
 
         $this->amqpChannel->close();
 
