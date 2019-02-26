@@ -59,9 +59,9 @@
                 </div>
                 <div class="col-6 col-12-medium">
                     <select name="variable[]" multiple="multiple">
-                        <option value="phospho">Phospho (STY)</option>
-                        <option value="oxidation">Oxidation (M)</option>
-                        <option value="deamidation">Deamidation (NQ)</option>
+                        <option value="7">Deamidation (NQ)</option>
+                        <option value="35">Oxidation (M)</option>
+                        <option value="21">Phospho (STY)</option>
                     </select>
                 </div>
                 <div class="col-12">

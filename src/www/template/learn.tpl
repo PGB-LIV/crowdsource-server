@@ -1,61 +1,58 @@
-<article id="learn" class="panel">
+<article id="about" class="panel">
     <header>
-        <h2>Learn</h2>
+        <h2>About Dracula</h2>
     </header>
-    <p>Phasellus enim sapien, blandit ullamcorper elementum eu,
-        condimentum eu elit. Vestibulum ante ipsum primis in faucibus
-        orci luctus et ultrices posuere cubilia luctus elit eget
-        interdum.</p>
-    <section>
-        <div class="row">
-            <div class="col-4 col-6-medium col-12-small">
-                <a href="#" class="image fit"><img
-                    src="images/pic01.jpg" alt=""></a>
-            </div>
-            <div class="col-4 col-6-medium col-12-small">
-                <a href="#" class="image fit"><img
-                    src="images/pic02.jpg" alt=""></a>
-            </div>
-            <div class="col-4 col-6-medium col-12-small">
-                <a href="#" class="image fit"><img
-                    src="images/pic03.jpg" alt=""></a>
-            </div>
-            <div class="col-4 col-6-medium col-12-small">
-                <a href="#" class="image fit"><img
-                    src="images/pic04.jpg" alt=""></a>
-            </div>
-            <div class="col-4 col-6-medium col-12-small">
-                <a href="#" class="image fit"><img
-                    src="images/pic05.jpg" alt=""></a>
-            </div>
-            <div class="col-4 col-6-medium col-12-small">
-                <a href="#" class="image fit"><img
-                    src="images/pic06.jpg" alt=""></a>
-            </div>
-            <div class="col-4 col-6-medium col-12-small">
-                <a href="#" class="image fit"><img
-                    src="images/pic07.jpg" alt=""></a>
-            </div>
-            <div class="col-4 col-6-medium col-12-small">
-                <a href="#" class="image fit"><img
-                    src="images/pic08.jpg" alt=""></a>
-            </div>
-            <div class="col-4 col-6-medium col-12-small">
-                <a href="#" class="image fit"><img
-                    src="images/pic09.jpg" alt=""></a>
-            </div>
-            <div class="col-4 col-6-medium col-12-small">
-                <a href="#" class="image fit"><img
-                    src="images/pic10.jpg" alt=""></a>
-            </div>
-            <div class="col-4 col-6-medium col-12-small">
-                <a href="#" class="image fit"><img
-                    src="images/pic11.jpg" alt=""></a>
-            </div>
-            <div class="col-4 col-6-medium col-12-small">
-                <a href="#" class="image fit"><img
-                    src="images/pic12.jpg" alt=""></a>
-            </div>
-        </div>
-    </section>
+    <p>Dracula is an Internet-based search engine for mass
+        spectrometry proteomics data that utilises computation from
+        volunteer nodes.</p>
+
+    <h3>Powering Dracula</h3>
+
+    <p>The dracula search engine is built using JavaScript
+        (ECMAScript 5) which is suitable for execution in common browers
+        (i.e. Firefox, Chrome, Internet Explorer, etc.) or in dedicated
+        headless engines (i.e. PhantomJS).</p>
+
+    <p>When data is uploaded to Dracula, it is partitioned into
+        smaller manageable chunks which are then distributed to clients
+        for analysis, and the results are then fed back to be
+        re-assembled into a complete result.</p>
+
+    <p>Computation time is received by clients executing the
+        JavaScript, either via accessing a web site which hosts the
+        JavaScript code, (i.e. this one), or via dedicated cluster nodes
+        execution the JavaScript in a headless manner.</p>
+
+    <h3>Joining Dracula</h3>
+
+    <p>There are two ways of joining the Dracula network, the first
+        is by hosting the JavaScript client on a web-site that you
+        control, Dracula requires jQuery and can be included as follows:</p>
+
+<hr />
+    <pre>&lt;script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"&gt;&lt;/script&gt;
+
+&lt;script src="http://pgb.liv.ac.uk:1260/script/DraculaSearch.js">&lt;/script&gt;</pre>
+<hr />
+
+    <p>For hosting Dracula on a dedicated cluster node, see the
+        GitHub page.</p>
+
+    <h3>Source code</h3>
+
+    <p>Dracula is written in PHP, JavaScript and C#, utilising
+        RabbitMQ and MySQL for data storage.</p>
+
+    <p>The source code for all components can be found in their
+        respective GitHub repositories:</p>
+
+    <ul>
+        <li>PHP data pre-processor/post-processor:</li>
+        <li>JavaScript client:</li>
+        <li>C# allocation server:</li>
+    </ul>
+
+    <h3>Citation</h3>
+
+    <p>Pending.</p>
 </article>

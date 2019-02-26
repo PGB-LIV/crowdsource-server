@@ -19,6 +19,8 @@ if (filesize($_FILES['rawFile']['tmp_name']) > 504857600) {
 $fields = array();
 $fields['database_file'] = DATA_PATH . '/databases/curated/' . $_POST['fasta'];
 $fields['raw_file'] = $_FILES['rawFile']['tmp_name'];
+$fields['name'] = $_POST['name'];
+$fields['email'] = $_POST['email'];
 $fields['enzyme'] = $_POST['enzyme'];
 $fields['miss_cleave_max'] = $_POST['missed_cleavages'];
 $fields['charge_min'] = 1;
@@ -56,15 +58,15 @@ foreach ($_POST['fixed'] as $fixedMod) {
 
 foreach ($_POST['variable'] as $variableMod) {
     switch ($variableMod) {
-        case 'phospho':
+        case '21':
             $adodb->Execute('INSERT INTO `job_variable_mod` (`job`, `mod_id`, `acid`) VALUES (' . $jobId . ', 21, "S")');
             $adodb->Execute('INSERT INTO `job_variable_mod` (`job`, `mod_id`, `acid`) VALUES (' . $jobId . ', 21, "T")');
             $adodb->Execute('INSERT INTO `job_variable_mod` (`job`, `mod_id`, `acid`) VALUES (' . $jobId . ', 21, "Y")');
             break;
-        case 'oxidation':
+        case '35':
             $adodb->Execute('INSERT INTO `job_variable_mod` (`job`, `mod_id`, `acid`) VALUES (' . $jobId . ', 35, "M")');
             break;
-        case 'deamidation':
+        case '7':
             $adodb->Execute('INSERT INTO `job_variable_mod` (`job`, `mod_id`, `acid`) VALUES (' . $jobId . ', 7, "N")');
             $adodb->Execute('INSERT INTO `job_variable_mod` (`job`, `mod_id`, `acid`) VALUES (' . $jobId . ', 7, "Q")');
             break;
