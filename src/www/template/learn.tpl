@@ -27,12 +27,10 @@
 
     <p>There are two ways of joining the Dracula network, the first
         is by hosting the JavaScript client on a web-site that you
-        control, Dracula requires jQuery and can be included as follows:</p>
+        control by adding the following to your &lt;head&gt; &lt;/head&gt; tag:</p>
 
 <hr />
-    <pre>&lt;script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"&gt;&lt;/script&gt;
-
-&lt;script src="http://pgb.liv.ac.uk:1260/script/DraculaSearch.js">&lt;/script&gt;</pre>
+    <pre>&lt;script src="http://pgb.liv.ac.uk:1260/script/DraculaSearch.js"&gt;&lt;/script&gt;</pre>
 <hr />
 
     <p>For hosting Dracula on a dedicated cluster node, see the
