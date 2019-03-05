@@ -1,5 +1,4 @@
 <?php
-
 $rawFastaFiles = scandir(DATA_PATH . '/databases/curated');
 
 $fastaFiles = array();

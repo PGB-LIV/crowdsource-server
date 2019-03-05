@@ -67,7 +67,11 @@ foreach ($users as $user) {
     }
 
     $ip = long2ip($line[0]);
-    $location = geoip_record_by_name($ip);
+    $location = @geoip_record_by_name($ip);
+    if (! $location) {
+        continue;
+    }
+
     $key = $location['latitude'] . ',' . $location['longitude'];
     $nodeLocations[$key] = array(
         'title' => $location['city'] . ', ' . $location['country_code'],
