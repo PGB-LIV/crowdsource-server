@@ -96,27 +96,56 @@ class Phase1Preprocessor extends AbstractPreprocessor
         $this->adodb->Execute(
             'UPDATE `job_queue` SET `database_hash` = UNHEX("' . $hash . '") WHERE `id` = ' . $this->jobId);
 
-        // Generate fixed mod table
-        $modifications = $this->adodb->GetAssoc(
-            'SELECT `j`.`acid`, `mono_mass` FROM `job_fixed_mod` `j` LEFT JOIN `unimod_modifications` ON `j`.`mod_id` = `record_id` WHERE `j`.`job` = ' .
-            $this->jobId);
-
         // Remove any data from a previous run
         $this->adodb->Execute('DELETE FROM `fasta_peptide_fixed` WHERE `job` = ' . $this->jobId);
 
-        // Fill fixed mod with peptides that meet requirements
-        $this->adodb->Execute(
-            'INSERT INTO `fasta_peptide_fixed` SELECT ' . $this->jobId .
-            ', `id`, `mass` FROM `fasta_peptides` WHERE `fasta` = "' . $fastaId . '" && `missed_cleavage` <= ' .
-            $this->maxMissedCleavage);
+        $isIndexed = false;
+        $modifications = $this->adodb->GetAll(
+            'SELECT `mod_id`, `acid` FROM `job_fixed_mod` WHERE `job` = ' . $this->jobId);
 
-        // For each fixed mod add mass to peptides
-        foreach ($modifications as $acid => $mass) {
+        $isCarbOnly = count($modifications) == 1 && $modifications[0]['mod_id'] == 4 && $modifications[0]['acid'] == 'C';
+        if ($isCarbOnly) {
+            $hits = $this->adodb->GetOne(
+                'SELECT COUNT(`fasta`) FROM `fasta_peptide_fixed_carb` WHERE `fasta` = ' . $fastaId);
+
+            if ($hits > 0) {
+                $isIndexed = true;
+            }
+        }
+
+        if (! $isIndexed) {
+            // Generate fixed mod table
+            $modifications = $this->adodb->GetAssoc(
+                'SELECT `j`.`acid`, `mono_mass` FROM `job_fixed_mod` `j` LEFT JOIN `unimod_modifications` ON `j`.`mod_id` = `record_id` WHERE `j`.`job` = ' .
+                $this->jobId);
+
+            // Fill fixed mod with peptides that meet requirements
             $this->adodb->Execute(
-                'UPDATE `fasta_peptide_fixed` `f` LEFT JOIN `fasta_peptides` `p` ON `f`.`peptide` = `p`.`id` && `fasta` = ' .
-                $fastaId . '
+                'INSERT INTO `fasta_peptide_fixed` SELECT ' . $this->jobId .
+                ', `id`, `mass` FROM `fasta_peptides` WHERE `fasta` = "' . $fastaId . '" && `missed_cleavage` <= ' .
+                $this->maxMissedCleavage);
+
+            // For each fixed mod add mass to peptides
+            foreach ($modifications as $acid => $mass) {
+                $this->adodb->Execute(
+                    'UPDATE `fasta_peptide_fixed` `f` LEFT JOIN `fasta_peptides` `p` ON `f`.`peptide` = `p`.`id` && `fasta` = ' .
+                    $fastaId . '
 SET `fixed_mass`=`fixed_mass` + ((`length` - LENGTH(REPLACE(`p`.`peptide`, "' . $acid . '", ""))) * ' . $mass .
-                ') WHERE `length` - LENGTH(REPLACE(`p`.`peptide`, "' . $acid . '", "")) > 0 && `job` = ' . $this->jobId);
+                    ') WHERE `length` - LENGTH(REPLACE(`p`.`peptide`, "' . $acid . '", "")) > 0 && `job` = ' .
+                    $this->jobId);
+            }
+
+            if ($isCarbOnly) {
+                $this->adodb->Execute(
+                    'INSERT INTO `fasta_peptide_fixed_carb` SELECT ' . $fastaId .
+                    ', `peptide`, `fixed_mass` FROM `fasta_peptide_fixed`');
+            }
+        }
+
+        if ($isCarbOnly && $isIndexed) {
+            $this->adodb->Execute(
+                'INSERT INTO `fasta_peptide_fixed` SELECT ' . $this->jobId .
+                ', `peptide`, `fixed_mass` FROM `fasta_peptide_fixed_carb` WHERE `fasta` = ' . $fastaId);
         }
     }
 

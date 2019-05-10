@@ -16,12 +16,7 @@
  */
 namespace pgb_liv\crowdsource\Parallel\Slave;
 
-use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Message\AMQPMessage;
-use PhpAmqpLib\Exception\AMQPTimeoutException;
 use pgb_liv\crowdsource\Core\WorkUnit;
-use pgb_liv\crowdsource\Core\Peptide;
-use pgb_liv\crowdsource\Parallel\Master\ResultUnitMaster;
 use pgb_liv\crowdsource\BulkQuery;
 use pgb_liv\php_ms\Utility\Sort\IdentificationSort;
 use pgb_liv\php_ms\Core\Identification;
@@ -100,7 +95,7 @@ class ResultUnitSlave extends AbstractSlave
         }
 
         if ($this->bulkWorkUnit->isExecRequired() || $this->bulkLocation->isExecRequired() ||
-            array_sum($this->pendingIncrement) > 100) {
+            array_sum($this->pendingIncrement) > 500) {
             $this->flush();
         }
 

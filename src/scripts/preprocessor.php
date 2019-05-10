@@ -19,6 +19,8 @@ use pgb_liv\crowdsource\Postprocessor\Phase1Postprocessor;
 use pgb_liv\crowdsource\Parallel\Master\WorkUnitMaster;
 use pgb_liv\crowdsource\Parallel\Master\ResultUnitMaster;
 
+ini_set('memory_limit', '8G');
+
 error_reporting(E_ALL);
 ini_set('display_errors', true);
 

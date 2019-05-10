@@ -61,7 +61,7 @@ abstract class AbstractSlave
 
         while (count($this->amqpChannel->callbacks)) {
             try {
-                $this->amqpChannel->wait(null, false, 30);
+                $this->amqpChannel->wait(null, false, 10);
             } catch (AMQPTimeoutException $e) {
                 // No data in stream
                 echo 'Queue empty' . PHP_EOL;
