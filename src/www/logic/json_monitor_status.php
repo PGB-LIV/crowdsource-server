@@ -2,14 +2,14 @@
 $result = array();
 
 $currentJob = $adodb->GetRow(
-    'SELECT `id`, `workunits_created`, `workunits_returned`, `created_at` FROM `job_queue` WHERE `state` != "COMPLETE" && `state` != "NEW"');
+    'SELECT `id`, `workunits_created`, `workunits_returned`, `process_start` FROM `job_queue` WHERE `state` != "COMPLETE" && `state` != "NEW"');
 
 $result['job_current'] = empty($currentJob) ? 'NONE' : $currentJob['id'];
 
 if (! empty($currentJob)) {
     $result['job_progress'] = $currentJob['workunits_returned'] == 0 ? '0' : floor(
         ($currentJob['workunits_returned'] / $currentJob['workunits_created']) * 100);
-    $result['job_start'] = $currentJob['created_at'];
+    $result['job_start'] = $currentJob['process_start'];
 }
 
 $queuedJob = $adodb->GetOne('SELECT COUNT(*) FROM `job_queue` WHERE `state` = "NEW"');

@@ -239,8 +239,7 @@ WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id
                             $protein->reverseSequence();
                         }
 
-                        $protein->setUniqueIdentifier($uid);
-                        $protein->setAccession($uid);
+                        $protein->setIdentifier($uid);
 
                         $proteinMap[$uid] = $protein;
                     }
