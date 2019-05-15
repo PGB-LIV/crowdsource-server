@@ -99,6 +99,9 @@ function updateStatus() {
 
 						if (data.job_current === 'NONE') {
 							content += '<p>Dracula is currently idle.</p>';
+						} else if (data.job_start == null) {
+							content += '<p>Dracula is currently preparing job '
+									+ data.job_current + '.</p>';
 						} else {
 							content += '<p>Dracula is currently consuming job '
 									+ data.job_current + ' ('
@@ -111,8 +114,7 @@ function updateStatus() {
 						if (data.jobs_queued > 0) {
 							content += '<p>There are currently '
 									+ data.jobs_queued
-									+ ' jobs in the queue, next job is estimated to start in '
-									+ data.job_next_start + ' hours</p>';
+									+ ' jobs in the queue.</p>';
 						} else {
 							content += '<p>There are currently no jobs queued for processing.</p>';
 						}
