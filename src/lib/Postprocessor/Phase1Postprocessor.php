@@ -133,8 +133,9 @@ class Phase1Postprocessor
             new Tolerance((float) $jobRecord['fragment_tolerance'], $jobRecord['precursor_tolerance_unit']));
         $mzIdentMl->addParentTolerance(
             new Tolerance((float) $jobRecord['precursor_tolerance'], $jobRecord['precursor_tolerance_unit']));
-
+        
         $mzIdentMl->addScore('MS:1002352', '-10lgP');
+        $mzIdentMl->addScore('DRAC:00001', 'CandidateCount');
         $mzIdentMl->addSpectraData(basename($jobRecord['raw_file']));
 
         $fixedMods = $this->adodb->GetAll('SELECT `mod_id`, `acid` FROM `job_fixed_mod` WHERE `job` = ' . $this->jobId);
@@ -213,6 +214,7 @@ WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id
 
                 $identification->setRank($rank);
                 $identification->setScore('-10lgP', $psmRecord['score']);
+                $identification->setScore('CandidateCount', $precursorRecord['candidates']);
 
                 $peptide = new Peptide();
                 $peptide->setSequence($psmRecord['sequence']);

@@ -191,8 +191,7 @@ class WorkUnitSlave extends AbstractSlave
             $totalSequenceLength += $peptide->getLength();
             $candidateCount ++;
             if ($candidateCount > 50 || $totalSequenceLength > 400) {
-                $workUnits[$workUnit->getUid()] = $workUnit->toJson();
-                $workUnit->clearIdentifications();
+                $this->addToBatch($workUnits, $workUnit, $precursorId);
 
                 $candidateCount = 0;
                 $totalSequenceLength = 0;
@@ -202,7 +201,7 @@ class WorkUnitSlave extends AbstractSlave
         }
 
         if (count($workUnit->getIdentifications()) > 0) {
-            $workUnits[$workUnit->getUid()] = $workUnit->toJson();
+            $this->addToBatch($workUnits, $workUnit, $precursorId);
         }
 
         foreach ($workUnits as $uid => $workUnit) {
@@ -216,6 +215,13 @@ class WorkUnitSlave extends AbstractSlave
             $this->jobId);
 
         $this->jobChannel->publish_batch();
+    }
+
+    private function addToBatch(array &$workUnits, WorkUnit $workUnit, $precursorId)
+    {
+        $this->adodb->Execute('UPDATE `raw_ms1` SET `candidates` = `candidates` + ' . count($workUnit->getIdentifications()) . ' WHERE `id` =' . $precursorId . ' && `job` = ' . $this->jobId);
+        $workUnits[$workUnit->getUid()] = $workUnit->toJson();
+        $workUnit->clearIdentifications();
     }
 
     protected function injectFixedModifications(WorkUnit $workUnit, array $modifications)
