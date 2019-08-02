@@ -74,12 +74,6 @@ class ResultUnitSlave extends AbstractSlave
         $jobId = (int) $uidParts[0];
         $precursorId = (int) $uidParts[1];
 
-        if (! isset($this->pendingIncrement[$jobId])) {
-            $this->pendingIncrement[$jobId] = 0;
-        }
-
-        $this->pendingIncrement[$jobId] ++;
-
         $identifications = $workUnit->getIdentifications();
 
         $this->identificationSort->sort($identifications, false);
@@ -94,16 +88,17 @@ class ResultUnitSlave extends AbstractSlave
             $this->recordIdentification($jobId, $precursorId, $identification);
         }
 
-        if ($this->bulkWorkUnit->isExecRequired() || $this->bulkLocation->isExecRequired() ||
-            array_sum($this->pendingIncrement) > 500) {
-            $this->flush();
-        }
-
         $this->adodb->Execute(
             'INSERT IGNORE INTO `analytic_meta` (`job`, `uid`, `sent`, `received`, `ip`, `host`, `cpu`) VALUES (' .
             $jobId . ',' . $this->adodb->Quote($workUnit->getUid()) . ',' . $workUnit->getBytesSent() . ',' .
             $workUnit->getBytesReceived() . ',' . $workUnit->getUser() . ',' .
             $this->adodb->Quote($workUnit->getHostname()) . ',' . $workUnit->getProcessTime() . ')');
+
+        if (! isset($this->pendingIncrement[$jobId])) {
+            $this->pendingIncrement[$jobId] = 0;
+        }
+
+        $this->pendingIncrement[$jobId] ++;
     }
 
     private function recordIdentification($jobId, $precursorId, Identification $identification)
@@ -128,14 +123,14 @@ class ResultUnitSlave extends AbstractSlave
         $this->bulkWorkUnit->flush();
         $this->bulkLocation->flush();
 
-        foreach ($this->pendingAcks as $ack) {
-            $this->amqpChannel->basic_ack($ack);
-        }
-
         foreach ($this->pendingIncrement as $jobId => $increment) {
             $this->adodb->Execute(
                 'UPDATE `job_queue` SET `workunits_returned` = `workunits_returned` + ' . $increment . ' WHERE `id` =' .
                 $jobId);
+        }
+
+        foreach ($this->pendingAcks as $ack) {
+            $this->amqpChannel->basic_ack($ack);
         }
 
         $this->pendingAcks = array();
@@ -152,6 +147,11 @@ class ResultUnitSlave extends AbstractSlave
         $this->processResult($message->body);
 
         $this->pendingAcks[] = $message->delivery_info['delivery_tag'];
+
+        if ($this->bulkWorkUnit->isExecRequired() || $this->bulkLocation->isExecRequired() ||
+            array_sum($this->pendingIncrement) > 500) {
+            $this->flush();
+        }
     }
 
     protected function initialise()

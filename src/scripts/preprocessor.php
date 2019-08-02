@@ -17,7 +17,6 @@
 use pgb_liv\crowdsource\Preprocessor\Phase1Preprocessor;
 use pgb_liv\crowdsource\Postprocessor\Phase1Postprocessor;
 use pgb_liv\crowdsource\Parallel\Master\WorkUnitMaster;
-use pgb_liv\crowdsource\Parallel\Master\ResultUnitMaster;
 
 ini_set('memory_limit', '8G');
 
@@ -32,25 +31,63 @@ require_once '../conf/adodb.php';
 require_once '../vendor/autoload.php';
 
 $lockDir = DATA_PATH . '/.lock';
-$lockFile = $lockDir . '/.PreprocessorLock';
 
-if (! file_exists($lockFile)) {
-    if (! is_dir($lockDir)) {
-        mkdir($lockDir);
+$lockCount = 2;
+$lockFilePath = $lockDir . '/.PreprocessorLock';
+$jidFilePath = $lockDir . '/.PreprocessorJid';
+
+$availableLock = null;
+// Init
+$jobsRunning = array(
+    0
+);
+for ($lockIndex = 1; $lockIndex <= $lockCount; $lockIndex ++) {
+    $lockFile = $lockFilePath . $lockIndex;
+    if (! file_exists($lockFile)) {
+        if (! is_dir($lockDir)) {
+            mkdir($lockDir);
+        }
+
+        touch($lockFile);
     }
 
-    touch($lockFile);
+    if (! file_exists($jidFilePath . $lockIndex)) {
+        touch($jidFilePath . $lockIndex);
+    }
+
+    $lock = fopen($lockFile, 'w+');
+
+    if (! flock($lock, LOCK_EX | LOCK_NB)) {
+        $jobId = file_get_contents($jidFilePath . $lockIndex);
+
+        if (strlen($jobId) > 0) {
+            $jobsRunning[] = $jobId;
+        }
+    } else {
+        $availableLock = $lockIndex;
+    }
+
+    fclose($lock);
 }
 
-$lock = fopen($lockFile, 'r+');
+if (is_null($availableLock)) {
+    die('Terminating: All processors running');
+}
+
+echo '[' . date('r') . '] Locking ' . $lockFilePath . $availableLock . PHP_EOL;
+
+$lock = fopen($lockFilePath . $availableLock, 'w+');
 
 if (! flock($lock, LOCK_EX | LOCK_NB)) {
-    die('Terminating. Process Running.');
+    die('Terminating: Available lock locked');
 }
+// Got lock
 
 echo '[' . date('r') . '] Starting preprocessor.' . PHP_EOL;
 
-$job = $adodb->GetRow('SELECT `id`, `state` FROM `job_queue` WHERE `state` != \'COMPLETE\' ORDER BY `created_at` ASC');
+$job = $adodb->GetRow(
+    'SELECT `id`, `state` FROM `job_queue` WHERE `state` != \'COMPLETE\' && `id` NOT IN(' . implode(',', $jobsRunning) .
+    ') ORDER BY `created_at` ASC');
 
 if (empty($job)) {
     die('[' . date('r') . '] Terminating. No jobs awaiting processing.' . PHP_EOL);
@@ -62,6 +99,11 @@ $jobId = (int) $job['id'];
 if (empty($job)) {
     die('[' . date('r') . '] Terminating. Nothing to do.' . PHP_EOL);
 }
+
+file_put_contents($jidFilePath . $availableLock, $jobId);
+
+// var_dump($job);
+// exit();
 
 echo '[' . date('r') . '] Found job: ' . $job['id'] . ' - Phase: ' . $state . '.' . PHP_EOL;
 
@@ -80,13 +122,15 @@ switch ($state) {
         $master = new WorkUnitMaster($adodb, $jobId);
         $master->processJobs();
     case 'PROCESSING':
-        echo '[' . date('r') . '] Processing Results.' . PHP_EOL;
-        $master = new ResultUnitMaster($adodb);
-        $master->processJobs();
 
-        // TODO: Validate job is complete
         $phase1 = new Phase1Postprocessor($adodb, $jobId);
-
+        
+        echo '[' . date('r') . '] Waiting for Results.' . PHP_EOL;
+        do {
+            sleep(1);
+        } while (! $phase1->resultsReady());
+        
+        echo '[' . date('r') . '] Processing Results.' . PHP_EOL;
         if ($phase1->resultsReady()) {
             echo '[' . date('r') . '] Generating results.' . PHP_EOL;
             $phase1->generateResults();
@@ -103,3 +147,7 @@ switch ($state) {
 }
 
 echo '[' . date('r') . '] Done.' . PHP_EOL;
+
+file_put_contents($jidFilePath . $availableLock, '');
+ftruncate($lock, 0);
+fclose($lock);

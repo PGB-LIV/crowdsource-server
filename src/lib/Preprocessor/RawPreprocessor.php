@@ -158,15 +158,15 @@ class RawPreprocessor
 
     private function processRawFile()
     {
-        $ms1Id = 0;
+        $ms1Id = -1;
         foreach ($this->rawParser as $spectra) {
+            $ms1Id ++;
             if (! $this->filterCharge->isValidSpectra($spectra)) {
                 continue;
             }
 
             $this->processMs1($ms1Id, $spectra);
             $this->processMs2($ms1Id, $spectra);
-            $ms1Id ++;
         }
     }
 
@@ -187,15 +187,15 @@ class RawPreprocessor
             'SELECT `charge_min`, `charge_max`, `precursor_tolerance` FROM `job_queue` WHERE `id` = ' . $this->jobId);
         $tolerance = $job['precursor_tolerance'] / 1000000;
 
-        $massLimt = $this->adodb->GetRow(
+        $massLimit = $this->adodb->GetRow(
             'SELECT MIN(`mono_mass`) AS `min`, MAX(`mono_mass`) AS `max` FROM `unimod_modifications`;');
 
         $mass = $this->adodb->GetRow(
             'SELECT MIN(`fixed_mass`) AS `min`, MAX(`fixed_mass`) AS `max` FROM `fasta_peptide_fixed` WHERE `job` = ' .
             $this->jobId);
 
-        $mass['min'] -= $massLimt['min'];
-        $mass['max'] -= $massLimt['max'];
+        $mass['min'] -= $massLimit['min'];
+        $mass['max'] -= $massLimit['max'];
 
         $mass['min'] -= $mass['min'] * $tolerance;
         $mass['max'] += $mass['max'] * $tolerance;

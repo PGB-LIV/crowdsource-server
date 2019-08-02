@@ -100,12 +100,12 @@ class Phase1Postprocessor
 
     public function clean()
     {
-        $this->adodb->Execute('TRUNCATE `fasta_peptide_fixed`');
-        $this->adodb->Execute('TRUNCATE `raw_ms1`');
-        $this->adodb->Execute('TRUNCATE `raw_ms2`');
-        $this->adodb->Execute('TRUNCATE `workunit1`');
-        $this->adodb->Execute('TRUNCATE `workunit1_locations`');
-        $this->adodb->Execute('TRUNCATE `analytic_meta`');
+        $this->adodb->Execute('DELETE FROM `analytic_meta` WHERE `job` = ' . $this->jobId);
+        $this->adodb->Execute('DELETE FROM `fasta_peptide_fixed` WHERE `job` = ' . $this->jobId);
+        $this->adodb->Execute('DELETE FROM `raw_ms1` WHERE `job` = ' . $this->jobId);
+        $this->adodb->Execute('DELETE FROM `raw_ms2` WHERE `job` = ' . $this->jobId);
+        $this->adodb->Execute('DELETE FROM `workunit1` WHERE `job` = ' . $this->jobId);
+        $this->adodb->Execute('DELETE FROM `workunit1_locations` WHERE `job` = ' . $this->jobId);
     }
 
     public function finalise()
@@ -135,7 +135,7 @@ class Phase1Postprocessor
             new Tolerance((float) $jobRecord['precursor_tolerance'], $jobRecord['precursor_tolerance_unit']));
 
         $mzIdentMl->addScore('MS:1002352', '-10lgP');
-        $mzIdentMl->addSpectraData(self::RESULTS_URL . $this->jobId . '/processed.mgf');
+        $mzIdentMl->addSpectraData(basename($jobRecord['raw_file']));
 
         $fixedMods = $this->adodb->GetAll('SELECT `mod_id`, `acid` FROM `job_fixed_mod` WHERE `job` = ' . $this->jobId);
         $varMods = $this->adodb->GetAll('SELECT `mod_id`, `acid` FROM `job_variable_mod` WHERE `job` = ' . $this->jobId);
@@ -199,7 +199,7 @@ class Phase1Postprocessor
             $psmRecords = $this->adodb->Execute(
                 'SELECT `w`.`precursor`, `w`.`peptide`, `w`.`score`, `p`.`peptide` AS `sequence`, `p`.`is_decoy` FROM `workunit1` `w` 
 LEFT JOIN `fasta_peptides` `p` ON `fasta` = ' . $fastaId . ' && `p`.`id` = `w`.`peptide` 
-WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id'] . ' ORDER BY `score` DESC LIMIT 0,' .
+WHERE `w`.`job` = ' . $this->jobId . ' && `precursor` = ' . $precursorRecord['id'] . ' ORDER BY `score` DESC, `p`.`is_decoy` ASC LIMIT 0,' .
                 self::PSM_LIMIT);
 
             $rank = 0;

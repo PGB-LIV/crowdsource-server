@@ -56,6 +56,10 @@ class WorkUnitSlave extends AbstractSlave
 
     private $fixedMods;
 
+    private $sequenceLengthMin;
+
+    private $sequenceLengthMax;
+
     public function __construct(\ADOConnection $conn)
     {
         parent::__construct($conn, WorkUnitMaster::WORKUNIT_QUEUE_NAME);
@@ -157,7 +161,8 @@ class WorkUnitSlave extends AbstractSlave
 
         $uid = $this->jobId . '-' . $precursorId;
 
-        $workUnit = new WorkUnit($uid . '-0');
+        $packetNum = 0;
+        $workUnit = new WorkUnit($uid . '-' . $packetNum);
         $workUnit->setCharge($charge);
 
         $fragmentIons = $this->getFragmentIons($precursorId);
@@ -166,8 +171,9 @@ class WorkUnitSlave extends AbstractSlave
         $this->injectFragmentIons($workUnit, $fragmentIons);
         $this->injectFixedModifications($workUnit, $this->fixedMods);
 
-        $candidateCount = 0;
+        $totalSequenceLength = 0;
         $workUnits = array();
+        $candidateCount = 0;
         foreach ($candidates as $candidate) {
             $peptide = new Peptide((int) $candidate[0]['id']);
 
@@ -182,11 +188,16 @@ class WorkUnitSlave extends AbstractSlave
             $identification->setSequence($peptide);
             $workUnit->addIdentification($identification);
 
+            $totalSequenceLength += $peptide->getLength();
             $candidateCount ++;
-            if ($candidateCount % 50 == 0) {
+            if ($candidateCount > 50 || $totalSequenceLength > 400) {
                 $workUnits[$workUnit->getUid()] = $workUnit->toJson();
                 $workUnit->clearIdentifications();
-                $workUnit->setUid($uid . '-' . floor($candidateCount / 50));
+
+                $candidateCount = 0;
+                $totalSequenceLength = 0;
+                $packetNum ++;
+                $workUnit->setUid($uid . '-' . $packetNum);
             }
         }
 
@@ -223,9 +234,13 @@ class WorkUnitSlave extends AbstractSlave
 
     protected function initialise2()
     {
-        $this->fastaId = $this->adodb->GetOne(
-            'SELECT `fasta`.`id` FROM `job_queue` LEFT JOIN `fasta` ON `fasta`.`hash` = `job_queue`.`database_hash` WHERE `job_queue`.`id` = ' .
+        $jobProperties = $this->adodb->GetRow(
+            'SELECT `fasta`.`id`, `peptide_min`, `peptide_max` FROM `job_queue` LEFT JOIN `fasta` ON `fasta`.`hash` = `job_queue`.`database_hash` WHERE `job_queue`.`id` = ' .
             $this->jobId);
+
+        $this->fastaId = $jobProperties['id'];
+        $this->sequenceLengthMin = $jobProperties['peptide_min'];
+        $this->sequenceLengthMax = $jobProperties['peptide_max'];
 
         $toleranceRaw = $this->adodb->GetRow(
             'SELECT `precursor_tolerance`, `precursor_tolerance_unit` FROM `job_queue` WHERE `id` = ' . $this->jobId);
@@ -322,14 +337,15 @@ class WorkUnitSlave extends AbstractSlave
      */
     private function getPeptides($spectraMass)
     {
+        // TODO: Validate peptide is acceptable length
         $tolerance = $this->massTolerance->getDaltonDelta($spectraMass);
         $pepMassLow = $spectraMass - $tolerance;
         $pepMassHigh = $spectraMass + $tolerance;
 
         return $this->adodb->GetAll(
             'SELECT `f`.`peptide` AS `id`, `p`.`peptide` AS `sequence` FROM `fasta_peptide_fixed` `f` LEFT JOIN `fasta_peptides` `p` ON `f`.`peptide` = `p`.`id` && `fasta` = ' .
-            $this->fastaId . ' WHERE `job` = ' . $this->jobId . ' && `fixed_mass` BETWEEN ' . $pepMassLow . ' AND ' .
-            $pepMassHigh);
+            $this->fastaId . ' WHERE `job` = ' . $this->jobId . ' && `length` BETWEEN ' . $this->sequenceLengthMin .
+            ' AND ' . $this->sequenceLengthMax . ' && `fixed_mass` BETWEEN ' . $pepMassLow . ' AND ' . $pepMassHigh);
     }
 
     /**
@@ -341,15 +357,16 @@ class WorkUnitSlave extends AbstractSlave
      */
     private function getModifiablePeptides($spectraMass, $where)
     {
+        // TODO: Validate peptide is acceptable length
         $tolerance = $this->massTolerance->getDaltonDelta($spectraMass);
         $pepMassLow = $spectraMass - $tolerance;
         $pepMassHigh = $spectraMass + $tolerance;
 
         $query = 'SELECT `f`.`peptide` AS `id`, `p`.`peptide` AS `sequence` FROM `fasta_peptide_fixed` `f`
-            LEFT JOIN `fasta_peptides` `p` ON `f`.`peptide` = `p`.`id` && `fasta` = ' .
-            $this->fastaId . '
-            WHERE `job` = ' . $this->jobId . ' && `fixed_mass` BETWEEN ' .
-            $pepMassLow . ' AND ' . $pepMassHigh;
+            LEFT JOIN `fasta_peptides` `p` ON `f`.`peptide` = `p`.`id` && `fasta` = ' . $this->fastaId .
+            '
+            WHERE `job` = ' . $this->jobId . '&& `length` BETWEEN ' . $this->sequenceLengthMin . ' AND ' .
+            $this->sequenceLengthMax . ' && `fixed_mass` BETWEEN ' . $pepMassLow . ' AND ' . $pepMassHigh;
 
         foreach ($where as $key => $value) {
             $query .= ' && ' . $key . ' >= ' . $value;

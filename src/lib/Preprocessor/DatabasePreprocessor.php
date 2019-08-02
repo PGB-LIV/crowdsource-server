@@ -76,7 +76,7 @@ class DatabasePreprocessor
 
     private function initialise()
     {
-        $this->filter = new FilterLength(5, 60);
+        $this->filter = new FilterLength(6, 60);
         $this->cleaver->setMaxMissedCleavage(static::MAX_MISS_CLEAVE);
 
         $this->proteinBulk = new BulkQuery($this->adodb,
